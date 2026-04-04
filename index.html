@@ -263,49 +263,9 @@
 // ─── DATA ───────────────────────────────────────────────────────────────────
 const DEFAULTS = {
   names: { papa: 'Papa', mama: 'Mama' },
-  income: { papa: 9812, mama: 5686 },
-  exchange: 1300,
-  bills: [
-    { id:1,  name:'Loan 2',           amount:2315, dueDay:0,  person:'papa', freq:'monthly', cat:'debt',      note:'$6,500 out (–$1,000 net), paid weekly' },
-    { id:2,  name:'Savings',          amount:839,  dueDay:0,  person:'papa', freq:'monthly', cat:'savings',   note:'Divided into weekly payments' },
-    { id:3,  name:'Mortgage',         amount:2515, dueDay:1,  person:'papa', freq:'monthly', cat:'housing',   note:'' },
-    { id:4,  name:'YMCA',             amount:118,  dueDay:1,  person:'papa', freq:'monthly', cat:'health',    note:'' },
-    { id:5,  name:'Storage',          amount:300,  dueDay:1,  person:'papa', freq:'monthly', cat:'misc',      note:'' },
-    { id:6,  name:'SDG&E',            amount:525,  dueDay:1,  person:'papa', freq:'monthly', cat:'utilities', note:'' },
-    { id:7,  name:'Tesla',            amount:120,  dueDay:2,  person:'papa', freq:'monthly', cat:'auto',      note:'Includes FSD, premium connectivity & Reviver plate' },
-    { id:8,  name:'Phone',            amount:312,  dueDay:11, person:'papa', freq:'monthly', cat:'utilities', note:'' },
-    { id:9,  name:'Water',            amount:184,  dueDay:17, person:'papa', freq:'monthly', cat:'utilities', note:'' },
-    { id:10, name:'Trash',            amount:34,   dueDay:20, person:'papa', freq:'monthly', cat:'utilities', note:'' },
-    { id:11, name:'Cable',            amount:115,  dueDay:24, person:'papa', freq:'monthly', cat:'utilities', note:'' },
-    { id:12, name:'Auto Insurance',   amount:381,  dueDay:24, person:'papa', freq:'monthly', cat:'insurance', note:'' },
-    { id:13, name:'ADT',              amount:64,   dueDay:0,  person:'papa', freq:'monthly', cat:'home',      note:'Various dates' },
-    { id:14, name:'Groceries / Food', amount:600,  dueDay:0,  person:'papa', freq:'monthly', cat:'food',      note:'' },
-    { id:15, name:'Tech Subs',        amount:207,  dueDay:0,  person:'papa', freq:'monthly', cat:'tech',      note:'See Subscriptions tab' },
-    { id:16, name:'Home Insurance',   amount:155,  dueDay:1,  person:'papa', freq:'yearly',  cat:'insurance', dueMonth:4,  note:'Paid yearly in April' },
-    { id:17, name:'Hagerty Insurance',amount:62,   dueDay:1,  person:'papa', freq:'yearly',  cat:'insurance', dueMonth:7,  note:'Paid yearly in July' },
-    { id:18, name:'Grundy Insurance', amount:25,   dueDay:1,  person:'papa', freq:'yearly',  cat:'insurance', dueMonth:8,  note:'Paid yearly in August' },
-    { id:19, name:'Landscaping',      amount:100,  dueDay:0,  person:'mama', freq:'monthly', cat:'home',      note:'Divided into weekly payments' },
-    { id:20, name:'Groceries / Food', amount:2000, dueDay:0,  person:'mama', freq:'monthly', cat:'food',      note:'' },
-    { id:21, name:'Antac',            amount:20,   dueDay:0,  person:'mama', freq:'monthly', cat:'health',    note:'' },
-    { id:22, name:'Tech Subs',        amount:20,   dueDay:0,  person:'mama', freq:'monthly', cat:'tech',      note:'' },
-  ],
-  subscriptions: [
-    { id:1,  name:'iCloud',       amount:10, dueDay:1,  freq:'monthly', cat:'cloud'   },
-    { id:2,  name:'Ford',         amount:10, dueDay:1,  freq:'monthly', cat:'auto'    },
-    { id:3,  name:'Flickr',       amount:8,  dueDay:2,  freq:'monthly', cat:'photo'   },
-    { id:4,  name:'Spotify',      amount:22, dueDay:15, freq:'monthly', cat:'media'   },
-    { id:5,  name:'Apple TV+',    amount:10, dueDay:18, freq:'monthly', cat:'media'   },
-    { id:6,  name:'Netflix',      amount:15, dueDay:20, freq:'monthly', cat:'media'   },
-    { id:7,  name:'Photobucket',  amount:8,  dueDay:23, freq:'monthly', cat:'photo'   },
-    { id:8,  name:'Hulu',         amount:10, dueDay:24, freq:'monthly', cat:'media'   },
-    { id:9,  name:'ChatGPT',      amount:20, dueDay:17, freq:'monthly', cat:'ai'      },
-    { id:10, name:'Claude',       amount:20, dueDay:17, freq:'monthly', cat:'ai'      },
-    { id:11, name:'Grok',         amount:30, dueDay:25, freq:'monthly', cat:'ai'      },
-    { id:12, name:'Fantasy Pros', amount:10, dueDay:0,  freq:'monthly', cat:'sports'  },
-    { id:13, name:'Recraft',      amount:10, dueDay:1,  freq:'yearly',  cat:'design', dueMonth:2 },
-    { id:14, name:'MLB',          amount:17, dueDay:1,  freq:'yearly',  cat:'sports', dueMonth:4 },
-    { id:15, name:'myfitnesspal', amount:7,  dueDay:1,  freq:'yearly',  cat:'health', dueMonth:6 },
-  ]
+  income: { papa: 0, mama: 0 },
+  bills: [],
+  subscriptions: []
 };
 
 let data = (() => {
