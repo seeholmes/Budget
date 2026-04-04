@@ -261,6 +261,7 @@
 <script>
 // ─── DATA ───────────────────────────────────────────────────────────────────
 const DEFAULTS = {
+  names: { papa: 'Papa', mama: 'Mama' },
   income: { papa: 9812, mama: 5686 },
   exchange: 1300,
   bills: [
@@ -451,7 +452,7 @@ function renderHome() {
       : (exchange >= 0 ? `Receives ${fmt(exchange)}` : `Sends ${fmt(-exchange)}`);
     const xferColor = (cls === 'papa') === (exchange >= 0) ? 'var(--red)' : 'var(--green)';
     html += `<div class="summary-card ${cls}">
-      <div class="sc-label" style="color:${color}">${person}</div>
+      <div class="sc-label" style="color:${color}">${data.names[cls]}</div>
       <div class="sc-row"><span>Income/mo</span><span>${fmt(income)}</span></div>
       <div class="sc-row"><span>Bills</span><span style="color:var(--red)">–${fmt(bills)}</span></div>
       <div class="sc-row"><span>Transfer</span><span style="color:${xferColor};font-size:12px">${xferLabel}</span></div>
@@ -471,7 +472,7 @@ function renderHome() {
     <div class="wide-card-title">Household Monthly</div>
     <div class="wc-row"><span class="label">Combined Income</span><span class="val">${fmt(totalIncome)}</span></div>
     <div class="wc-row"><span class="label">Total Expenses</span><span class="val" style="color:var(--red)">–${fmt(totalExp)}</span></div>
-    <div class="wc-row"><span class="label">${exchange >= 0 ? 'Papa → Mama' : 'Mama → Papa'}</span><span class="val" style="color:var(--text2)">${fmt(Math.abs(exchange))}</span></div>
+    <div class="wc-row"><span class="label">${exchange >= 0 ? data.names.papa+' → '+data.names.mama : data.names.mama+' → '+data.names.papa}</span><span class="val" style="color:var(--text2)">${fmt(Math.abs(exchange))}</span></div>
     <div class="wc-row" style="font-weight:600">
       <span class="label">Net Balance</span>
       <span class="val" style="color:${totalBal >= 0 ? 'var(--green)' : 'var(--red)'}">${fmt(totalBal)}</span>
@@ -488,7 +489,7 @@ function renderHome() {
         <div class="row-icon" style="background:rgba(${b.person==='papa'?'0,122,255':'175,82,222'},0.1)">${CAT_ICONS[b.cat]||'📋'}</div>
         <div class="row-main">
           <div class="row-title">${b.name}</div>
-          <div class="row-sub" style="color:${color}">${b.person[0].toUpperCase()+b.person.slice(1)} · Due ${dueLabel(b)}</div>
+          <div class="row-sub" style="color:${color}">${data.names[b.person]} · Due ${dueLabel(b)}</div>
         </div>
         <div class="row-right">
           <div class="row-amount">${fmt(b.amount)}</div>
@@ -532,7 +533,7 @@ function renderBills() {
   const totalY = bills.filter(b=>b.freq==='yearly').reduce((s,b)=>s+b.amount,0);
 
   let html = `<div class="filter-row">
-    ${['all','papa','mama'].map(f=>`<button class="filter-chip${billFilter===f?' active':''}" onclick="setBillFilter('${f}')">${f==='all'?'All Bills':f[0].toUpperCase()+f.slice(1)}</button>`).join('')}
+    ${['all','papa','mama'].map(f=>`<button class="filter-chip${billFilter===f?' active':''}" onclick="setBillFilter('${f}')">${f==='all'?'All Bills':data.names[f]}</button>`).join('')}
   </div>`;
 
   html += `<div class="section-label">Monthly Bills</div><div class="card-list">`;
@@ -549,7 +550,7 @@ function renderBills() {
       <div class="row-icon" style="background:rgba(${b.person==='papa'?'0,122,255':'175,82,222'},0.1)">${CAT_ICONS[b.cat]||'📋'}</div>
       <div class="row-main">
         <div class="row-title">${b.name}</div>
-        <div class="row-sub" style="color:${personColor}">${b.person[0].toUpperCase()+b.person.slice(1)}${b.note ? ' · <span style="color:var(--text2)">'+b.note+'</span>' : ''}</div>
+        <div class="row-sub" style="color:${personColor}">${data.names[b.person]}${b.note ? ' · <span style="color:var(--text2)">'+b.note+'</span>' : ''}</div>
       </div>
       <div class="row-right">
         ${editMode
@@ -693,8 +694,8 @@ function itemForm(type, item) {
       ${isBill ? `<div class="form-field">
         <span class="form-label">Person</span>
         <select id="${prefix}-person" class="form-select">
-          <option value="papa" ${sel('person','papa')}>Papa</option>
-          <option value="mama" ${sel('person','mama')}>Mama</option>
+          <option value="papa" ${sel('person','papa')}>${data.names.papa}</option>
+          <option value="mama" ${sel('person','mama')}>${data.names.mama}</option>
         </select>
       </div>` : ''}
       <div class="form-field">
@@ -733,7 +734,7 @@ function renderSettings() {
     return `<div class="settings-row" style="cursor:pointer" onclick="editingBillId=${b.id};editingSubId=null;render()">
       <div style="flex:1;min-width:0">
         <div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${b.name}</div>
-        <div class="hint">${b.person[0].toUpperCase()+b.person.slice(1)} · ${b.freq === 'yearly' ? 'Yearly ('+MONTHS[b.dueMonth-1]+')' : (b.dueDay ? 'Day '+b.dueDay : 'Various')}</div>
+        <div class="hint">${data.names[b.person]} · ${b.freq === 'yearly' ? 'Yearly ('+MONTHS[b.dueMonth-1]+')' : (b.dueDay ? 'Day '+b.dueDay : 'Various')}</div>
       </div>
       <span style="margin-right:4px;font-weight:500">${fmt(b.amount)}</span>
       <button class="del-btn" onclick="event.stopPropagation();deleteBill(${b.id})">−</button>
@@ -757,12 +758,20 @@ function renderSettings() {
   <div class="section-label">Income (Monthly Net)</div>
   <div class="settings-group">
     <div class="settings-row">
-      <div><div>Papa</div><div class="hint">Per month</div></div>
+      <div style="flex:1;min-width:0">
+        <input class="form-input" type="text" value="${data.names.papa}" autocomplete="off" style="font-size:16px;margin-bottom:4px"
+          onchange="data.names.papa=this.value.trim()||'Papa';save();render()">
+        <div class="hint">Per month</div>
+      </div>
       <input class="edit-input" type="number" value="${data.income.papa}" inputmode="decimal"
         onchange="data.income.papa=+this.value;save();render()">
     </div>
     <div class="settings-row">
-      <div><div>Mama</div><div class="hint">Per month</div></div>
+      <div style="flex:1;min-width:0">
+        <input class="form-input" type="text" value="${data.names.mama}" autocomplete="off" style="font-size:16px;margin-bottom:4px"
+          onchange="data.names.mama=this.value.trim()||'Mama';save();render()">
+        <div class="hint">Per month</div>
+      </div>
       <input class="edit-input" type="number" value="${data.income.mama}" inputmode="decimal"
         onchange="data.income.mama=+this.value;save();render()">
     </div>
@@ -771,7 +780,7 @@ function renderSettings() {
   <div class="section-label">Monthly Transfer</div>
   <div class="settings-group">
     <div class="settings-row">
-      <div><div>${xfer >= 0 ? 'Papa → Mama' : 'Mama → Papa'}</div><div class="hint">Auto-calculated to equalize balances</div></div>
+      <div><div>${xfer >= 0 ? data.names.papa+' → '+data.names.mama : data.names.mama+' → '+data.names.papa}</div><div class="hint">Auto-calculated to equalize balances</div></div>
       <span style="font-size:16px;font-weight:500">${fmt(Math.abs(xfer))}</span>
     </div>
   </div>
