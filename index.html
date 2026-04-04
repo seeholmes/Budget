@@ -209,6 +209,24 @@
     .empty { text-align: center; color: var(--text2); padding: 40px 16px; font-size: 15px; }
     /* CHEVRON */
     .chevron { color: var(--text3); font-size: 13px; margin-left: 4px; }
+    /* FORM */
+    .add-form { padding: 14px 16px; border-top: 0.5px solid var(--sep); background: var(--bg); }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+    .form-grid.full { grid-template-columns: 1fr; }
+    .form-field { display: flex; flex-direction: column; gap: 4px; }
+    .form-label { font-size: 12px; color: var(--text2); font-weight: 500; padding-left: 2px; }
+    .form-input, .form-select {
+      background: var(--card); border: 1.5px solid var(--sep);
+      border-radius: 8px; padding: 9px 10px;
+      font-size: 15px; font-family: inherit; color: var(--text); width: 100%;
+    }
+    .form-input:focus, .form-select:focus { border-color: var(--blue); outline: none; }
+    .form-select { -webkit-appearance: none; appearance: none; }
+    .form-actions { display: flex; gap: 8px; margin-top: 10px; }
+    .btn-save { flex:1; background: var(--blue); color: white; border: none; border-radius: 10px; padding: 12px; font-size: 15px; font-family: inherit; font-weight: 600; cursor: pointer; }
+    .btn-cancel { background: var(--sep); color: var(--text); border: none; border-radius: 10px; padding: 12px 18px; font-size: 15px; font-family: inherit; font-weight: 500; cursor: pointer; }
+    .btn-add-row { width: 100%; background: none; border: none; color: var(--blue); font-size: 16px; font-family: inherit; padding: 13px 16px; text-align: left; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+    .del-btn { background: none; border: none; color: var(--red); font-size: 20px; cursor: pointer; padding: 4px 8px; line-height: 1; flex-shrink: 0; }
   </style>
 </head>
 <body>
@@ -368,6 +386,8 @@ function calcExchange() {
 let currentTab = 'home';
 let editMode = false;
 let billFilter = 'all';
+let addingBill = false;
+let addingSub = false;
 
 function switchTab(tab) {
   currentTab = tab;
@@ -636,28 +656,121 @@ function renderSubs() {
 }
 
 // ─── RENDER SETTINGS ──────────────────────────────────────────────────────────
+function addForm(type) {
+  const isBill = type === 'bill';
+  const prefix = isBill ? 'nb' : 'ns';
+  const cats = Object.keys(CAT_ICONS);
+  return `<div class="add-form">
+    <div style="font-weight:600;font-size:15px;margin-bottom:10px">${isBill ? 'New Bill' : 'New Subscription'}</div>
+    <div class="form-grid full"><div class="form-field">
+      <span class="form-label">Name</span>
+      <input id="${prefix}-name" class="form-input" type="text" placeholder="e.g. Netflix" autocomplete="off">
+    </div></div>
+    <div class="form-grid">
+      <div class="form-field">
+        <span class="form-label">Amount ($/mo)</span>
+        <input id="${prefix}-amount" class="form-input" type="number" inputmode="decimal" placeholder="0">
+      </div>
+      <div class="form-field">
+        <span class="form-label">Category</span>
+        <select id="${prefix}-cat" class="form-select">
+          ${cats.map(c=>`<option value="${c}">${CAT_ICONS[c]} ${c}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+    <div class="form-grid">
+      ${isBill ? `<div class="form-field">
+        <span class="form-label">Person</span>
+        <select id="${prefix}-person" class="form-select">
+          <option value="papa">Papa</option>
+          <option value="mama">Mama</option>
+        </select>
+      </div>` : ''}
+      <div class="form-field">
+        <span class="form-label">Frequency</span>
+        <select id="${prefix}-freq" class="form-select" onchange="render()">
+          <option value="monthly">Monthly</option>
+          <option value="yearly">Yearly</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-grid">
+      <div class="form-field">
+        <span class="form-label">Due Day (0 = various)</span>
+        <input id="${prefix}-dueday" class="form-input" type="number" inputmode="numeric" placeholder="0" min="0" max="31">
+      </div>
+      <div class="form-field">
+        <span class="form-label">Due Month (if yearly)</span>
+        <select id="${prefix}-duemonth" class="form-select">
+          ${MONTHS.map((m,i)=>`<option value="${i+1}">${m}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn-save" onclick="submitNew('${type}')">Add</button>
+      <button class="btn-cancel" onclick="${isBill?'addingBill=false':'addingSub=false'};render()">Cancel</button>
+    </div>
+  </div>`;
+}
+
 function renderSettings() {
+  const xfer = calcExchange();
+
+  // Bills list
+  let billRows = data.bills.map(b => `
+    <div class="settings-row">
+      <div style="flex:1;min-width:0">
+        <div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${b.name}</div>
+        <div class="hint">${b.person[0].toUpperCase()+b.person.slice(1)} · ${b.freq === 'yearly' ? 'Yearly ('+MONTHS[b.dueMonth-1]+')' : (b.dueDay ? 'Day '+b.dueDay : 'Various')}</div>
+      </div>
+      <span style="margin-right:4px;font-weight:500">${fmt(b.amount)}</span>
+      <button class="del-btn" onclick="deleteBill(${b.id})">−</button>
+    </div>`).join('');
+
+  // Subs list
+  let subRows = data.subscriptions.map(s => `
+    <div class="settings-row">
+      <div style="flex:1;min-width:0">
+        <div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${s.name}</div>
+        <div class="hint">${s.freq === 'yearly' ? 'Yearly ('+MONTHS[s.dueMonth-1]+')' : (s.dueDay ? 'Day '+s.dueDay : 'Monthly')}</div>
+      </div>
+      <span style="margin-right:4px;font-weight:500">${fmt(s.amount)}</span>
+      <button class="del-btn" onclick="deleteSub(${s.id})">−</button>
+    </div>`).join('');
+
   return `
   <div class="section-label">Income (Monthly Net)</div>
   <div class="settings-group">
     <div class="settings-row">
       <div><div>Papa</div><div class="hint">Per month</div></div>
       <input class="edit-input" type="number" value="${data.income.papa}" inputmode="decimal"
-        onchange="data.income.papa=+this.value;save();renderHome&&currentTab==='home'&&render()">
+        onchange="data.income.papa=+this.value;save();render()">
     </div>
     <div class="settings-row">
       <div><div>Mama</div><div class="hint">Per month</div></div>
       <input class="edit-input" type="number" value="${data.income.mama}" inputmode="decimal"
-        onchange="data.income.mama=+this.value;save();currentTab==='home'&&render()">
+        onchange="data.income.mama=+this.value;save();render()">
     </div>
   </div>
 
   <div class="section-label">Monthly Transfer</div>
   <div class="settings-group">
     <div class="settings-row">
-      <div><div>${calcExchange() >= 0 ? 'Papa → Mama' : 'Mama → Papa'}</div><div class="hint">Auto-calculated to equalize balances</div></div>
-      <span style="font-size:16px;font-weight:500">${fmt(Math.abs(calcExchange()))}</span>
+      <div><div>${xfer >= 0 ? 'Papa → Mama' : 'Mama → Papa'}</div><div class="hint">Auto-calculated to equalize balances</div></div>
+      <span style="font-size:16px;font-weight:500">${fmt(Math.abs(xfer))}</span>
     </div>
+  </div>
+
+  <div class="section-label">Bills</div>
+  <div class="settings-group">
+    ${billRows}
+    ${addingBill ? addForm('bill') : `<button class="btn-add-row" onclick="addingBill=true;render()">＋ Add Bill</button>`}
+  </div>
+
+  <div class="section-label">Subscriptions</div>
+  <div class="settings-group">
+    ${subRows}
+    ${addingSub ? addForm('sub') : `<button class="btn-add-row" onclick="addingSub=true;render()">＋ Add Subscription</button>`}
   </div>
 
   <div class="section-label">App</div>
@@ -682,6 +795,42 @@ function updateBill(id, key, val) {
 function updateSub(id, key, val) {
   const s = data.subscriptions.find(x=>x.id===id);
   if (s) { s[key] = val; save(); }
+}
+function deleteBill(id) {
+  if (!confirm('Delete this bill?')) return;
+  data.bills = data.bills.filter(b => b.id !== id);
+  save(); render();
+}
+function deleteSub(id) {
+  if (!confirm('Delete this subscription?')) return;
+  data.subscriptions = data.subscriptions.filter(s => s.id !== id);
+  save(); render();
+}
+function submitNew(type) {
+  const isBill = type === 'bill';
+  const p = isBill ? 'nb' : 'ns';
+  const name = document.getElementById(`${p}-name`).value.trim();
+  const amount = parseFloat(document.getElementById(`${p}-amount`).value);
+  const freq = document.getElementById(`${p}-freq`).value;
+  const dueDay = parseInt(document.getElementById(`${p}-dueday`).value) || 0;
+  const dueMonth = parseInt(document.getElementById(`${p}-duemonth`).value) || 1;
+  const cat = document.getElementById(`${p}-cat`).value;
+  if (!name || isNaN(amount) || amount <= 0) { alert('Please enter a name and amount.'); return; }
+  if (isBill) {
+    const person = document.getElementById(`${p}-person`).value;
+    const newId = data.bills.length ? Math.max(...data.bills.map(b=>b.id))+1 : 1;
+    const bill = { id:newId, name, amount, dueDay, person, freq, cat, note:'' };
+    if (freq === 'yearly') bill.dueMonth = dueMonth;
+    data.bills.push(bill);
+    addingBill = false;
+  } else {
+    const newId = data.subscriptions.length ? Math.max(...data.subscriptions.map(s=>s.id))+1 : 1;
+    const sub = { id:newId, name, amount, dueDay, freq, cat };
+    if (freq === 'yearly') sub.dueMonth = dueMonth;
+    data.subscriptions.push(sub);
+    addingSub = false;
+  }
+  save(); render();
 }
 function resetData() {
   if (confirm('Reset all data to defaults?')) {
