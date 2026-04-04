@@ -388,11 +388,17 @@ let editMode = false;
 let billFilter = 'all';
 let addingBill = false;
 let addingSub = false;
+let editingBillId = null;
+let editingSubId = null;
 
 function switchTab(tab) {
   currentTab = tab;
   editMode = false;
   billFilter = 'all';
+  addingBill = false;
+  addingSub = false;
+  editingBillId = null;
+  editingSubId = null;
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
   document.getElementById('edit-btn').textContent = 'Edit';
   render();
@@ -656,25 +662,30 @@ function renderSubs() {
 }
 
 // ─── RENDER SETTINGS ──────────────────────────────────────────────────────────
-function addForm(type) {
+function itemForm(type, item) {
   const isBill = type === 'bill';
-  const prefix = isBill ? 'nb' : 'ns';
+  const isEdit = item !== null;
+  const prefix = isEdit ? (isBill ? 'eb' : 'es') : (isBill ? 'nb' : 'ns');
   const cats = Object.keys(CAT_ICONS);
+  const v = k => isEdit && item[k] != null ? item[k] : '';
+  const sel = (k, val) => isEdit && item[k] === val ? 'selected' : '';
+  const cancelAction = isEdit ? (isBill ? 'editingBillId=null' : 'editingSubId=null') : (isBill ? 'addingBill=false' : 'addingSub=false');
+  const saveAction = isEdit ? `saveEdit('${type}',${item.id})` : `submitNew('${type}')`;
   return `<div class="add-form">
-    <div style="font-weight:600;font-size:15px;margin-bottom:10px">${isBill ? 'New Bill' : 'New Subscription'}</div>
+    <div style="font-weight:600;font-size:15px;margin-bottom:10px">${isEdit ? 'Edit' : 'New'} ${isBill ? 'Bill' : 'Subscription'}</div>
     <div class="form-grid full"><div class="form-field">
       <span class="form-label">Name</span>
-      <input id="${prefix}-name" class="form-input" type="text" placeholder="e.g. Netflix" autocomplete="off">
+      <input id="${prefix}-name" class="form-input" type="text" value="${v('name')}" placeholder="e.g. Netflix" autocomplete="off">
     </div></div>
     <div class="form-grid">
       <div class="form-field">
-        <span class="form-label">Amount ($/mo)</span>
-        <input id="${prefix}-amount" class="form-input" type="number" inputmode="decimal" placeholder="0">
+        <span class="form-label">Amount ($/mo avg)</span>
+        <input id="${prefix}-amount" class="form-input" type="number" inputmode="decimal" value="${v('amount')}" placeholder="0">
       </div>
       <div class="form-field">
         <span class="form-label">Category</span>
         <select id="${prefix}-cat" class="form-select">
-          ${cats.map(c=>`<option value="${c}">${CAT_ICONS[c]} ${c}</option>`).join('')}
+          ${cats.map(c=>`<option value="${c}" ${sel('cat',c)}>${CAT_ICONS[c]} ${c}</option>`).join('')}
         </select>
       </div>
     </div>
@@ -682,33 +693,33 @@ function addForm(type) {
       ${isBill ? `<div class="form-field">
         <span class="form-label">Person</span>
         <select id="${prefix}-person" class="form-select">
-          <option value="papa">Papa</option>
-          <option value="mama">Mama</option>
+          <option value="papa" ${sel('person','papa')}>Papa</option>
+          <option value="mama" ${sel('person','mama')}>Mama</option>
         </select>
       </div>` : ''}
       <div class="form-field">
         <span class="form-label">Frequency</span>
-        <select id="${prefix}-freq" class="form-select" onchange="render()">
-          <option value="monthly">Monthly</option>
-          <option value="yearly">Yearly</option>
+        <select id="${prefix}-freq" class="form-select">
+          <option value="monthly" ${sel('freq','monthly')}>Monthly</option>
+          <option value="yearly" ${sel('freq','yearly')}>Yearly</option>
         </select>
       </div>
     </div>
     <div class="form-grid">
       <div class="form-field">
         <span class="form-label">Due Day (0 = various)</span>
-        <input id="${prefix}-dueday" class="form-input" type="number" inputmode="numeric" placeholder="0" min="0" max="31">
+        <input id="${prefix}-dueday" class="form-input" type="number" inputmode="numeric" value="${isEdit ? item.dueDay : 0}" min="0" max="31">
       </div>
       <div class="form-field">
         <span class="form-label">Due Month (if yearly)</span>
         <select id="${prefix}-duemonth" class="form-select">
-          ${MONTHS.map((m,i)=>`<option value="${i+1}">${m}</option>`).join('')}
+          ${MONTHS.map((m,i)=>`<option value="${i+1}" ${isEdit && item.dueMonth===i+1?'selected':''}>${m}</option>`).join('')}
         </select>
       </div>
     </div>
     <div class="form-actions">
-      <button class="btn-save" onclick="submitNew('${type}')">Add</button>
-      <button class="btn-cancel" onclick="${isBill?'addingBill=false':'addingSub=false'};render()">Cancel</button>
+      <button class="btn-save" onclick="${saveAction}">${isEdit ? 'Save' : 'Add'}</button>
+      <button class="btn-cancel" onclick="${cancelAction};render()">Cancel</button>
     </div>
   </div>`;
 }
@@ -717,26 +728,30 @@ function renderSettings() {
   const xfer = calcExchange();
 
   // Bills list
-  let billRows = data.bills.map(b => `
-    <div class="settings-row">
+  let billRows = data.bills.map(b => {
+    if (editingBillId === b.id) return itemForm('bill', b);
+    return `<div class="settings-row" style="cursor:pointer" onclick="editingBillId=${b.id};editingSubId=null;render()">
       <div style="flex:1;min-width:0">
         <div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${b.name}</div>
         <div class="hint">${b.person[0].toUpperCase()+b.person.slice(1)} · ${b.freq === 'yearly' ? 'Yearly ('+MONTHS[b.dueMonth-1]+')' : (b.dueDay ? 'Day '+b.dueDay : 'Various')}</div>
       </div>
       <span style="margin-right:4px;font-weight:500">${fmt(b.amount)}</span>
-      <button class="del-btn" onclick="deleteBill(${b.id})">−</button>
-    </div>`).join('');
+      <button class="del-btn" onclick="event.stopPropagation();deleteBill(${b.id})">−</button>
+    </div>`;
+  }).join('');
 
   // Subs list
-  let subRows = data.subscriptions.map(s => `
-    <div class="settings-row">
+  let subRows = data.subscriptions.map(s => {
+    if (editingSubId === s.id) return itemForm('sub', s);
+    return `<div class="settings-row" style="cursor:pointer" onclick="editingSubId=${s.id};editingBillId=null;render()">
       <div style="flex:1;min-width:0">
         <div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${s.name}</div>
         <div class="hint">${s.freq === 'yearly' ? 'Yearly ('+MONTHS[s.dueMonth-1]+')' : (s.dueDay ? 'Day '+s.dueDay : 'Monthly')}</div>
       </div>
       <span style="margin-right:4px;font-weight:500">${fmt(s.amount)}</span>
-      <button class="del-btn" onclick="deleteSub(${s.id})">−</button>
-    </div>`).join('');
+      <button class="del-btn" onclick="event.stopPropagation();deleteSub(${s.id})">−</button>
+    </div>`;
+  }).join('');
 
   return `
   <div class="section-label">Income (Monthly Net)</div>
@@ -764,13 +779,13 @@ function renderSettings() {
   <div class="section-label">Bills</div>
   <div class="settings-group">
     ${billRows}
-    ${addingBill ? addForm('bill') : `<button class="btn-add-row" onclick="addingBill=true;render()">＋ Add Bill</button>`}
+    ${addingBill ? itemForm('bill', null) : `<button class="btn-add-row" onclick="addingBill=true;render()">＋ Add Bill</button>`}
   </div>
 
   <div class="section-label">Subscriptions</div>
   <div class="settings-group">
     ${subRows}
-    ${addingSub ? addForm('sub') : `<button class="btn-add-row" onclick="addingSub=true;render()">＋ Add Subscription</button>`}
+    ${addingSub ? itemForm('sub', null) : `<button class="btn-add-row" onclick="addingSub=true;render()">＋ Add Subscription</button>`}
   </div>
 
   <div class="section-label">App</div>
@@ -829,6 +844,29 @@ function submitNew(type) {
     if (freq === 'yearly') sub.dueMonth = dueMonth;
     data.subscriptions.push(sub);
     addingSub = false;
+  }
+  save(); render();
+}
+
+function saveEdit(type, id) {
+  const isBill = type === 'bill';
+  const p = isBill ? 'eb' : 'es';
+  const name = document.getElementById(p+'-name').value.trim();
+  const amount = parseFloat(document.getElementById(p+'-amount').value);
+  const freq = document.getElementById(p+'-freq').value;
+  const dueDay = parseInt(document.getElementById(p+'-dueday').value) || 0;
+  const dueMonth = parseInt(document.getElementById(p+'-duemonth').value) || 1;
+  const cat = document.getElementById(p+'-cat').value;
+  if (!name || isNaN(amount) || amount <= 0) { alert('Please enter a name and amount.'); return; }
+  if (isBill) {
+    const person = document.getElementById(p+'-person').value;
+    const b = data.bills.find(x => x.id === id);
+    if (b) { b.name=name; b.amount=amount; b.freq=freq; b.dueDay=dueDay; b.cat=cat; b.person=person; if (freq==='yearly') b.dueMonth=dueMonth; }
+    editingBillId = null;
+  } else {
+    const s = data.subscriptions.find(x => x.id === id);
+    if (s) { s.name=name; s.amount=amount; s.freq=freq; s.dueDay=dueDay; s.cat=cat; if (freq==='yearly') s.dueMonth=dueMonth; }
+    editingSubId = null;
   }
   save(); render();
 }
