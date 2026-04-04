@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Budget">
+  <title>Family Budget</title>
+  <link rel="manifest" href="manifest.json">
+  <style>
+    :root {
+      --bg: #f2f2f7;
+      --card: #ffffff;
+      --text: #1c1c1e;
+      --text2: #6c6c70;
+      --text3: #aeaeb2;
+      --sep: #e5e5ea;
+      --blue: #007aff;
+      --purple: #af52de;
+      --green: #34c759;
+      --red: #ff3b30;
+      --orange: #ff9500;
+      --yellow: #ffcc00;
+      --tab-bg: rgba(249,249,249,0.94);
+      --header-bg: rgba(242,242,247,0.94);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --safe-top: env(safe-area-inset-top, 0px);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #1c1c1e;
+        --card: #2c2c2e;
+        --text: #ffffff;
+        --text2: #8e8e93;
+        --text3: #48484a;
+        --sep: #38383a;
+        --tab-bg: rgba(28,28,30,0.94);
+        --header-bg: rgba(28,28,30,0.94);
+      }
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      max-width: 430px;
+      margin: 0 auto;
+      min-height: 100dvh;
+      overflow-x: hidden;
+    }
+    /* HEADER */
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: var(--header-bg);
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      padding: calc(var(--safe-top) + 12px) 16px 12px;
+      border-bottom: 0.5px solid var(--sep);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .header h1 { font-size: 17px; font-weight: 600; letter-spacing: -0.4px; }
+    .header-actions { display: flex; gap: 12px; align-items: center; }
+    .hdr-btn {
+      background: none; border: none; color: var(--blue);
+      font-size: 17px; font-family: inherit; cursor: pointer;
+      padding: 4px 0; min-width: 44px; min-height: 44px;
+      display: flex; align-items: center; justify-content: flex-end;
+    }
+    /* MAIN SCROLL AREA */
+    main {
+      padding-bottom: calc(var(--safe-bottom) + 74px);
+      min-height: calc(100dvh - 50px);
+    }
+    /* BOTTOM TAB BAR */
+    .tab-bar {
+      position: fixed;
+      bottom: 0; left: 50%; transform: translateX(-50%);
+      width: 100%; max-width: 430px;
+      background: var(--tab-bg);
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      border-top: 0.5px solid var(--sep);
+      display: flex;
+      padding-bottom: var(--safe-bottom);
+      z-index: 100;
+    }
+    .tab-btn {
+      flex: 1; background: none; border: none;
+      display: flex; flex-direction: column; align-items: center;
+      padding: 8px 4px 4px; gap: 3px;
+      cursor: pointer; color: var(--text3); font-family: inherit;
+      min-height: 50px;
+    }
+    .tab-btn.active { color: var(--blue); }
+    .tab-btn svg { width: 24px; height: 24px; }
+    .tab-btn span { font-size: 10px; font-weight: 500; }
+    /* SECTION LABEL */
+    .section-label {
+      font-size: 13px; font-weight: 600; color: var(--text2);
+      text-transform: uppercase; letter-spacing: 0.5px;
+      padding: 20px 16px 6px;
+    }
+    /* CARD LIST */
+    .card-list {
+      background: var(--card);
+      border-radius: 12px;
+      margin: 0 16px;
+      overflow: hidden;
+    }
+    .card-list + .card-list { margin-top: 0; }
+    .list-row {
+      display: flex; align-items: center;
+      padding: 12px 16px; gap: 12px;
+      border-bottom: 0.5px solid var(--sep);
+      min-height: 52px;
+    }
+    .list-row:last-child { border-bottom: none; }
+    .row-icon {
+      width: 36px; height: 36px; border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; font-size: 17px;
+    }
+    .row-main { flex: 1; min-width: 0; }
+    .row-title { font-size: 16px; font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .row-sub { font-size: 13px; color: var(--text2); margin-top: 1px; }
+    .row-right { text-align: right; flex-shrink: 0; }
+    .row-amount { font-size: 16px; font-weight: 500; }
+    .row-badge {
+      font-size: 11px; font-weight: 600; padding: 2px 7px;
+      border-radius: 20px; margin-top: 3px; display: inline-block;
+    }
+    .badge-papa { background: rgba(0,122,255,0.12); color: var(--blue); }
+    .badge-mama { background: rgba(175,82,222,0.12); color: var(--purple); }
+    .badge-due { background: rgba(255,59,48,0.12); color: var(--red); }
+    .badge-soon { background: rgba(255,149,0,0.12); color: var(--orange); }
+    .badge-ok { background: rgba(52,199,89,0.12); color: var(--green); }
+    .badge-yearly { background: rgba(255,204,0,0.12); color: #b8860b; }
+    /* SUMMARY CARDS */
+    .summary-row {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 12px; padding: 16px 16px 0;
+    }
+    .summary-card {
+      background: var(--card); border-radius: 14px; padding: 14px;
+    }
+    .summary-card.papa { border-top: 3px solid var(--blue); }
+    .summary-card.mama { border-top: 3px solid var(--purple); }
+    .sc-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text2); margin-bottom: 6px; }
+    .sc-name { font-size: 15px; font-weight: 600; margin-bottom: 10px; }
+    .sc-row { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px; }
+    .sc-row.total {
+      border-top: 0.5px solid var(--sep); margin-top: 6px;
+      padding-top: 6px; font-weight: 600; font-size: 14px;
+    }
+    .sc-row.total .pos { color: var(--green); }
+    .sc-row.total .neg { color: var(--red); }
+    /* WIDE CARD */
+    .wide-card {
+      background: var(--card); border-radius: 14px;
+      margin: 12px 16px 0; padding: 14px;
+    }
+    .wide-card-title { font-size: 13px; font-weight: 600; color: var(--text2); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .wc-row { display: flex; justify-content: space-between; align-items: center; font-size: 15px; padding: 5px 0; border-bottom: 0.5px solid var(--sep); }
+    .wc-row:last-child { border-bottom: none; }
+    .wc-row .label { color: var(--text); }
+    .wc-row .val { font-weight: 500; }
+    /* FILTER ROW */
+    .filter-row {
+      display: flex; gap: 8px; padding: 12px 16px 0; overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .filter-row::-webkit-scrollbar { display: none; }
+    .filter-chip {
+      background: var(--card); border: 1.5px solid var(--sep);
+      border-radius: 20px; padding: 6px 14px;
+      font-size: 14px; font-weight: 500; color: var(--text2);
+      white-space: nowrap; cursor: pointer; font-family: inherit;
+      min-height: 36px;
+    }
+    .filter-chip.active { background: var(--blue); border-color: var(--blue); color: white; }
+    /* EDIT INPUT */
+    .edit-input {
+      background: var(--bg); border: 1.5px solid var(--blue);
+      border-radius: 8px; padding: 6px 10px;
+      font-size: 15px; font-family: inherit; color: var(--text);
+      width: 100px; text-align: right;
+    }
+    /* SETTINGS */
+    .settings-group { margin: 0 16px; background: var(--card); border-radius: 12px; overflow: hidden; }
+    .settings-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 16px; border-bottom: 0.5px solid var(--sep); gap: 12px;
+    }
+    .settings-row:last-child { border-bottom: none; }
+    .settings-row label { font-size: 16px; }
+    .settings-row .hint { font-size: 13px; color: var(--text2); margin-top: 2px; }
+    .btn-danger {
+      background: var(--red); color: white; border: none;
+      border-radius: 12px; padding: 14px; font-size: 16px;
+      font-family: inherit; font-weight: 500; cursor: pointer;
+      width: 100%; margin: 0 16px; width: calc(100% - 32px);
+    }
+    /* EMPTY */
+    .empty { text-align: center; color: var(--text2); padding: 40px 16px; font-size: 15px; }
+    /* CHEVRON */
+    .chevron { color: var(--text3); font-size: 13px; margin-left: 4px; }
+  </style>
+</head>
+<body>
+<div id="app">
+  <header class="header">
+    <div style="width:60px"></div>
+    <h1 id="page-title">Dashboard</h1>
+    <div class="header-actions">
+      <button class="hdr-btn" id="edit-btn" onclick="toggleEdit()">Edit</button>
+    </div>
+  </header>
+  <main id="main"></main>
+  <nav class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('home')" data-tab="home">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+      <span>Home</span>
+    </button>
+    <button class="tab-btn" onclick="switchTab('bills')" data-tab="bills">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11zM8 15h8v2H8zm0-4h8v2H8zm0-4h5v2H8z"/></svg>
+      <span>Bills</span>
+    </button>
+    <button class="tab-btn" onclick="switchTab('subs')" data-tab="subs">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V8h16v10zM6 10h12v2H6zm0 4h8v2H6z"/></svg>
+      <span>Subs</span>
+    </button>
+    <button class="tab-btn" onclick="switchTab('settings')" data-tab="settings">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+      <span>Settings</span>
+    </button>
+  </nav>
+</div>
+<script>
+// ─── DATA ───────────────────────────────────────────────────────────────────
+const DEFAULTS = {
+  income: { papa: 9812, mama: 5686 },
+  exchange: 1300,
+  bills: [
+    { id:1,  name:'Loan 2',           amount:2315, dueDay:0,  person:'papa', freq:'monthly', cat:'debt',      note:'$6,500 out (–$1,000 net), paid weekly' },
+    { id:2,  name:'Savings',          amount:839,  dueDay:0,  person:'papa', freq:'monthly', cat:'savings',   note:'Divided into weekly payments' },
+    { id:3,  name:'Mortgage',         amount:2515, dueDay:1,  person:'papa', freq:'monthly', cat:'housing',   note:'' },
+    { id:4,  name:'YMCA',             amount:118,  dueDay:1,  person:'papa', freq:'monthly', cat:'health',    note:'' },
+    { id:5,  name:'Storage',          amount:300,  dueDay:1,  person:'papa', freq:'monthly', cat:'misc',      note:'' },
+    { id:6,  name:'SDG&E',            amount:525,  dueDay:1,  person:'papa', freq:'monthly', cat:'utilities', note:'' },
+    { id:7,  name:'Tesla',            amount:120,  dueDay:2,  person:'papa', freq:'monthly', cat:'auto',      note:'Includes FSD, premium connectivity & Reviver plate' },
+    { id:8,  name:'Phone',            amount:312,  dueDay:11, person:'papa', freq:'monthly', cat:'utilities', note:'' },
+    { id:9,  name:'Water',            amount:184,  dueDay:17, person:'papa', freq:'monthly', cat:'utilities', note:'' },
+    { id:10, name:'Trash',            amount:34,   dueDay:20, person:'papa', freq:'monthly', cat:'utilities', note:'' },
+    { id:11, name:'Cable',            amount:115,  dueDay:24, person:'papa', freq:'monthly', cat:'utilities', note:'' },
+    { id:12, name:'Auto Insurance',   amount:381,  dueDay:24, person:'papa', freq:'monthly', cat:'insurance', note:'' },
+    { id:13, name:'ADT',              amount:64,   dueDay:0,  person:'papa', freq:'monthly', cat:'home',      note:'Various dates' },
+    { id:14, name:'Groceries / Food', amount:600,  dueDay:0,  person:'papa', freq:'monthly', cat:'food',      note:'' },
+    { id:15, name:'Tech Subs',        amount:207,  dueDay:0,  person:'papa', freq:'monthly', cat:'tech',      note:'See Subscriptions tab' },
+    { id:16, name:'Home Insurance',   amount:155,  dueDay:1,  person:'papa', freq:'yearly',  cat:'insurance', dueMonth:4,  note:'Paid yearly in April' },
+    { id:17, name:'Hagerty Insurance',amount:62,   dueDay:1,  person:'papa', freq:'yearly',  cat:'insurance', dueMonth:7,  note:'Paid yearly in July' },
+    { id:18, name:'Grundy Insurance', amount:25,   dueDay:1,  person:'papa', freq:'yearly',  cat:'insurance', dueMonth:8,  note:'Paid yearly in August' },
+    { id:19, name:'Landscaping',      amount:100,  dueDay:0,  person:'mama', freq:'monthly', cat:'home',      note:'Divided into weekly payments' },
+    { id:20, name:'Groceries / Food', amount:2000, dueDay:0,  person:'mama', freq:'monthly', cat:'food',      note:'' },
+    { id:21, name:'Antac',            amount:20,   dueDay:0,  person:'mama', freq:'monthly', cat:'health',    note:'' },
+    { id:22, name:'Tech Subs',        amount:20,   dueDay:0,  person:'mama', freq:'monthly', cat:'tech',      note:'' },
+  ],
+  subscriptions: [
+    { id:1,  name:'iCloud',       amount:10, dueDay:1,  freq:'monthly', cat:'cloud'   },
+    { id:2,  name:'Ford',         amount:10, dueDay:1,  freq:'monthly', cat:'auto'    },
+    { id:3,  name:'Flickr',       amount:8,  dueDay:2,  freq:'monthly', cat:'photo'   },
+    { id:4,  name:'Spotify',      amount:22, dueDay:15, freq:'monthly', cat:'media'   },
+    { id:5,  name:'Apple TV+',    amount:10, dueDay:18, freq:'monthly', cat:'media'   },
+    { id:6,  name:'Netflix',      amount:15, dueDay:20, freq:'monthly', cat:'media'   },
+    { id:7,  name:'Photobucket',  amount:8,  dueDay:23, freq:'monthly', cat:'photo'   },
+    { id:8,  name:'Hulu',         amount:10, dueDay:24, freq:'monthly', cat:'media'   },
+    { id:9,  name:'ChatGPT',      amount:20, dueDay:17, freq:'monthly', cat:'ai'      },
+    { id:10, name:'Claude',       amount:20, dueDay:17, freq:'monthly', cat:'ai'      },
+    { id:11, name:'Grok',         amount:30, dueDay:25, freq:'monthly', cat:'ai'      },
+    { id:12, name:'Fantasy Pros', amount:10, dueDay:0,  freq:'monthly', cat:'sports'  },
+    { id:13, name:'Recraft',      amount:10, dueDay:1,  freq:'yearly',  cat:'design', dueMonth:2 },
+    { id:14, name:'MLB',          amount:17, dueDay:1,  freq:'yearly',  cat:'sports', dueMonth:4 },
+    { id:15, name:'myfitnesspal', amount:7,  dueDay:1,  freq:'yearly',  cat:'health', dueMonth:6 },
+  ]
+};
+
+let data = (() => {
+  try { return JSON.parse(localStorage.getItem('budget_v1')) || JSON.parse(JSON.stringify(DEFAULTS)); }
+  catch(e) { return JSON.parse(JSON.stringify(DEFAULTS)); }
+})();
+
+function save() { localStorage.setItem('budget_v1', JSON.stringify(data)); }
+
+// ─── UTILS ──────────────────────────────────────────────────────────────────
+const fmt = n => '$' + Math.round(Math.abs(n)).toLocaleString('en-US');
+const fmtSigned = n => (n < 0 ? '–' : '') + fmt(n);
+
+const CAT_ICONS = {
+  housing:'🏠', utilities:'⚡', auto:'🚗', insurance:'🛡️', health:'💪',
+  food:'🛒', tech:'💻', debt:'💳', savings:'🏦', home:'🔧',
+  misc:'📦', media:'📺', photo:'📷', cloud:'☁️', ai:'🤖',
+  sports:'⚽', design:'🎨'
+};
+
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const MONTHS_FULL = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+function daysUntil(dueDay, dueMonth) {
+  const now = new Date();
+  const today = now.getDate();
+  const thisMonth = now.getMonth() + 1;
+  const thisYear = now.getFullYear();
+
+  if (dueMonth) {
+    // Yearly bill
+    let targetYear = thisYear;
+    if (dueMonth < thisMonth || (dueMonth === thisMonth && dueDay < today)) targetYear++;
+    const target = new Date(targetYear, dueMonth - 1, dueDay || 1);
+    return Math.ceil((target - now) / 86400000);
+  }
+  if (!dueDay) return null;
+  let target = new Date(thisYear, thisMonth - 1, dueDay);
+  if (dueDay < today) target = new Date(thisYear, thisMonth, dueDay);
+  return Math.ceil((target - now) / 86400000);
+}
+
+function dueBadge(days) {
+  if (days === null) return '';
+  if (days <= 0)  return `<span class="row-badge badge-due">Due today</span>`;
+  if (days <= 3)  return `<span class="row-badge badge-due">Due in ${days}d</span>`;
+  if (days <= 7)  return `<span class="row-badge badge-soon">Due in ${days}d</span>`;
+  if (days <= 14) return `<span class="row-badge badge-ok">In ${days}d</span>`;
+  return `<span class="row-badge" style="background:rgba(142,142,147,0.12);color:var(--text2)">Day ${dueDay}</span>`;
+}
+
+function dueLabel(bill) {
+  if (bill.freq === 'yearly') return `${MONTHS[bill.dueMonth-1]} ${bill.dueDay || 1}`;
+  if (!bill.dueDay) return 'Various';
+  const sfx = ['','st','nd','rd'];
+  const d = bill.dueDay;
+  return d + (sfx[d] || 'th');
+}
+
+function monthlyEquiv(bill) {
+  if (bill.freq === 'yearly') return bill.amount / 12;
+  return bill.amount;
+}
+
+function billsFor(person) {
+  return data.bills.filter(b => b.person === person);
+}
+
+function totalMonthly(person) {
+  return billsFor(person).reduce((s, b) => s + monthlyEquiv(b), 0);
+}
+
+// ─── STATE ───────────────────────────────────────────────────────────────────
+let currentTab = 'home';
+let editMode = false;
+let billFilter = 'all';
+
+function switchTab(tab) {
+  currentTab = tab;
+  editMode = false;
+  billFilter = 'all';
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  document.getElementById('edit-btn').textContent = 'Edit';
+  render();
+}
+
+function toggleEdit() {
+  editMode = !editMode;
+  document.getElementById('edit-btn').textContent = editMode ? 'Done' : 'Edit';
+  render();
+}
+
+// ─── RENDER HOME ─────────────────────────────────────────────────────────────
+function renderHome() {
+  const now = new Date();
+  const papaIncome = data.income.papa * 2;
+  const mamaIncome = data.income.mama * 2;
+  const papaExp = totalMonthly('papa') + data.exchange;
+  const mamaExp = totalMonthly('mama') - data.exchange;
+  const papaBal = papaIncome - papaExp;
+  const mamaBal = mamaIncome - mamaExp;
+
+  // Upcoming bills this week (next 7 days)
+  const upcoming = data.bills
+    .filter(b => b.freq === 'monthly' && b.dueDay)
+    .map(b => ({ ...b, days: daysUntil(b.dueDay, null) }))
+    .filter(b => b.days !== null && b.days <= 7)
+    .sort((a, b) => a.days - b.days);
+
+  const upcomingYearly = data.bills
+    .filter(b => b.freq === 'yearly')
+    .map(b => ({ ...b, days: daysUntil(b.dueDay, b.dueMonth) }))
+    .filter(b => b.days !== null && b.days <= 30)
+    .sort((a, b) => a.days - b.days);
+
+  let html = `<div style="padding:16px 16px 0">
+    <div style="font-size:22px;font-weight:700;letter-spacing:-0.5px">${MONTHS_FULL[now.getMonth()]} ${now.getFullYear()}</div>
+    <div style="font-size:14px;color:var(--text2);margin-top:2px">Monthly Budget Overview</div>
+  </div>`;
+
+  // Summary cards
+  html += `<div class="summary-row">`;
+  for (const [person, income, exp, bal, cls] of [
+    ['Papa', papaIncome, papaExp, papaBal, 'papa'],
+    ['Mama', mamaIncome, mamaExp, mamaBal, 'mama']
+  ]) {
+    const color = cls === 'papa' ? 'var(--blue)' : 'var(--purple)';
+    html += `<div class="summary-card ${cls}">
+      <div class="sc-label" style="color:${color}">${person}</div>
+      <div class="sc-row"><span>Paycheck</span><span>${fmt(data.income[cls])}</span></div>
+      <div class="sc-row"><span>Income/mo</span><span>${fmt(income)}</span></div>
+      <div class="sc-row"><span>Expenses</span><span style="color:var(--red)">–${fmt(exp)}</span></div>
+      <div class="sc-row total">
+        <span>Balance</span>
+        <span class="${bal >= 0 ? 'pos' : 'neg'}">${bal >= 0 ? '' : '–'}${fmt(bal)}</span>
+      </div>
+    </div>`;
+  }
+  html += `</div>`;
+
+  // Household total
+  const totalIncome = papaIncome + mamaIncome;
+  const totalExp = totalMonthly('papa') + totalMonthly('mama');
+  const totalBal = totalIncome - totalExp;
+  html += `<div class="wide-card">
+    <div class="wide-card-title">Household Monthly</div>
+    <div class="wc-row"><span class="label">Combined Income</span><span class="val">${fmt(totalIncome)}</span></div>
+    <div class="wc-row"><span class="label">Total Expenses</span><span class="val" style="color:var(--red)">–${fmt(totalExp)}</span></div>
+    <div class="wc-row"><span class="label">Transfer Papa→Mama</span><span class="val" style="color:var(--text2)">–${fmt(data.exchange)}</span></div>
+    <div class="wc-row" style="font-weight:600">
+      <span class="label">Net Balance</span>
+      <span class="val" style="color:${totalBal >= 0 ? 'var(--green)' : 'var(--red)'}">${fmt(totalBal)}</span>
+    </div>
+  </div>`;
+
+  // Upcoming this week
+  if (upcoming.length > 0 || upcomingYearly.length > 0) {
+    html += `<div class="section-label">Upcoming</div><div class="card-list">`;
+    for (const b of upcoming) {
+      const color = b.person === 'papa' ? 'var(--blue)' : 'var(--purple)';
+      const urgency = b.days <= 0 ? 'var(--red)' : b.days <= 3 ? 'var(--orange)' : 'var(--green)';
+      html += `<div class="list-row">
+        <div class="row-icon" style="background:rgba(${b.person==='papa'?'0,122,255':'175,82,222'},0.1)">${CAT_ICONS[b.cat]||'📋'}</div>
+        <div class="row-main">
+          <div class="row-title">${b.name}</div>
+          <div class="row-sub" style="color:${color}">${b.person[0].toUpperCase()+b.person.slice(1)} · Due ${dueLabel(b)}</div>
+        </div>
+        <div class="row-right">
+          <div class="row-amount">${fmt(b.amount)}</div>
+          <div style="font-size:12px;color:${urgency};font-weight:600;text-align:right">${b.days <= 0 ? 'TODAY' : `in ${b.days}d`}</div>
+        </div>
+      </div>`;
+    }
+    for (const b of upcomingYearly) {
+      html += `<div class="list-row">
+        <div class="row-icon" style="background:rgba(255,204,0,0.15)">${CAT_ICONS[b.cat]||'📋'}</div>
+        <div class="row-main">
+          <div class="row-title">${b.name}</div>
+          <div class="row-sub" style="color:#b8860b">Yearly · ${MONTHS[b.dueMonth-1]} ${b.dueDay}</div>
+        </div>
+        <div class="row-right">
+          <div class="row-amount">${fmt(b.amount)}</div>
+          <div style="font-size:12px;color:var(--orange);font-weight:600;text-align:right">in ${b.days}d</div>
+        </div>
+      </div>`;
+    }
+    html += `</div>`;
+  }
+
+  return html;
+}
+
+// ─── RENDER BILLS ─────────────────────────────────────────────────────────────
+function renderBills() {
+  let bills = [...data.bills];
+  if (billFilter !== 'all') bills = bills.filter(b => b.person === billFilter);
+
+  const monthly = bills.filter(b => b.freq === 'monthly').sort((a,b) => {
+    if (!a.dueDay && !b.dueDay) return 0;
+    if (!a.dueDay) return 1;
+    if (!b.dueDay) return -1;
+    return a.dueDay - b.dueDay;
+  });
+  const yearly = bills.filter(b => b.freq === 'yearly').sort((a,b) => a.dueMonth - b.dueMonth);
+
+  const totalM = bills.filter(b=>b.freq==='monthly').reduce((s,b)=>s+b.amount,0);
+  const totalY = bills.filter(b=>b.freq==='yearly').reduce((s,b)=>s+b.amount,0);
+
+  let html = `<div class="filter-row">
+    ${['all','papa','mama'].map(f=>`<button class="filter-chip${billFilter===f?' active':''}" onclick="setBillFilter('${f}')">${f==='all'?'All Bills':f[0].toUpperCase()+f.slice(1)}</button>`).join('')}
+  </div>`;
+
+  html += `<div class="section-label">Monthly Bills</div><div class="card-list">`;
+  for (const b of monthly) {
+    const days = b.dueDay ? daysUntil(b.dueDay, null) : null;
+    const personColor = b.person === 'papa' ? 'var(--blue)' : 'var(--purple)';
+    const daysText = days !== null
+      ? (days <= 0 ? '<span style="color:var(--red);font-weight:600;font-size:12px">TODAY</span>'
+        : days <= 3 ? `<span style="color:var(--orange);font-weight:600;font-size:12px">in ${days}d</span>`
+        : days <= 7 ? `<span style="color:var(--green);font-weight:600;font-size:12px">in ${days}d</span>`
+        : `<span style="color:var(--text3);font-size:12px">day ${b.dueDay}</span>`)
+      : `<span style="color:var(--text3);font-size:12px">various</span>`;
+    html += `<div class="list-row">
+      <div class="row-icon" style="background:rgba(${b.person==='papa'?'0,122,255':'175,82,222'},0.1)">${CAT_ICONS[b.cat]||'📋'}</div>
+      <div class="row-main">
+        <div class="row-title">${b.name}</div>
+        <div class="row-sub" style="color:${personColor}">${b.person[0].toUpperCase()+b.person.slice(1)}${b.note ? ' · <span style="color:var(--text2)">'+b.note+'</span>' : ''}</div>
+      </div>
+      <div class="row-right">
+        ${editMode
+          ? `<input class="edit-input" type="number" value="${b.amount}" onchange="updateBill(${b.id},'amount',+this.value)" inputmode="decimal">`
+          : `<div class="row-amount">${fmt(b.amount)}</div>`}
+        <div style="text-align:right">${daysText}</div>
+      </div>
+    </div>`;
+  }
+  html += `<div class="list-row" style="background:rgba(0,0,0,0.02)">
+    <div class="row-main" style="font-weight:600">Monthly Total</div>
+    <div class="row-right"><div class="row-amount" style="color:var(--red)">${fmt(totalM)}</div></div>
+  </div></div>`;
+
+  if (yearly.length) {
+    html += `<div class="section-label">Yearly Bills</div><div class="card-list">`;
+    for (const b of yearly) {
+      const days = daysUntil(b.dueDay, b.dueMonth);
+      html += `<div class="list-row">
+        <div class="row-icon" style="background:rgba(255,204,0,0.15)">${CAT_ICONS[b.cat]||'📋'}</div>
+        <div class="row-main">
+          <div class="row-title">${b.name}</div>
+          <div class="row-sub" style="color:#b8860b">Yearly · ${MONTHS[b.dueMonth-1]} · ~${fmt(b.amount/12)}/mo</div>
+        </div>
+        <div class="row-right">
+          ${editMode
+            ? `<input class="edit-input" type="number" value="${b.amount}" onchange="updateBill(${b.id},'amount',+this.value)" inputmode="decimal">`
+            : `<div class="row-amount">${fmt(b.amount)}</div>`}
+          <div style="text-align:right;font-size:12px;color:${days<=30?'var(--orange)':'var(--text3)'}">in ${days}d</div>
+        </div>
+      </div>`;
+    }
+    html += `<div class="list-row" style="background:rgba(0,0,0,0.02)">
+      <div class="row-main" style="font-weight:600">Yearly Total</div>
+      <div class="row-right"><div class="row-amount" style="color:var(--red)">${fmt(totalY)}</div>
+        <div style="font-size:12px;color:var(--text2);text-align:right">~${fmt(totalY/12)}/mo</div>
+      </div>
+    </div></div>`;
+  }
+
+  return html;
+}
+
+// ─── RENDER SUBS ─────────────────────────────────────────────────────────────
+function renderSubs() {
+  const monthly = data.subscriptions.filter(s=>s.freq==='monthly').sort((a,b)=>a.dueDay-b.dueDay);
+  const yearly  = data.subscriptions.filter(s=>s.freq==='yearly').sort((a,b)=>a.dueMonth-b.dueMonth);
+  const totalM  = monthly.reduce((s,x)=>s+x.amount,0);
+  const totalY  = yearly.reduce((s,x)=>s+x.amount,0);
+  const grandMo = totalM + totalY/12;
+
+  let html = `<div class="section-label">Monthly Subscriptions</div><div class="card-list">`;
+  for (const s of monthly) {
+    const days = s.dueDay ? daysUntil(s.dueDay, null) : null;
+    const daysText = days !== null
+      ? (days <= 0 ? `<span style="color:var(--red);font-size:12px;font-weight:600">TODAY</span>`
+        : days <= 3 ? `<span style="color:var(--orange);font-size:12px;font-weight:600">in ${days}d</span>`
+        : `<span style="color:var(--text3);font-size:12px">day ${s.dueDay}</span>`)
+      : `<span style="color:var(--text3);font-size:12px">monthly</span>`;
+    html += `<div class="list-row">
+      <div class="row-icon" style="background:rgba(0,122,255,0.1)">${CAT_ICONS[s.cat]||'📱'}</div>
+      <div class="row-main">
+        <div class="row-title">${s.name}</div>
+      </div>
+      <div class="row-right">
+        ${editMode
+          ? `<input class="edit-input" type="number" value="${s.amount}" onchange="updateSub(${s.id},'amount',+this.value)" inputmode="decimal">`
+          : `<div class="row-amount">${fmt(s.amount)}</div>`}
+        <div style="text-align:right">${daysText}</div>
+      </div>
+    </div>`;
+  }
+  html += `<div class="list-row" style="background:rgba(0,0,0,0.02)">
+    <div class="row-main" style="font-weight:600">Monthly Total</div>
+    <div class="row-right"><div class="row-amount" style="color:var(--red)">${fmt(totalM)}</div></div>
+  </div></div>`;
+
+  if (yearly.length) {
+    html += `<div class="section-label">Yearly Subscriptions</div><div class="card-list">`;
+    for (const s of yearly) {
+      const days = daysUntil(s.dueDay||1, s.dueMonth);
+      html += `<div class="list-row">
+        <div class="row-icon" style="background:rgba(255,204,0,0.15)">${CAT_ICONS[s.cat]||'📱'}</div>
+        <div class="row-main">
+          <div class="row-title">${s.name}</div>
+          <div class="row-sub" style="color:#b8860b">${MONTHS[s.dueMonth-1]} · ~${fmt(s.amount/12)}/mo</div>
+        </div>
+        <div class="row-right">
+          ${editMode
+            ? `<input class="edit-input" type="number" value="${s.amount}" onchange="updateSub(${s.id},'amount',+this.value)" inputmode="decimal">`
+            : `<div class="row-amount">${fmt(s.amount)}</div>`}
+          <div style="font-size:12px;color:${days<=30?'var(--orange)':'var(--text3)'};text-align:right">in ${days}d</div>
+        </div>
+      </div>`;
+    }
+    html += `<div class="list-row" style="background:rgba(0,0,0,0.02)">
+      <div class="row-main" style="font-weight:600">Yearly Total</div>
+      <div class="row-right"><div class="row-amount" style="color:var(--red)">${fmt(totalY)}</div></div>
+    </div></div>`;
+  }
+
+  html += `<div class="wide-card">
+    <div class="wide-card-title">Summary</div>
+    <div class="wc-row"><span class="label">Monthly subs</span><span class="val">${fmt(totalM)}</span></div>
+    <div class="wc-row"><span class="label">Yearly ÷12</span><span class="val">${fmt(totalY/12)}</span></div>
+    <div class="wc-row" style="font-weight:600"><span class="label">Total/month</span><span class="val" style="color:var(--red)">${fmt(grandMo)}</span></div>
+  </div>`;
+
+  return html;
+}
+
+// ─── RENDER SETTINGS ──────────────────────────────────────────────────────────
+function renderSettings() {
+  return `
+  <div class="section-label">Income (Bi-weekly Net)</div>
+  <div class="settings-group">
+    <div class="settings-row">
+      <div><div>Papa</div><div class="hint">Per paycheck</div></div>
+      <input class="edit-input" type="number" value="${data.income.papa}" inputmode="decimal"
+        onchange="data.income.papa=+this.value;save();renderHome&&currentTab==='home'&&render()">
+    </div>
+    <div class="settings-row">
+      <div><div>Mama</div><div class="hint">Per paycheck</div></div>
+      <input class="edit-input" type="number" value="${data.income.mama}" inputmode="decimal"
+        onchange="data.income.mama=+this.value;save();currentTab==='home'&&render()">
+    </div>
+  </div>
+
+  <div class="section-label">Monthly Transfer</div>
+  <div class="settings-group">
+    <div class="settings-row">
+      <div><div>Papa → Mama</div><div class="hint">Monthly exchange</div></div>
+      <input class="edit-input" type="number" value="${data.exchange}" inputmode="decimal"
+        onchange="data.exchange=+this.value;save();currentTab==='home'&&render()">
+    </div>
+  </div>
+
+  <div class="section-label">App</div>
+  <div class="settings-group">
+    <div class="settings-row">
+      <div><div>Version</div></div>
+      <span style="color:var(--text2);font-size:14px">1.0</span>
+    </div>
+    <div class="settings-row" onclick="resetData()" style="cursor:pointer">
+      <div style="color:var(--red)">Reset to Defaults</div>
+    </div>
+  </div>
+  <div style="height:16px"></div>`;
+}
+
+// ─── ACTIONS ─────────────────────────────────────────────────────────────────
+function setBillFilter(f) { billFilter = f; render(); }
+function updateBill(id, key, val) {
+  const b = data.bills.find(x=>x.id===id);
+  if (b) { b[key] = val; save(); }
+}
+function updateSub(id, key, val) {
+  const s = data.subscriptions.find(x=>x.id===id);
+  if (s) { s[key] = val; save(); }
+}
+function resetData() {
+  if (confirm('Reset all data to defaults?')) {
+    data = JSON.parse(JSON.stringify(DEFAULTS));
+    save(); render();
+  }
+}
+
+// ─── RENDER DISPATCH ──────────────────────────────────────────────────────────
+function render() {
+  const titles = { home:'Dashboard', bills:'Bills', subs:'Subscriptions', settings:'Settings' };
+  document.getElementById('page-title').textContent = titles[currentTab];
+  const showEdit = currentTab !== 'settings';
+  document.getElementById('edit-btn').style.visibility = showEdit ? 'visible' : 'hidden';
+  const map = { home:renderHome, bills:renderBills, subs:renderSubs, settings:renderSettings };
+  document.getElementById('main').innerHTML = (map[currentTab] || renderHome)();
+}
+
+render();
+</script>
+</body>
+</html>
