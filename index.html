@@ -593,7 +593,7 @@ function renderSubs() {
   const yearly  = data.subscriptions.filter(s=>s.freq==='yearly').sort((a,b)=>a.dueMonth-b.dueMonth);
   const totalM  = monthly.reduce((s,x)=>s+x.amount,0);
   const totalY  = yearly.reduce((s,x)=>s+x.amount,0);
-  const grandMo = totalM + totalY/12;
+  const grandMo = totalM + totalY;
 
   let html = `<div class="section-label">Monthly Subscriptions</div><div class="card-list">`;
   for (const s of monthly) {
@@ -629,7 +629,7 @@ function renderSubs() {
         <div class="row-icon" style="background:rgba(255,204,0,0.15)">${CAT_ICONS[s.cat]||'📱'}</div>
         <div class="row-main">
           <div class="row-title">${s.name}</div>
-          <div class="row-sub" style="color:#b8860b">${MONTHS[s.dueMonth-1]} · ~${fmt(s.amount/12)}/mo</div>
+          <div class="row-sub" style="color:#b8860b">Yearly · Paid in ${MONTHS[s.dueMonth-1]} · ${fmt(s.amount * 12)} annual</div>
         </div>
         <div class="row-right">
           ${editMode
@@ -648,7 +648,7 @@ function renderSubs() {
   html += `<div class="wide-card">
     <div class="wide-card-title">Summary</div>
     <div class="wc-row"><span class="label">Monthly subs</span><span class="val">${fmt(totalM)}</span></div>
-    <div class="wc-row"><span class="label">Yearly ÷12</span><span class="val">${fmt(totalY/12)}</span></div>
+    <div class="wc-row"><span class="label">Yearly (avg/mo)</span><span class="val">${fmt(totalY)}</span></div>
     <div class="wc-row" style="font-weight:600"><span class="label">Total/month</span><span class="val" style="color:var(--red)">${fmt(grandMo)}</span></div>
   </div>`;
 
