@@ -346,8 +346,7 @@ function dueLabel(bill) {
 }
 
 function monthlyEquiv(bill) {
-  if (bill.freq === 'yearly') return bill.amount / 12;
-  return bill.amount;
+  return bill.amount; // all amounts are already monthly (yearly bills store the monthly average)
 }
 
 function billsFor(person) {
@@ -356,6 +355,13 @@ function billsFor(person) {
 
 function totalMonthly(person) {
   return billsFor(person).reduce((s, b) => s + monthlyEquiv(b), 0);
+}
+
+// Returns positive if papa sends to mama, negative if mama sends to papa
+function calcExchange() {
+  const papaNet = data.income.papa - totalMonthly('papa');
+  const mamaNet = data.income.mama - totalMonthly('mama');
+  return (papaNet - mamaNet) / 2;
 }
 
 // ─── STATE ───────────────────────────────────────────────────────────────────
@@ -381,12 +387,12 @@ function toggleEdit() {
 // ─── RENDER HOME ─────────────────────────────────────────────────────────────
 function renderHome() {
   const now = new Date();
-  const papaIncome = data.income.papa * 2;
-  const mamaIncome = data.income.mama * 2;
-  const papaExp = totalMonthly('papa') + data.exchange;
-  const mamaExp = totalMonthly('mama') - data.exchange;
-  const papaBal = papaIncome - papaExp;
-  const mamaBal = mamaIncome - mamaExp;
+  const papaIncome = data.income.papa;
+  const mamaIncome = data.income.mama;
+  const exchange = calcExchange(); // positive = papa→mama, negative = mama→papa
+  const equalBal = (data.income.papa + data.income.mama - totalMonthly('papa') - totalMonthly('mama')) / 2;
+  const papaBal = equalBal;
+  const mamaBal = equalBal;
 
   // Upcoming bills this week (next 7 days)
   const upcoming = data.bills
@@ -413,14 +419,19 @@ function renderHome() {
     ['Mama', mamaIncome, mamaExp, mamaBal, 'mama']
   ]) {
     const color = cls === 'papa' ? 'var(--blue)' : 'var(--purple)';
+    const bills = totalMonthly(cls);
+    const xferLabel = cls === 'papa'
+      ? (exchange >= 0 ? `Sends ${fmt(exchange)}` : `Receives ${fmt(-exchange)}`)
+      : (exchange >= 0 ? `Receives ${fmt(exchange)}` : `Sends ${fmt(-exchange)}`);
+    const xferColor = (cls === 'papa') === (exchange >= 0) ? 'var(--red)' : 'var(--green)';
     html += `<div class="summary-card ${cls}">
       <div class="sc-label" style="color:${color}">${person}</div>
-      <div class="sc-row"><span>Paycheck</span><span>${fmt(data.income[cls])}</span></div>
       <div class="sc-row"><span>Income/mo</span><span>${fmt(income)}</span></div>
-      <div class="sc-row"><span>Expenses</span><span style="color:var(--red)">–${fmt(exp)}</span></div>
+      <div class="sc-row"><span>Bills</span><span style="color:var(--red)">–${fmt(bills)}</span></div>
+      <div class="sc-row"><span>Transfer</span><span style="color:${xferColor};font-size:12px">${xferLabel}</span></div>
       <div class="sc-row total">
         <span>Balance</span>
-        <span class="${bal >= 0 ? 'pos' : 'neg'}">${bal >= 0 ? '' : '–'}${fmt(bal)}</span>
+        <span class="pos">${fmt(bal)}</span>
       </div>
     </div>`;
   }
@@ -434,7 +445,7 @@ function renderHome() {
     <div class="wide-card-title">Household Monthly</div>
     <div class="wc-row"><span class="label">Combined Income</span><span class="val">${fmt(totalIncome)}</span></div>
     <div class="wc-row"><span class="label">Total Expenses</span><span class="val" style="color:var(--red)">–${fmt(totalExp)}</span></div>
-    <div class="wc-row"><span class="label">Transfer Papa→Mama</span><span class="val" style="color:var(--text2)">–${fmt(data.exchange)}</span></div>
+    <div class="wc-row"><span class="label">${exchange >= 0 ? 'Papa → Mama' : 'Mama → Papa'}</span><span class="val" style="color:var(--text2)">${fmt(Math.abs(exchange))}</span></div>
     <div class="wc-row" style="font-weight:600">
       <span class="label">Net Balance</span>
       <span class="val" style="color:${totalBal >= 0 ? 'var(--green)' : 'var(--red)'}">${fmt(totalBal)}</span>
@@ -535,7 +546,7 @@ function renderBills() {
         <div class="row-icon" style="background:rgba(255,204,0,0.15)">${CAT_ICONS[b.cat]||'📋'}</div>
         <div class="row-main">
           <div class="row-title">${b.name}</div>
-          <div class="row-sub" style="color:#b8860b">Yearly · ${MONTHS[b.dueMonth-1]} · ~${fmt(b.amount/12)}/mo</div>
+          <div class="row-sub" style="color:#b8860b">Yearly · Paid in ${MONTHS[b.dueMonth-1]} · ${fmt(b.amount * 12)} annual</div>
         </div>
         <div class="row-right">
           ${editMode
@@ -627,15 +638,15 @@ function renderSubs() {
 // ─── RENDER SETTINGS ──────────────────────────────────────────────────────────
 function renderSettings() {
   return `
-  <div class="section-label">Income (Bi-weekly Net)</div>
+  <div class="section-label">Income (Monthly Net)</div>
   <div class="settings-group">
     <div class="settings-row">
-      <div><div>Papa</div><div class="hint">Per paycheck</div></div>
+      <div><div>Papa</div><div class="hint">Per month</div></div>
       <input class="edit-input" type="number" value="${data.income.papa}" inputmode="decimal"
         onchange="data.income.papa=+this.value;save();renderHome&&currentTab==='home'&&render()">
     </div>
     <div class="settings-row">
-      <div><div>Mama</div><div class="hint">Per paycheck</div></div>
+      <div><div>Mama</div><div class="hint">Per month</div></div>
       <input class="edit-input" type="number" value="${data.income.mama}" inputmode="decimal"
         onchange="data.income.mama=+this.value;save();currentTab==='home'&&render()">
     </div>
@@ -644,9 +655,8 @@ function renderSettings() {
   <div class="section-label">Monthly Transfer</div>
   <div class="settings-group">
     <div class="settings-row">
-      <div><div>Papa → Mama</div><div class="hint">Monthly exchange</div></div>
-      <input class="edit-input" type="number" value="${data.exchange}" inputmode="decimal"
-        onchange="data.exchange=+this.value;save();currentTab==='home'&&render()">
+      <div><div>${calcExchange() >= 0 ? 'Papa → Mama' : 'Mama → Papa'}</div><div class="hint">Auto-calculated to equalize balances</div></div>
+      <span style="font-size:16px;font-weight:500">${fmt(Math.abs(calcExchange()))}</span>
     </div>
   </div>
 
