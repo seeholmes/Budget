@@ -434,9 +434,9 @@ function renderHome() {
 
   // Summary cards
   html += `<div class="summary-row">`;
-  for (const [person, income, exp, bal, cls] of [
-    ['Papa', papaIncome, papaExp, papaBal, 'papa'],
-    ['Mama', mamaIncome, mamaExp, mamaBal, 'mama']
+  for (const [person, income, bal, cls] of [
+    ['Papa', papaIncome, papaBal, 'papa'],
+    ['Mama', mamaIncome, mamaBal, 'mama']
   ]) {
     const color = cls === 'papa' ? 'var(--blue)' : 'var(--purple)';
     const bills = totalMonthly(cls);
