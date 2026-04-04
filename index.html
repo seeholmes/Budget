@@ -311,6 +311,7 @@ let data = (() => {
   try { return JSON.parse(localStorage.getItem('budget_v1')) || JSON.parse(JSON.stringify(DEFAULTS)); }
   catch(e) { return JSON.parse(JSON.stringify(DEFAULTS)); }
 })();
+if (!data.names) data.names = { papa: 'Papa', mama: 'Mama' };
 
 function save() { localStorage.setItem('budget_v1', JSON.stringify(data)); }
 
