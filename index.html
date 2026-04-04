@@ -797,6 +797,24 @@ function renderSettings() {
     ${addingSub ? itemForm('sub', null) : `<button class="btn-add-row" onclick="addingSub=true;render()">＋ Add Subscription</button>`}
   </div>
 
+  <div class="section-label">Data</div>
+  <div class="settings-group">
+    <div class="settings-row" onclick="exportData()" style="cursor:pointer">
+      <div>
+        <div style="color:var(--blue)">Export Backup</div>
+        <div class="hint">Save all data as a .json file</div>
+      </div>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="var(--blue)"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+    </div>
+    <div class="settings-row" onclick="importData()" style="cursor:pointer">
+      <div>
+        <div style="color:var(--blue)">Import Backup</div>
+        <div class="hint">Restore from a .json file</div>
+      </div>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="var(--blue)"><path d="M5 15h4v6h6v-6h4l-7-7-7 7zM5 4v2h14V4H5z"/></svg>
+    </div>
+  </div>
+
   <div class="section-label">App</div>
   <div class="settings-group">
     <div class="settings-row">
@@ -879,6 +897,49 @@ function saveEdit(type, id) {
   }
   save(); render();
 }
+
+function exportData() {
+  const json = JSON.stringify(data, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'budget-backup-' + new Date().toISOString().slice(0,10) + '.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function importData() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.onchange = e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      try {
+        const imported = JSON.parse(ev.target.result);
+        if (!imported.income || !imported.bills || !imported.subscriptions) {
+          alert('Invalid backup file — missing required fields.');
+          return;
+        }
+        if (!confirm('Replace all current data with this backup?')) return;
+        data = imported;
+        if (!data.names) data.names = { papa: 'Papa', mama: 'Mama' };
+        save();
+        render();
+      } catch(err) {
+        alert('Could not read file. Make sure it is a valid budget backup.');
+      }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
 function resetData() {
   if (confirm('Reset all data to defaults?')) {
     data = JSON.parse(JSON.stringify(DEFAULTS));
