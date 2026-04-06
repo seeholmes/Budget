@@ -936,31 +936,13 @@ function resetData() {
 
 
 // ─── RENDER CHART SECTION ────────────────────────────────────────────────────
-function renderChartSection() {
-  // Aggregate bills + subs by category
-  const totals = {};
-  for (const b of data.bills) {
-    totals[b.cat] = (totals[b.cat] || 0) + b.amount;
-  }
-  for (const s of data.subscriptions) {
-    totals[s.cat] = (totals[s.cat] || 0) + s.amount;
-  }
-  const entries = Object.entries(totals)
-    .map(([cat, val]) => ({ cat, val, color: CAT_COLORS[cat] || '#8E8E93' }))
-    .filter(e => e.val > 0)
-    .sort((a, b) => b.val - a.val);
-
-  const total = entries.reduce((s, e) => s + e.val, 0);
-  if (total === 0) return '';
-
-  // Donut SVG
+function buildDonut(entries, total) {
   const size = 200, cx = 100, cy = 100, r = 68, sw = 28;
   const C = 2 * Math.PI * r;
   let cumulative = 0;
   let segments = '';
   for (const e of entries) {
-    const pct = e.val / total;
-    const dash = pct * C;
+    const dash = (e.val / total) * C;
     const dashOffset = C * 0.25 - cumulative;
     cumulative += dash;
     segments += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none"
@@ -969,21 +951,60 @@ function renderChartSection() {
       stroke-dashoffset="${dashOffset.toFixed(2)}"
       stroke-linecap="butt"/>`;
   }
-  const donut = `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="display:block">
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="display:block">
     <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--sep)" stroke-width="${sw}"/>
     ${segments}
     <text x="${cx}" y="${cy - 10}" text-anchor="middle" font-size="13" fill="var(--text2)" font-family="-apple-system,sans-serif">Monthly</text>
     <text x="${cx}" y="${cy + 12}" text-anchor="middle" font-size="18" fill="var(--text)" font-weight="700" font-family="-apple-system,sans-serif">${fmt(total)}</text>
   </svg>`;
+}
+
+function renderChartSection() {
+  // Main chart: bills only (subs are tracked separately below)
+  const totals = {};
+  for (const b of data.bills) {
+    totals[b.cat] = (totals[b.cat] || 0) + b.amount;
+  }
+  const entries = Object.entries(totals)
+    .map(([cat, val]) => ({ cat, val, color: CAT_COLORS[cat] || '#8E8E93', label: cat[0].toUpperCase()+cat.slice(1), icon: CAT_ICONS[cat] || '📋' }))
+    .filter(e => e.val > 0)
+    .sort((a, b) => b.val - a.val);
+
+  const total = entries.reduce((s, e) => s + e.val, 0);
+  if (total === 0) return '';
+
+  const donut = buildDonut(entries, total);
 
   // Legend
   const legend = entries.map(e => `
     <div class="legend-row">
       <div class="legend-dot" style="background:${e.color}"></div>
-      <div class="legend-name">${CAT_ICONS[e.cat] || '📋'} ${e.cat[0].toUpperCase()+e.cat.slice(1)}</div>
+      <div class="legend-name">${e.icon} ${e.label}</div>
       <div class="legend-amt">${fmt(e.val)}</div>
       <div class="legend-pct">${(e.val/total*100).toFixed(0)}%</div>
     </div>`).join('');
+
+  // Subscriptions chart: individual subs by name
+  const SUB_PALETTE = ['#007AFF','#34C759','#FF9500','#FF3B30','#AF52DE','#00C7BE','#5856D6','#FF2D55','#FFD60A','#8E8E93','#FF6B6B','#30B0C7'];
+  const subEntries = [...data.subscriptions]
+    .filter(s => s.amount > 0)
+    .sort((a, b) => b.amount - a.amount)
+    .map((s, i) => ({ val: s.amount, color: SUB_PALETTE[i % SUB_PALETTE.length], label: s.name, icon: CAT_ICONS[s.cat] || '📱' }));
+  const subTotal = subEntries.reduce((s, e) => s + e.val, 0);
+
+  const subSection = subEntries.length === 0 ? '' : `
+    <div class="section-label">Subscriptions Breakdown</div>
+    <div class="wide-card">
+      <div class="donut-wrap">${buildDonut(subEntries, subTotal)}</div>
+      <div class="legend-list">${subEntries.map(e => `
+        <div class="legend-row">
+          <div class="legend-dot" style="background:${e.color}"></div>
+          <div class="legend-name">${e.icon} ${e.label}</div>
+          <div class="legend-amt">${fmt(e.val)}</div>
+          <div class="legend-pct">${(e.val/subTotal*100).toFixed(0)}%</div>
+        </div>`).join('')}
+      </div>
+    </div>`;
 
   // Papa vs Mama split bar — adjusted for transfer so it reflects true burden
   const exchange = calcExchange(); // positive = papa sends to mama
@@ -1017,6 +1038,7 @@ function renderChartSection() {
       <div class="donut-wrap">${donut}</div>
       <div class="legend-list">${legend}</div>
     </div>
+    ${subSection}
     <div class="section-label">Expense Split</div>
     <div class="wide-card">${splitBar}</div>`;
 }
