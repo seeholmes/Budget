@@ -984,9 +984,10 @@ function renderChartSection() {
       <div class="legend-pct">${(e.val/total*100).toFixed(0)}%</div>
     </div>`).join('');
 
-  // Papa vs Mama split bar
-  const papaTotal = totalMonthly('papa');
-  const mamaTotal = totalMonthly('mama');
+  // Papa vs Mama split bar — adjusted for transfer so it reflects true burden
+  const exchange = calcExchange(); // positive = papa sends to mama
+  const papaTotal = totalMonthly('papa') + exchange;
+  const mamaTotal = totalMonthly('mama') - exchange;
   const houseTotal = papaTotal + mamaTotal;
   const papaPct = houseTotal > 0 ? (papaTotal / houseTotal * 100).toFixed(0) : 50;
   const mamaPct = houseTotal > 0 ? (mamaTotal / houseTotal * 100).toFixed(0) : 50;
