@@ -984,12 +984,14 @@ function renderChartSection() {
       <div class="legend-pct">${(e.val/total*100).toFixed(0)}%</div>
     </div>`).join('');
 
-  // Subscriptions chart: individual subs by name
-  const SUB_PALETTE = ['#007AFF','#34C759','#FF9500','#FF3B30','#AF52DE','#00C7BE','#5856D6','#FF2D55','#FFD60A','#8E8E93','#FF6B6B','#30B0C7'];
-  const subEntries = [...data.subscriptions]
-    .filter(s => s.amount > 0)
-    .sort((a, b) => b.amount - a.amount)
-    .map((s, i) => ({ val: s.amount, color: SUB_PALETTE[i % SUB_PALETTE.length], label: s.name, icon: CAT_ICONS[s.cat] || '📱' }));
+  // Subscriptions chart: grouped by category
+  const subTotals = {};
+  for (const s of data.subscriptions) {
+    if (s.amount > 0) subTotals[s.cat] = (subTotals[s.cat] || 0) + s.amount;
+  }
+  const subEntries = Object.entries(subTotals)
+    .map(([cat, val]) => ({ val, color: CAT_COLORS[cat] || '#8E8E93', label: cat[0].toUpperCase()+cat.slice(1), icon: CAT_ICONS[cat] || '📱' }))
+    .sort((a, b) => b.val - a.val);
   const subTotal = subEntries.reduce((s, e) => s + e.val, 0);
 
   const subSection = subEntries.length === 0 ? '' : `
