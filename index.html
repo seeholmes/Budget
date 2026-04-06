@@ -206,6 +206,22 @@
       font-family: inherit; font-weight: 500; cursor: pointer;
       width: 100%; margin: 0 16px; width: calc(100% - 32px);
     }
+
+    /* CHART */
+    .donut-wrap { display:flex; flex-direction:column; align-items:center; padding:14px 0 6px; }
+    .legend-list { width:100%; }
+    .legend-row { display:flex; align-items:center; padding:7px 0; border-bottom:0.5px solid var(--sep); gap:10px; }
+    .legend-row:last-child { border-bottom:none; }
+    .legend-dot { width:12px; height:12px; border-radius:50%; flex-shrink:0; }
+    .legend-name { flex:1; font-size:15px; }
+    .legend-amt { font-size:15px; font-weight:500; }
+    .legend-pct { font-size:13px; color:var(--text2); min-width:38px; text-align:right; }
+    .split-bar-wrap { padding:4px 0 8px; }
+    .split-row { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+    .split-label { font-size:13px; color:var(--text2); width:54px; text-align:right; flex-shrink:0; }
+    .split-track { flex:1; height:18px; background:var(--sep); border-radius:9px; overflow:hidden; }
+    .split-fill { height:100%; border-radius:9px; display:flex; align-items:center; justify-content:flex-end; padding-right:6px; font-size:11px; font-weight:600; color:white; white-space:nowrap; min-width:2px; transition:width 0.4s; }
+    .split-val { font-size:13px; font-weight:500; width:54px; flex-shrink:0; }
     /* EMPTY */
     .empty { text-align: center; color: var(--text2); padding: 40px 16px; font-size: 15px; }
     /* CHEVRON */
@@ -287,6 +303,13 @@ const CAT_ICONS = {
   sports:'⚽', design:'🎨'
 };
 
+
+const CAT_COLORS = {
+  housing:'#007AFF', utilities:'#FF9500', food:'#34C759', auto:'#FF3B30',
+  insurance:'#AF52DE', health:'#00C7BE', tech:'#5856D6', savings:'#FFD60A',
+  debt:'#FF6B6B', home:'#FF9500', misc:'#8E8E93', media:'#FF2D55',
+  photo:'#30B0C7', cloud:'#63C8F7', ai:'#BF5AF2', sports:'#30D158', design:'#FFD60A'
+};
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const MONTHS_FULL = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
@@ -475,6 +498,7 @@ function renderHome() {
     html += `</div>`;
   }
 
+  html += renderChartSection();
   return html;
 }
 
@@ -909,6 +933,91 @@ function resetData() {
   }
 }
 
+
+// ─── RENDER CHART SECTION ────────────────────────────────────────────────────
+function renderChartSection() {
+  // Aggregate bills + subs by category
+  const totals = {};
+  for (const b of data.bills) {
+    totals[b.cat] = (totals[b.cat] || 0) + b.amount;
+  }
+  for (const s of data.subscriptions) {
+    totals[s.cat] = (totals[s.cat] || 0) + s.amount;
+  }
+  const entries = Object.entries(totals)
+    .map(([cat, val]) => ({ cat, val, color: CAT_COLORS[cat] || '#8E8E93' }))
+    .filter(e => e.val > 0)
+    .sort((a, b) => b.val - a.val);
+
+  const total = entries.reduce((s, e) => s + e.val, 0);
+  if (total === 0) return '';
+
+  // Donut SVG
+  const size = 200, cx = 100, cy = 100, r = 68, sw = 28;
+  const C = 2 * Math.PI * r;
+  let cumulative = 0;
+  let segments = '';
+  for (const e of entries) {
+    const pct = e.val / total;
+    const dash = pct * C;
+    const dashOffset = C * 0.25 - cumulative;
+    cumulative += dash;
+    segments += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none"
+      stroke="${e.color}" stroke-width="${sw}"
+      stroke-dasharray="${dash.toFixed(2)} ${(C - dash).toFixed(2)}"
+      stroke-dashoffset="${dashOffset.toFixed(2)}"
+      stroke-linecap="butt"/>`;
+  }
+  const donut = `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="display:block">
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--sep)" stroke-width="${sw}"/>
+    ${segments}
+    <text x="${cx}" y="${cy - 10}" text-anchor="middle" font-size="13" fill="var(--text2)" font-family="-apple-system,sans-serif">Monthly</text>
+    <text x="${cx}" y="${cy + 12}" text-anchor="middle" font-size="18" fill="var(--text)" font-weight="700" font-family="-apple-system,sans-serif">${fmt(total)}</text>
+  </svg>`;
+
+  // Legend
+  const legend = entries.map(e => `
+    <div class="legend-row">
+      <div class="legend-dot" style="background:${e.color}"></div>
+      <div class="legend-name">${CAT_ICONS[e.cat] || '📋'} ${e.cat[0].toUpperCase()+e.cat.slice(1)}</div>
+      <div class="legend-amt">${fmt(e.val)}</div>
+      <div class="legend-pct">${(e.val/total*100).toFixed(0)}%</div>
+    </div>`).join('');
+
+  // Papa vs Mama split bar
+  const papaTotal = totalMonthly('papa');
+  const mamaTotal = totalMonthly('mama');
+  const houseTotal = papaTotal + mamaTotal;
+  const papaPct = houseTotal > 0 ? (papaTotal / houseTotal * 100).toFixed(0) : 50;
+  const mamaPct = houseTotal > 0 ? (mamaTotal / houseTotal * 100).toFixed(0) : 50;
+
+  const splitBar = `
+    <div class="split-bar-wrap">
+      <div class="split-row">
+        <div class="split-label" style="color:var(--blue)">${data.names.papa}</div>
+        <div class="split-track">
+          <div class="split-fill" style="width:${papaPct}%;background:var(--blue)">${papaPct}%</div>
+        </div>
+        <div class="split-val">${fmt(papaTotal)}</div>
+      </div>
+      <div class="split-row">
+        <div class="split-label" style="color:var(--purple)">${data.names.mama}</div>
+        <div class="split-track">
+          <div class="split-fill" style="width:${mamaPct}%;background:var(--purple)">${mamaPct}%</div>
+        </div>
+        <div class="split-val">${fmt(mamaTotal)}</div>
+      </div>
+    </div>`;
+
+  return `
+    <div class="section-label">Spending Breakdown</div>
+    <div class="wide-card">
+      <div class="donut-wrap">${donut}</div>
+      <div class="legend-list">${legend}</div>
+    </div>
+    <div class="section-label">Expense Split</div>
+    <div class="wide-card">${splitBar}</div>`;
+}
 // ─── RENDER DISPATCH ──────────────────────────────────────────────────────────
 function render() {
   const titles = { home:'Dashboard', bills:'Bills', subs:'Subscriptions', settings:'Settings' };
