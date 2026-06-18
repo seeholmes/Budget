@@ -9,7 +9,6 @@ Use the document toolbar in the header for the normal file workflow:
 - New starts a blank budget after warning about unsaved changes.
 - Open loads an existing `.json` budget file.
 - Save writes back to the current file when the browser supports file handles; otherwise it downloads the budget file.
-- Save As always prompts for or downloads a new budget file.
 
 The header shows the current file name and marks it as Unsaved after any budget edit. On smaller screens, the same file actions are available from the File button. The app warns before closing the browser tab with unsaved changes and before New or Open would discard edits.
 
@@ -29,4 +28,4 @@ Run the workflow verifier from the project root:
 node verify-workflow.js
 ```
 
-It checks legacy migration, single-source serialization, dirty-state warnings, Open, Save, Save As fallback, and close-warning behavior.
+It checks legacy migration, single-source serialization, dirty-state warnings, Open, Save, save fallback, and close-warning behavior.

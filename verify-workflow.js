@@ -140,6 +140,8 @@ function assert(condition, message) {
 async function run() {
   assert(!html.includes('data-tab="settings"'), 'Settings tab should not be present in the main navigation.');
   assert(!html.includes('renderSettings'), 'Settings renderer should be removed after moving income to Dashboard.');
+  assert(!html.includes('>Save As<'), 'Save As should not be exposed as a separate command.');
+  assert(!html.includes('saveBudgetAs'), 'Save As handler should not remain as a public workflow.');
   assert(html.includes('person-income-input'), 'Dashboard summary cards should expose household income entry.');
   assert(html.includes('theme-btn'), 'Header should include the light/dark theme toggle.');
 
@@ -201,12 +203,12 @@ async function run() {
   assert(openFlow.__harness.writes.length === 1, 'Save should write through the current file handle.');
   assert(vm.runInContext('isDirty', openFlow) === false, 'Successful Save should clear dirty state.');
 
-  const saveAsFlow = createHarness();
-  vm.runInContext('data.expenses.push({ id: 1, type: "subscription", name: "Music", amount: 12, dueDay: 9, dueMonth: 1, freq: "monthly", cat: "media" }); markDirty();', saveAsFlow);
-  await vm.runInContext('saveBudgetAs()', saveAsFlow);
-  assert(saveAsFlow.__harness.downloads.length === 1, 'Save As fallback should download one budget file.');
-  assert(saveAsFlow.__harness.downloads[0].download.endsWith('.json'), 'Save As download should use a JSON file name.');
-  assert(vm.runInContext('isDirty', saveAsFlow) === false, 'Save As fallback should clear dirty state after download starts.');
+  const saveFallbackFlow = createHarness();
+  vm.runInContext('data.expenses.push({ id: 1, type: "subscription", name: "Music", amount: 12, dueDay: 9, dueMonth: 1, freq: "monthly", cat: "media" }); markDirty();', saveFallbackFlow);
+  await vm.runInContext('saveBudget()', saveFallbackFlow);
+  assert(saveFallbackFlow.__harness.downloads.length === 1, 'Save fallback should download one budget file.');
+  assert(saveFallbackFlow.__harness.downloads[0].download.endsWith('.json'), 'Save fallback download should use a JSON file name.');
+  assert(vm.runInContext('isDirty', saveFallbackFlow) === false, 'Save fallback should clear dirty state after download starts.');
 
   const unloadFlow = createHarness();
   vm.runInContext('isDirty = true;', unloadFlow);

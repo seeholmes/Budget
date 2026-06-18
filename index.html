@@ -423,7 +423,6 @@
       <button class="tool-btn" onclick="newBudget()">New</button>
       <button class="tool-btn" onclick="openBudget()">Open</button>
       <button class="tool-btn primary" onclick="saveBudget()">Save</button>
-      <button class="tool-btn" onclick="saveBudgetAs()">Save As</button>
     </div>
     <div class="header-actions">
       <button class="hdr-btn file-menu-btn" id="file-btn" onclick="openFileMenu()">File</button>
@@ -464,10 +463,6 @@
     <button class="file-action" id="save-action" onclick="saveBudget()">
       <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zM12 19c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zM6 8V5h9v3H6z"/></svg>
       <span class="label">Save</span>
-    </button>
-    <button class="file-action" onclick="saveBudgetAs()">
-      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 20h14v-2H5v2zM19 9h-4V3H9v6H5l7 7 7-7z"/></svg>
-      <span class="label">Save As</span>
     </button>
     <button class="file-action" onclick="closeFileMenu()">
       <span class="label" style="color:var(--blue);text-align:center">Close</span>
@@ -710,14 +705,14 @@ async function saveBudget() {
       return;
     } catch(err) {
       if (err && err.name === 'AbortError') return;
-      alert('Could not save to the current file. Try Save As.');
+      alert('Could not save to the current file. Choose Save again to pick a file location.');
       return;
     }
   }
-  await saveBudgetAs();
+  await chooseSaveTarget();
 }
 
-async function saveBudgetAs() {
+async function chooseSaveTarget() {
   closeFileMenu();
   const suggestedName = ensureBudgetFileName(documentName);
   if ('showSaveFilePicker' in window) {
