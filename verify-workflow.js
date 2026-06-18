@@ -45,6 +45,7 @@ function createHarness(options = {}) {
   const body = makeElement('body');
   const document = {
     body,
+    documentElement: makeElement('html'),
     createElement(tag) {
       const element = makeElement(tag);
       element.tagName = tag.toUpperCase();
@@ -139,7 +140,8 @@ function assert(condition, message) {
 async function run() {
   assert(!html.includes('data-tab="settings"'), 'Settings tab should not be present in the main navigation.');
   assert(!html.includes('renderSettings'), 'Settings renderer should be removed after moving income to Dashboard.');
-  assert(html.includes('Household Income'), 'Dashboard should expose household income entry.');
+  assert(html.includes('person-income-input'), 'Dashboard summary cards should expose household income entry.');
+  assert(html.includes('theme-btn'), 'Header should include the light/dark theme toggle.');
 
   const legacy = {
     names: { papa: 'A', mama: 'B' },
@@ -165,8 +167,12 @@ async function run() {
 
   const shellFlow = createHarness();
   vm.runInContext('render()', shellFlow);
-  assert(shellFlow.__harness.elements.get('main').innerHTML.includes('Household Income'), 'Dashboard should render household income inputs.');
+  assert(shellFlow.__harness.elements.get('main').innerHTML.includes('person-income-input'), 'Dashboard should render card-level income inputs.');
   assert(shellFlow.__harness.elements.get('edit-btn').style.display === 'none', 'Home should not show a dead edit/delete control.');
+  assert(shellFlow.__harness.elements.get('theme-btn').textContent === 'Dark', 'Theme toggle should default to offering dark mode.');
+  vm.runInContext('toggleTheme()', shellFlow);
+  assert(shellFlow.__harness.elements.get('theme-btn').textContent === 'Light', 'Theme toggle should switch to offering light mode in dark mode.');
+  assert(shellFlow.__harness.storage.get('budget_theme') === 'dark', 'Theme selection should be saved.');
   vm.runInContext('switchTab("bills")', shellFlow);
   assert(shellFlow.__harness.elements.get('edit-btn').style.display === 'flex', 'Bills should show the contextual delete control.');
 
