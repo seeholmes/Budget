@@ -64,14 +64,26 @@
       align-items: center;
       justify-content: space-between;
     }
+    .title-wrap { flex: 1; min-width: 0; text-align: center; }
     .header h1 { font-size: 17px; font-weight: 600; letter-spacing: -0.4px; }
+    .doc-status {
+      color: var(--text2);
+      font-size: 11px;
+      line-height: 1.2;
+      margin-top: 2px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .doc-status.unsaved { color: var(--orange); }
     .header-actions { display: flex; gap: 12px; align-items: center; }
     .hdr-btn {
       background: none; border: none; color: var(--blue);
       font-size: 17px; font-family: inherit; cursor: pointer;
-      padding: 4px 0; min-width: 44px; min-height: 44px;
-      display: flex; align-items: center; justify-content: flex-end;
+      padding: 4px 0; min-width: 54px; min-height: 44px;
+      display: flex; align-items: center; justify-content: center;
     }
+    .hdr-btn:disabled { color: var(--text3); cursor: default; }
     /* MAIN SCROLL AREA */
     main {
       padding-bottom: calc(var(--safe-bottom) + 74px);
@@ -231,6 +243,7 @@
     .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
     .form-grid.full { grid-template-columns: 1fr; }
     .form-field { display: flex; flex-direction: column; gap: 4px; }
+    .form-field[hidden] { display: none; }
     .form-label { font-size: 12px; color: var(--text2); font-weight: 500; padding-left: 2px; }
     .form-input, .form-select {
       background: var(--card); border: 1.5px solid var(--sep);
@@ -244,13 +257,60 @@
     .btn-cancel { background: var(--sep); color: var(--text); border: none; border-radius: 10px; padding: 12px 18px; font-size: 15px; font-family: inherit; font-weight: 500; cursor: pointer; }
     .btn-add-row { width: 100%; background: none; border: none; color: var(--blue); font-size: 16px; font-family: inherit; padding: 13px 16px; text-align: left; cursor: pointer; display: flex; align-items: center; gap: 6px; }
     .del-btn { background: none; border: none; color: var(--red); font-size: 20px; cursor: pointer; padding: 4px 8px; line-height: 1; flex-shrink: 0; }
+    /* FILE MENU */
+    [hidden] { display: none !important; }
+    .sheet {
+      position: fixed; inset: 0; z-index: 300;
+      background: rgba(0,0,0,0.28);
+      display: flex; align-items: flex-end; justify-content: center;
+      padding: 16px 16px calc(var(--safe-bottom) + 16px);
+    }
+    .sheet-card {
+      width: 100%; max-width: 398px;
+      background: var(--card);
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 18px 60px rgba(0,0,0,0.24);
+    }
+    .sheet-head {
+      padding: 14px 16px;
+      border-bottom: 0.5px solid var(--sep);
+    }
+    .sheet-title { font-size: 16px; font-weight: 600; }
+    .sheet-sub { color: var(--text2); font-size: 13px; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .file-action {
+      width: 100%;
+      border: none;
+      background: var(--card);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 16px;
+      min-height: 50px;
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      border-bottom: 0.5px solid var(--sep);
+      text-align: left;
+    }
+    .file-action:last-child { border-bottom: none; }
+    .file-action:disabled { color: var(--text3); cursor: default; }
+    .file-action svg { width: 21px; height: 21px; flex-shrink: 0; color: var(--blue); }
+    .file-action:disabled svg { color: var(--text3); }
+    .file-action .label { flex: 1; }
   </style>
 </head>
 <body>
 <div id="app">
   <header class="header">
-    <div style="width:60px"></div>
-    <h1 id="page-title">Dashboard</h1>
+    <div class="header-actions">
+      <button class="hdr-btn" id="file-btn" onclick="openFileMenu()">File</button>
+    </div>
+    <div class="title-wrap">
+      <h1 id="page-title">Dashboard</h1>
+      <div id="doc-status" class="doc-status">Untitled Budget</div>
+    </div>
     <div class="header-actions">
       <button class="hdr-btn" id="edit-btn" onclick="toggleEdit()">Edit</button>
     </div>
@@ -275,22 +335,308 @@
     </button>
   </nav>
 </div>
+<div id="file-sheet" class="sheet" hidden onclick="closeFileMenu()">
+  <div class="sheet-card" onclick="event.stopPropagation()">
+    <div class="sheet-head">
+      <div class="sheet-title">Budget File</div>
+      <div class="sheet-sub" id="file-menu-status">Untitled Budget</div>
+    </div>
+    <button class="file-action" onclick="newBudget()">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 3H6c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10h-7V3zm2 0v5h5l-5-5zM8 12h8v2H8v-2zm0 4h8v2H8v-2z"/></svg>
+      <span class="label">New</span>
+    </button>
+    <button class="file-action" onclick="openBudget()">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 4l2 2h8c1.1 0 2 .9 2 2v2H2V6c0-1.1.9-2 2-2h6zm12 8v6c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2v-6h20z"/></svg>
+      <span class="label">Open</span>
+    </button>
+    <button class="file-action" id="save-action" onclick="saveBudget()">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zM12 19c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zM6 8V5h9v3H6z"/></svg>
+      <span class="label">Save</span>
+    </button>
+    <button class="file-action" onclick="saveBudgetAs()">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 20h14v-2H5v2zM19 9h-4V3H9v6H5l7 7 7-7z"/></svg>
+      <span class="label">Save As</span>
+    </button>
+    <button class="file-action" onclick="closeFileMenu()">
+      <span class="label" style="color:var(--blue);text-align:center">Close</span>
+    </button>
+  </div>
+</div>
 <script>
 // ─── DATA ───────────────────────────────────────────────────────────────────
 const DEFAULTS = {
+  schemaVersion: 2,
   names: { papa: 'Papa', mama: 'Mama' },
   income: { papa: 0, mama: 0 },
-  bills: [],
-  subscriptions: []
+  expenses: []
 };
 
-let data = (() => {
-  try { return JSON.parse(localStorage.getItem('budget_v1')) || JSON.parse(JSON.stringify(DEFAULTS)); }
-  catch(e) { return JSON.parse(JSON.stringify(DEFAULTS)); }
-})();
-if (!data.names) data.names = { papa: 'Papa', mama: 'Mama' };
+const RECOVERY_KEY = 'budget_recovery_v2';
+const LEGACY_KEY = 'budget_v1';
+const DEFAULT_FILE_NAME = 'Untitled Budget.budget.json';
 
-function save() { localStorage.setItem('budget_v1', JSON.stringify(data)); }
+const clone = value => JSON.parse(JSON.stringify(value));
+
+function normalizeExpense(item, fallbackId, type) {
+  const normalized = { ...item };
+  normalized.id = fallbackId;
+  normalized.type = type === 'subscription' ? 'subscription' : 'bill';
+  normalized.name = String(normalized.name || '').trim() || (type === 'bill' ? 'New Bill' : 'New Subscription');
+  normalized.amount = Number.isFinite(+normalized.amount) ? +normalized.amount : 0;
+  normalized.dueDay = Number.isFinite(+normalized.dueDay) ? +normalized.dueDay : 0;
+  normalized.dueMonth = Number.isFinite(+normalized.dueMonth) ? +normalized.dueMonth : 1;
+  normalized.freq = normalized.freq === 'yearly' ? 'yearly' : 'monthly';
+  normalized.cat = normalized.cat || 'misc';
+  if (normalized.type === 'bill') normalized.person = normalized.person === 'mama' ? 'mama' : 'papa';
+  else delete normalized.person;
+  return normalized;
+}
+
+function normalizeBudget(raw) {
+  const source = raw && typeof raw === 'object' ? raw : {};
+  const budget = clone(DEFAULTS);
+  budget.names = {
+    papa: source.names && source.names.papa ? String(source.names.papa) : 'Papa',
+    mama: source.names && source.names.mama ? String(source.names.mama) : 'Mama'
+  };
+  budget.income = {
+    papa: Number.isFinite(+(source.income && source.income.papa)) ? +source.income.papa : 0,
+    mama: Number.isFinite(+(source.income && source.income.mama)) ? +source.income.mama : 0
+  };
+  const legacyBills = Array.isArray(source.bills)
+    ? source.bills.map(item => ({ ...item, type: 'bill' }))
+    : [];
+  const legacySubs = Array.isArray(source.subscriptions)
+    ? source.subscriptions.map(item => ({ ...item, type: 'subscription' }))
+    : [];
+  const rawExpenses = Array.isArray(source.expenses) ? source.expenses : [...legacyBills, ...legacySubs];
+  budget.expenses = rawExpenses.map((item, index) => normalizeExpense(item, index + 1, item.type));
+  return budget;
+}
+
+function loadInitialBudget() {
+  try {
+    const recovery = JSON.parse(localStorage.getItem(RECOVERY_KEY));
+    if (recovery && recovery.data) {
+      return {
+        data: normalizeBudget(recovery.data),
+        name: recovery.documentName || DEFAULT_FILE_NAME,
+        dirty: !!recovery.isDirty
+      };
+    }
+  } catch(e) {}
+
+  try {
+    const legacy = JSON.parse(localStorage.getItem(LEGACY_KEY));
+    if (legacy) {
+      return {
+        data: normalizeBudget(legacy),
+        name: 'Migrated Budget.budget.json',
+        dirty: true
+      };
+    }
+  } catch(e) {}
+
+  return { data: clone(DEFAULTS), name: DEFAULT_FILE_NAME, dirty: false };
+}
+
+const initialBudget = loadInitialBudget();
+let data = initialBudget.data;
+let documentName = initialBudget.name;
+let fileHandle = null;
+let isDirty = initialBudget.dirty;
+
+function ensureBudgetFileName(name) {
+  const trimmed = String(name || DEFAULT_FILE_NAME).trim() || DEFAULT_FILE_NAME;
+  return /\.json$/i.test(trimmed) ? trimmed : `${trimmed}.budget.json`;
+}
+
+function serializeBudget() {
+  return JSON.stringify({
+    ...normalizeBudget(data),
+    schemaVersion: 2,
+    savedAt: new Date().toISOString()
+  }, null, 2);
+}
+
+function writeRecovery() {
+  localStorage.setItem(RECOVERY_KEY, JSON.stringify({
+    documentName,
+    isDirty,
+    data: normalizeBudget(data),
+    savedAt: new Date().toISOString()
+  }));
+}
+
+function updateDocumentChrome() {
+  const label = `${documentName}${isDirty ? ' • Unsaved' : ''}`;
+  const status = document.getElementById('doc-status');
+  const menuStatus = document.getElementById('file-menu-status');
+  if (status) {
+    status.textContent = label;
+    status.classList.toggle('unsaved', isDirty);
+  }
+  if (menuStatus) menuStatus.textContent = label;
+}
+
+function markDirty() {
+  isDirty = true;
+  writeRecovery();
+  updateDocumentChrome();
+}
+
+function markSaved(name) {
+  if (name) documentName = ensureBudgetFileName(name);
+  isDirty = false;
+  writeRecovery();
+  updateDocumentChrome();
+}
+
+function save() { markDirty(); }
+
+function resetTransientState() {
+  currentTab = 'home';
+  editMode = false;
+  billFilter = 'all';
+  addingBill = false;
+  addingSub = false;
+  editingBillId = null;
+  editingSubId = null;
+}
+
+function confirmDiscardChanges(nextAction) {
+  if (!isDirty) return true;
+  return confirm(`You have unsaved changes to ${documentName}. ${nextAction || 'Continue'} and lose those changes?`);
+}
+
+function openFileMenu() {
+  updateDocumentChrome();
+  document.getElementById('file-sheet').hidden = false;
+}
+
+function closeFileMenu() {
+  document.getElementById('file-sheet').hidden = true;
+}
+
+async function newBudget() {
+  closeFileMenu();
+  if (!confirmDiscardChanges('Create a new budget')) return;
+  data = clone(DEFAULTS);
+  documentName = DEFAULT_FILE_NAME;
+  fileHandle = null;
+  isDirty = false;
+  resetTransientState();
+  writeRecovery();
+  render();
+}
+
+async function openBudget() {
+  closeFileMenu();
+  if (!confirmDiscardChanges('Open another budget')) return;
+  if ('showOpenFilePicker' in window) {
+    try {
+      const handles = await window.showOpenFilePicker({
+        multiple: false,
+        types: [{ description: 'Budget JSON', accept: { 'application/json': ['.json'] } }]
+      });
+      if (!handles.length) return;
+      const nextFile = await handles[0].getFile();
+      await loadBudgetFromFile(nextFile, handles[0]);
+      return;
+    } catch(err) {
+      if (err && err.name === 'AbortError') return;
+      alert('Could not open that budget file.');
+      return;
+    }
+  }
+
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json,.budget.json,application/json';
+  input.onchange = async event => {
+    const nextFile = event.target.files[0];
+    if (nextFile) await loadBudgetFromFile(nextFile, null);
+  };
+  input.click();
+}
+
+async function loadBudgetFromFile(nextFile, handle) {
+  try {
+    const parsed = JSON.parse(await nextFile.text());
+    data = normalizeBudget(parsed);
+    documentName = ensureBudgetFileName(nextFile.name || DEFAULT_FILE_NAME);
+    fileHandle = handle;
+    isDirty = false;
+    resetTransientState();
+    writeRecovery();
+    render();
+  } catch(err) {
+    alert('Could not read that budget file. Choose a valid Budget JSON file.');
+  }
+}
+
+async function saveBudget() {
+  closeFileMenu();
+  if (fileHandle && 'createWritable' in fileHandle) {
+    try {
+      await writeBudgetToHandle(fileHandle);
+      markSaved(fileHandle.name || documentName);
+      return;
+    } catch(err) {
+      if (err && err.name === 'AbortError') return;
+      alert('Could not save to the current file. Try Save As.');
+      return;
+    }
+  }
+  await saveBudgetAs();
+}
+
+async function saveBudgetAs() {
+  closeFileMenu();
+  const suggestedName = ensureBudgetFileName(documentName);
+  if ('showSaveFilePicker' in window) {
+    try {
+      const handle = await window.showSaveFilePicker({
+        suggestedName,
+        types: [{ description: 'Budget JSON', accept: { 'application/json': ['.json'] } }]
+      });
+      await writeBudgetToHandle(handle);
+      fileHandle = handle;
+      markSaved(handle.name || suggestedName);
+      return;
+    } catch(err) {
+      if (err && err.name === 'AbortError') return;
+      alert('Could not save that budget file.');
+      return;
+    }
+  }
+  downloadBudgetFile(suggestedName);
+  markSaved(suggestedName);
+}
+
+async function writeBudgetToHandle(handle) {
+  const writable = await handle.createWritable();
+  await writable.write(serializeBudget());
+  await writable.close();
+}
+
+function downloadBudgetFile(name) {
+  const blob = new Blob([serializeBudget()], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = ensureBudgetFileName(name);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+window.addEventListener('beforeunload', event => {
+  if (!isDirty) return;
+  event.preventDefault();
+  event.returnValue = '';
+});
 
 // ─── UTILS ──────────────────────────────────────────────────────────────────
 const fmt = n => '$' + Math.round(Math.abs(n)).toLocaleString('en-US');
@@ -333,15 +679,6 @@ function daysUntil(dueDay, dueMonth) {
   return Math.ceil((target - now) / 86400000);
 }
 
-function dueBadge(days) {
-  if (days === null) return '';
-  if (days <= 0)  return `<span class="row-badge badge-due">Due today</span>`;
-  if (days <= 3)  return `<span class="row-badge badge-due">Due in ${days}d</span>`;
-  if (days <= 7)  return `<span class="row-badge badge-soon">Due in ${days}d</span>`;
-  if (days <= 14) return `<span class="row-badge badge-ok">In ${days}d</span>`;
-  return `<span class="row-badge" style="background:rgba(142,142,147,0.12);color:var(--text2)">Day ${dueDay}</span>`;
-}
-
 function dueLabel(bill) {
   if (bill.freq === 'yearly') return `${MONTHS[bill.dueMonth-1]} ${bill.dueDay || 1}`;
   if (!bill.dueDay) return 'Various';
@@ -354,8 +691,16 @@ function monthlyEquiv(bill) {
   return bill.amount; // all amounts are already monthly (yearly bills store the monthly average)
 }
 
+function expensesOf(type) {
+  return data.expenses.filter(item => item.type === type);
+}
+
+function nextExpenseId() {
+  return data.expenses.length ? Math.max(...data.expenses.map(item => item.id)) + 1 : 1;
+}
+
 function billsFor(person) {
-  return data.bills.filter(b => b.person === person);
+  return expensesOf('bill').filter(b => b.person === person);
 }
 
 function totalMonthly(person) {
@@ -408,13 +753,13 @@ function renderHome() {
   const mamaBal = equalBal;
 
   // Upcoming bills this week (next 7 days)
-  const upcoming = data.bills
+  const upcoming = expensesOf('bill')
     .filter(b => b.freq === 'monthly' && b.dueDay)
     .map(b => ({ ...b, days: daysUntil(b.dueDay, null) }))
     .filter(b => b.days !== null && b.days <= 7)
     .sort((a, b) => a.days - b.days);
 
-  const upcomingYearly = data.bills
+  const upcomingYearly = expensesOf('bill')
     .filter(b => b.freq === 'yearly')
     .map(b => ({ ...b, days: daysUntil(b.dueDay, b.dueMonth) }))
     .filter(b => b.days !== null && b.days <= 30)
@@ -505,7 +850,7 @@ function renderHome() {
 
 // ─── RENDER BILLS ─────────────────────────────────────────────────────────────
 function renderBills() {
-  let bills = [...data.bills];
+  let bills = expensesOf('bill');
   if (billFilter !== 'all') bills = bills.filter(b => b.person === billFilter);
 
   const monthly = bills.filter(b => b.freq === 'monthly').sort((a,b) => {
@@ -525,6 +870,10 @@ function renderBills() {
 
   html += `<div class="section-label">Monthly Bills</div><div class="card-list">`;
   for (const b of monthly) {
+    if (editingBillId === b.id) {
+      html += itemForm('bill', b);
+      continue;
+    }
     const days = b.dueDay ? daysUntil(b.dueDay, null) : null;
     const personColor = b.person === 'papa' ? 'var(--blue)' : 'var(--purple)';
     const daysText = days !== null
@@ -533,18 +882,17 @@ function renderBills() {
         : days <= 7 ? `<span style="color:var(--green);font-weight:600;font-size:12px">in ${days}d</span>`
         : `<span style="color:var(--text3);font-size:12px">day ${b.dueDay}</span>`)
       : `<span style="color:var(--text3);font-size:12px">various</span>`;
-    html += `<div class="list-row">
+    html += `<div class="list-row" style="cursor:pointer" onclick="editingBillId=${b.id};addingBill=false;render()">
       <div class="row-icon" style="background:rgba(${b.person==='papa'?'0,122,255':'175,82,222'},0.1)">${CAT_ICONS[b.cat]||'📋'}</div>
       <div class="row-main">
         <div class="row-title">${b.name}</div>
         <div class="row-sub" style="color:${personColor}">${data.names[b.person]}${b.note ? ' · <span style="color:var(--text2)">'+b.note+'</span>' : ''}</div>
       </div>
       <div class="row-right">
-        ${editMode
-          ? `<input class="edit-input" type="number" value="${b.amount}" onchange="updateBill(${b.id},'amount',+this.value)" inputmode="decimal">`
-          : `<div class="row-amount">${fmt(b.amount)}</div>`}
+        <div class="row-amount">${fmt(b.amount)}</div>
         <div style="text-align:right">${daysText}</div>
       </div>
+      ${editMode ? `<button class="del-btn" onclick="event.stopPropagation();deleteBill(${b.id})">−</button>` : `<span class="chevron">›</span>`}
     </div>`;
   }
   html += `<div class="list-row" style="background:rgba(0,0,0,0.02)">
@@ -555,19 +903,22 @@ function renderBills() {
   if (yearly.length) {
     html += `<div class="section-label">Yearly Bills</div><div class="card-list">`;
     for (const b of yearly) {
+      if (editingBillId === b.id) {
+        html += itemForm('bill', b);
+        continue;
+      }
       const days = daysUntil(b.dueDay, b.dueMonth);
-      html += `<div class="list-row">
+      html += `<div class="list-row" style="cursor:pointer" onclick="editingBillId=${b.id};addingBill=false;render()">
         <div class="row-icon" style="background:rgba(255,204,0,0.15)">${CAT_ICONS[b.cat]||'📋'}</div>
         <div class="row-main">
           <div class="row-title">${b.name}</div>
           <div class="row-sub" style="color:#b8860b">Yearly · Paid in ${MONTHS[b.dueMonth-1]} · ${fmt(b.amount * 12)} annual</div>
         </div>
         <div class="row-right">
-          ${editMode
-            ? `<input class="edit-input" type="number" value="${b.amount}" onchange="updateBill(${b.id},'amount',+this.value)" inputmode="decimal">`
-            : `<div class="row-amount">${fmt(b.amount)}</div>`}
+          <div class="row-amount">${fmt(b.amount)}</div>
           <div style="text-align:right;font-size:12px;color:${days<=30?'var(--orange)':'var(--text3)'}">in ${days}d</div>
         </div>
+        ${editMode ? `<button class="del-btn" onclick="event.stopPropagation();deleteBill(${b.id})">−</button>` : `<span class="chevron">›</span>`}
       </div>`;
     }
     html += `<div class="list-row" style="background:rgba(0,0,0,0.02)">
@@ -578,36 +929,43 @@ function renderBills() {
     </div></div>`;
   }
 
+  html += `<div class="section-label">Manage Bills</div><div class="settings-group">
+    ${addingBill ? itemForm('bill', null) : `<button class="btn-add-row" onclick="addingBill=true;editingBillId=null;render()">＋ Add Bill</button>`}
+  </div>`;
+
   return html;
 }
 
 // ─── RENDER SUBS ─────────────────────────────────────────────────────────────
 function renderSubs() {
-  const monthly = data.subscriptions.filter(s=>s.freq==='monthly').sort((a,b)=>a.dueDay-b.dueDay);
-  const yearly  = data.subscriptions.filter(s=>s.freq==='yearly').sort((a,b)=>a.dueMonth-b.dueMonth);
+  const monthly = expensesOf('subscription').filter(s=>s.freq==='monthly').sort((a,b)=>a.dueDay-b.dueDay);
+  const yearly  = expensesOf('subscription').filter(s=>s.freq==='yearly').sort((a,b)=>a.dueMonth-b.dueMonth);
   const totalM  = monthly.reduce((s,x)=>s+x.amount,0);
   const totalY  = yearly.reduce((s,x)=>s+x.amount,0);
   const grandMo = totalM + totalY;
 
   let html = `<div class="section-label">Monthly Subscriptions</div><div class="card-list">`;
   for (const s of monthly) {
+    if (editingSubId === s.id) {
+      html += itemForm('sub', s);
+      continue;
+    }
     const days = s.dueDay ? daysUntil(s.dueDay, null) : null;
     const daysText = days !== null
       ? (days <= 0 ? `<span style="color:var(--red);font-size:12px;font-weight:600">TODAY</span>`
         : days <= 3 ? `<span style="color:var(--orange);font-size:12px;font-weight:600">in ${days}d</span>`
         : `<span style="color:var(--text3);font-size:12px">day ${s.dueDay}</span>`)
       : `<span style="color:var(--text3);font-size:12px">monthly</span>`;
-    html += `<div class="list-row">
+    html += `<div class="list-row" style="cursor:pointer" onclick="editingSubId=${s.id};addingSub=false;render()">
       <div class="row-icon" style="background:rgba(0,122,255,0.1)">${CAT_ICONS[s.cat]||'📱'}</div>
       <div class="row-main">
         <div class="row-title">${s.name}</div>
       </div>
       <div class="row-right">
-        ${editMode
-          ? `<input class="edit-input" type="number" value="${s.amount}" onchange="updateSub(${s.id},'amount',+this.value)" inputmode="decimal">`
-          : `<div class="row-amount">${fmt(s.amount)}</div>`}
+        <div class="row-amount">${fmt(s.amount)}</div>
         <div style="text-align:right">${daysText}</div>
       </div>
+      ${editMode ? `<button class="del-btn" onclick="event.stopPropagation();deleteSub(${s.id})">−</button>` : `<span class="chevron">›</span>`}
     </div>`;
   }
   html += `<div class="list-row" style="background:rgba(0,0,0,0.02)">
@@ -618,19 +976,22 @@ function renderSubs() {
   if (yearly.length) {
     html += `<div class="section-label">Yearly Subscriptions</div><div class="card-list">`;
     for (const s of yearly) {
+      if (editingSubId === s.id) {
+        html += itemForm('sub', s);
+        continue;
+      }
       const days = daysUntil(s.dueDay||1, s.dueMonth);
-      html += `<div class="list-row">
+      html += `<div class="list-row" style="cursor:pointer" onclick="editingSubId=${s.id};addingSub=false;render()">
         <div class="row-icon" style="background:rgba(255,204,0,0.15)">${CAT_ICONS[s.cat]||'📱'}</div>
         <div class="row-main">
           <div class="row-title">${s.name}</div>
           <div class="row-sub" style="color:#b8860b">Yearly · Paid in ${MONTHS[s.dueMonth-1]} · ${fmt(s.amount * 12)} annual</div>
         </div>
         <div class="row-right">
-          ${editMode
-            ? `<input class="edit-input" type="number" value="${s.amount}" onchange="updateSub(${s.id},'amount',+this.value)" inputmode="decimal">`
-            : `<div class="row-amount">${fmt(s.amount)}</div>`}
+          <div class="row-amount">${fmt(s.amount)}</div>
           <div style="font-size:12px;color:${days<=30?'var(--orange)':'var(--text3)'};text-align:right">in ${days}d</div>
         </div>
+        ${editMode ? `<button class="del-btn" onclick="event.stopPropagation();deleteSub(${s.id})">−</button>` : `<span class="chevron">›</span>`}
       </div>`;
     }
     html += `<div class="list-row" style="background:rgba(0,0,0,0.02)">
@@ -646,6 +1007,10 @@ function renderSubs() {
     <div class="wc-row" style="font-weight:600"><span class="label">Total/month</span><span class="val" style="color:var(--red)">${fmt(grandMo)}</span></div>
   </div>`;
 
+  html += `<div class="section-label">Manage Subscriptions</div><div class="settings-group">
+    ${addingSub ? itemForm('sub', null) : `<button class="btn-add-row" onclick="addingSub=true;editingSubId=null;render()">＋ Add Subscription</button>`}
+  </div>`;
+
   return html;
 }
 
@@ -655,6 +1020,7 @@ function itemForm(type, item) {
   const isEdit = item !== null;
   const prefix = isEdit ? (isBill ? 'eb' : 'es') : (isBill ? 'nb' : 'ns');
   const cats = Object.keys(CAT_ICONS);
+  const freqValue = isEdit && item.freq ? item.freq : 'monthly';
   const v = k => isEdit && item[k] != null ? item[k] : '';
   const sel = (k, val) => isEdit && item[k] === val ? 'selected' : '';
   const cancelAction = isEdit ? (isBill ? 'editingBillId=null' : 'editingSubId=null') : (isBill ? 'addingBill=false' : 'addingSub=false');
@@ -687,7 +1053,7 @@ function itemForm(type, item) {
       </div>` : ''}
       <div class="form-field">
         <span class="form-label">Frequency</span>
-        <select id="${prefix}-freq" class="form-select">
+        <select id="${prefix}-freq" class="form-select" onchange="updateDueMonthVisibility('${prefix}')">
           <option value="monthly" ${sel('freq','monthly')}>Monthly</option>
           <option value="yearly" ${sel('freq','yearly')}>Yearly</option>
         </select>
@@ -698,8 +1064,8 @@ function itemForm(type, item) {
         <span class="form-label">Due Day (0 = various)</span>
         <input id="${prefix}-dueday" class="form-input" type="number" inputmode="numeric" value="${isEdit ? item.dueDay : 0}" min="0" max="31">
       </div>
-      <div class="form-field">
-        <span class="form-label">Due Month (if yearly)</span>
+      <div class="form-field" id="${prefix}-duemonth-field" ${freqValue === 'yearly' ? '' : 'hidden'}>
+        <span class="form-label">Due Month</span>
         <select id="${prefix}-duemonth" class="form-select">
           ${MONTHS.map((m,i)=>`<option value="${i+1}" ${isEdit && item.dueMonth===i+1?'selected':''}>${m}</option>`).join('')}
         </select>
@@ -714,32 +1080,6 @@ function itemForm(type, item) {
 
 function renderSettings() {
   const xfer = calcExchange();
-
-  // Bills list
-  let billRows = data.bills.map(b => {
-    if (editingBillId === b.id) return itemForm('bill', b);
-    return `<div class="settings-row" style="cursor:pointer" onclick="editingBillId=${b.id};editingSubId=null;render()">
-      <div style="flex:1;min-width:0">
-        <div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${b.name}</div>
-        <div class="hint">${data.names[b.person]} · ${b.freq === 'yearly' ? 'Yearly ('+MONTHS[b.dueMonth-1]+')' : (b.dueDay ? 'Day '+b.dueDay : 'Various')}</div>
-      </div>
-      <span style="margin-right:4px;font-weight:500">${fmt(b.amount)}</span>
-      <button class="del-btn" onclick="event.stopPropagation();deleteBill(${b.id})">−</button>
-    </div>`;
-  }).join('');
-
-  // Subs list
-  let subRows = data.subscriptions.map(s => {
-    if (editingSubId === s.id) return itemForm('sub', s);
-    return `<div class="settings-row" style="cursor:pointer" onclick="editingSubId=${s.id};editingBillId=null;render()">
-      <div style="flex:1;min-width:0">
-        <div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${s.name}</div>
-        <div class="hint">${s.freq === 'yearly' ? 'Yearly ('+MONTHS[s.dueMonth-1]+')' : (s.dueDay ? 'Day '+s.dueDay : 'Monthly')}</div>
-      </div>
-      <span style="margin-right:4px;font-weight:500">${fmt(s.amount)}</span>
-      <button class="del-btn" onclick="event.stopPropagation();deleteSub(${s.id})">−</button>
-    </div>`;
-  }).join('');
 
   return `
   <div class="section-label">Income (Monthly Net)</div>
@@ -772,33 +1112,14 @@ function renderSettings() {
     </div>
   </div>
 
-  <div class="section-label">Bills</div>
+  <div class="section-label">Budget File</div>
   <div class="settings-group">
-    ${billRows}
-    ${addingBill ? itemForm('bill', null) : `<button class="btn-add-row" onclick="addingBill=true;render()">＋ Add Bill</button>`}
-  </div>
-
-  <div class="section-label">Subscriptions</div>
-  <div class="settings-group">
-    ${subRows}
-    ${addingSub ? itemForm('sub', null) : `<button class="btn-add-row" onclick="addingSub=true;render()">＋ Add Subscription</button>`}
-  </div>
-
-  <div class="section-label">Data</div>
-  <div class="settings-group">
-    <div class="settings-row" onclick="exportData()" style="cursor:pointer">
+    <div class="settings-row">
       <div>
-        <div style="color:var(--blue)">Export Backup</div>
-        <div class="hint">Save all data as a .json file</div>
+        <div>Current File</div>
+        <div class="hint">${documentName}</div>
       </div>
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="var(--blue)"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
-    </div>
-    <div class="settings-row" onclick="importData()" style="cursor:pointer">
-      <div>
-        <div style="color:var(--blue)">Import Backup</div>
-        <div class="hint">Restore from a .json file</div>
-      </div>
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="var(--blue)"><path d="M5 15h4v6h6v-6h4l-7-7-7 7zM5 4v2h14V4H5z"/></svg>
+      <span style="color:${isDirty ? 'var(--orange)' : 'var(--green)'};font-size:14px">${isDirty ? 'Unsaved' : 'Saved'}</span>
     </div>
   </div>
 
@@ -806,33 +1127,28 @@ function renderSettings() {
   <div class="settings-group">
     <div class="settings-row">
       <div><div>Version</div></div>
-      <span style="color:var(--text2);font-size:14px">1.0</span>
-    </div>
-    <div class="settings-row" onclick="resetData()" style="cursor:pointer">
-      <div style="color:var(--red)">Reset to Defaults</div>
+      <span style="color:var(--text2);font-size:14px">2.0</span>
     </div>
   </div>
   <div style="height:16px"></div>`;
 }
 
 // ─── ACTIONS ─────────────────────────────────────────────────────────────────
+function updateDueMonthVisibility(prefix) {
+  const freq = document.getElementById(`${prefix}-freq`);
+  const field = document.getElementById(`${prefix}-duemonth-field`);
+  if (freq && field) field.hidden = freq.value !== 'yearly';
+}
+
 function setBillFilter(f) { billFilter = f; render(); }
-function updateBill(id, key, val) {
-  const b = data.bills.find(x=>x.id===id);
-  if (b) { b[key] = val; save(); }
-}
-function updateSub(id, key, val) {
-  const s = data.subscriptions.find(x=>x.id===id);
-  if (s) { s[key] = val; save(); }
-}
 function deleteBill(id) {
   if (!confirm('Delete this bill?')) return;
-  data.bills = data.bills.filter(b => b.id !== id);
+  data.expenses = data.expenses.filter(item => !(item.type === 'bill' && item.id === id));
   save(); render();
 }
 function deleteSub(id) {
   if (!confirm('Delete this subscription?')) return;
-  data.subscriptions = data.subscriptions.filter(s => s.id !== id);
+  data.expenses = data.expenses.filter(item => !(item.type === 'subscription' && item.id === id));
   save(); render();
 }
 function submitNew(type) {
@@ -845,18 +1161,17 @@ function submitNew(type) {
   const dueMonth = parseInt(document.getElementById(`${p}-duemonth`).value) || 1;
   const cat = document.getElementById(`${p}-cat`).value;
   if (!name || isNaN(amount) || amount <= 0) { alert('Please enter a name and amount.'); return; }
+  const newId = nextExpenseId();
   if (isBill) {
     const person = document.getElementById(`${p}-person`).value;
-    const newId = data.bills.length ? Math.max(...data.bills.map(b=>b.id))+1 : 1;
-    const bill = { id:newId, name, amount, dueDay, person, freq, cat, note:'' };
+    const bill = { id:newId, type:'bill', name, amount, dueDay, person, freq, cat, note:'' };
     if (freq === 'yearly') bill.dueMonth = dueMonth;
-    data.bills.push(bill);
+    data.expenses.push(bill);
     addingBill = false;
   } else {
-    const newId = data.subscriptions.length ? Math.max(...data.subscriptions.map(s=>s.id))+1 : 1;
-    const sub = { id:newId, name, amount, dueDay, freq, cat };
+    const sub = { id:newId, type:'subscription', name, amount, dueDay, freq, cat };
     if (freq === 'yearly') sub.dueMonth = dueMonth;
-    data.subscriptions.push(sub);
+    data.expenses.push(sub);
     addingSub = false;
   }
   save(); render();
@@ -874,66 +1189,16 @@ function saveEdit(type, id) {
   if (!name || isNaN(amount) || amount <= 0) { alert('Please enter a name and amount.'); return; }
   if (isBill) {
     const person = document.getElementById(p+'-person').value;
-    const b = data.bills.find(x => x.id === id);
+    const b = data.expenses.find(x => x.type === 'bill' && x.id === id);
     if (b) { b.name=name; b.amount=amount; b.freq=freq; b.dueDay=dueDay; b.cat=cat; b.person=person; if (freq==='yearly') b.dueMonth=dueMonth; }
     editingBillId = null;
   } else {
-    const s = data.subscriptions.find(x => x.id === id);
+    const s = data.expenses.find(x => x.type === 'subscription' && x.id === id);
     if (s) { s.name=name; s.amount=amount; s.freq=freq; s.dueDay=dueDay; s.cat=cat; if (freq==='yearly') s.dueMonth=dueMonth; }
     editingSubId = null;
   }
   save(); render();
 }
-
-function exportData() {
-  const json = JSON.stringify(data, null, 2);
-  const blob = new Blob([json], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'budget-backup-' + new Date().toISOString().slice(0,10) + '.json';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-}
-
-function importData() {
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.accept = '.json';
-  input.onchange = e => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = ev => {
-      try {
-        const imported = JSON.parse(ev.target.result);
-        if (!imported.income || !imported.bills || !imported.subscriptions) {
-          alert('Invalid backup file — missing required fields.');
-          return;
-        }
-        if (!confirm('Replace all current data with this backup?')) return;
-        data = imported;
-        if (!data.names) data.names = { papa: 'Papa', mama: 'Mama' };
-        save();
-        render();
-      } catch(err) {
-        alert('Could not read file. Make sure it is a valid budget backup.');
-      }
-    };
-    reader.readAsText(file);
-  };
-  input.click();
-}
-
-function resetData() {
-  if (confirm('Reset all data to defaults?')) {
-    data = JSON.parse(JSON.stringify(DEFAULTS));
-    save(); render();
-  }
-}
-
 
 // ─── RENDER CHART SECTION ────────────────────────────────────────────────────
 function buildDonut(entries, total) {
@@ -962,7 +1227,7 @@ function buildDonut(entries, total) {
 function renderChartSection() {
   // Main chart: bills only (subs are tracked separately below)
   const totals = {};
-  for (const b of data.bills) {
+  for (const b of expensesOf('bill')) {
     totals[b.cat] = (totals[b.cat] || 0) + b.amount;
   }
   const entries = Object.entries(totals)
@@ -986,7 +1251,7 @@ function renderChartSection() {
 
   // Subscriptions chart: grouped by category
   const subTotals = {};
-  for (const s of data.subscriptions) {
+  for (const s of expensesOf('subscription')) {
     if (s.amount > 0) subTotals[s.cat] = (subTotals[s.cat] || 0) + s.amount;
   }
   const subEntries = Object.entries(subTotals)
@@ -1048,6 +1313,7 @@ function renderChartSection() {
 function render() {
   const titles = { home:'Dashboard', bills:'Bills', subs:'Subscriptions', settings:'Settings' };
   document.getElementById('page-title').textContent = titles[currentTab];
+  updateDocumentChrome();
   const showEdit = currentTab !== 'settings';
   document.getElementById('edit-btn').style.visibility = showEdit ? 'visible' : 'hidden';
   const map = { home:renderHome, bills:renderBills, subs:renderSubs, settings:renderSettings };
