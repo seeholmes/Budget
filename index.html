@@ -45,10 +45,13 @@
       font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
       background: var(--bg);
       color: var(--text);
-      max-width: 430px;
-      margin: 0 auto;
       min-height: 100dvh;
       overflow-x: hidden;
+    }
+    #app {
+      max-width: 1120px;
+      min-height: 100dvh;
+      margin: 0 auto;
     }
     /* HEADER */
     .header {
@@ -58,13 +61,14 @@
       background: var(--header-bg);
       backdrop-filter: saturate(180%) blur(20px);
       -webkit-backdrop-filter: saturate(180%) blur(20px);
-      padding: calc(var(--safe-top) + 12px) 16px 12px;
+      padding: calc(var(--safe-top) + 14px) 20px 14px;
       border-bottom: 0.5px solid var(--sep);
       display: flex;
       align-items: center;
       justify-content: space-between;
+      gap: 14px;
     }
-    .title-wrap { flex: 1; min-width: 0; text-align: center; }
+    .title-wrap { flex: 1; min-width: 160px; text-align: left; }
     .header h1 { font-size: 17px; font-weight: 600; letter-spacing: -0.4px; }
     .doc-status {
       color: var(--text2);
@@ -77,6 +81,7 @@
     }
     .doc-status.unsaved { color: var(--orange); }
     .header-actions { display: flex; gap: 12px; align-items: center; }
+    .file-actions { gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
     .hdr-btn {
       background: none; border: none; color: var(--blue);
       font-size: 17px; font-family: inherit; cursor: pointer;
@@ -84,34 +89,58 @@
       display: flex; align-items: center; justify-content: center;
     }
     .hdr-btn:disabled { color: var(--text3); cursor: default; }
+    .file-menu-btn { display: none; }
+    .tool-btn {
+      border: 1px solid var(--sep);
+      background: var(--card);
+      color: var(--text);
+      border-radius: 8px;
+      min-height: 38px;
+      padding: 0 12px;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .tool-btn.primary {
+      border-color: var(--blue);
+      background: var(--blue);
+      color: white;
+    }
     /* MAIN SCROLL AREA */
     main {
-      padding-bottom: calc(var(--safe-bottom) + 74px);
+      padding-bottom: calc(var(--safe-bottom) + 32px);
       min-height: calc(100dvh - 50px);
     }
     /* BOTTOM TAB BAR */
     .tab-bar {
-      position: fixed;
-      bottom: 0; left: 50%; transform: translateX(-50%);
-      width: 100%; max-width: 430px;
-      background: var(--tab-bg);
+      position: sticky;
+      top: calc(var(--safe-top) + 66px);
+      margin: 12px 16px 4px;
+      width: auto;
+      max-width: none;
+      background: rgba(249,249,249,0.82);
       backdrop-filter: saturate(180%) blur(20px);
       -webkit-backdrop-filter: saturate(180%) blur(20px);
-      border-top: 0.5px solid var(--sep);
+      border: 1px solid var(--sep);
+      border-radius: 10px;
       display: flex;
-      padding-bottom: var(--safe-bottom);
-      z-index: 100;
+      padding: 5px;
+      z-index: 90;
+      gap: 4px;
     }
     .tab-btn {
       flex: 1; background: none; border: none;
-      display: flex; flex-direction: column; align-items: center;
-      padding: 8px 4px 4px; gap: 3px;
+      display: flex; flex-direction: row; align-items: center; justify-content: center;
+      padding: 8px 10px; gap: 8px;
       cursor: pointer; color: var(--text3); font-family: inherit;
-      min-height: 50px;
+      min-height: 40px;
+      border-radius: 8px;
     }
-    .tab-btn.active { color: var(--blue); }
-    .tab-btn svg { width: 24px; height: 24px; }
-    .tab-btn span { font-size: 10px; font-weight: 500; }
+    .tab-btn.active { color: var(--blue); background: var(--card); box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+    .tab-btn svg { width: 20px; height: 20px; }
+    .tab-btn span { font-size: 13px; font-weight: 600; }
     /* SECTION LABEL */
     .section-label {
       font-size: 13px; font-weight: 600; color: var(--text2);
@@ -257,6 +286,40 @@
     .btn-cancel { background: var(--sep); color: var(--text); border: none; border-radius: 10px; padding: 12px 18px; font-size: 15px; font-family: inherit; font-weight: 500; cursor: pointer; }
     .btn-add-row { width: 100%; background: none; border: none; color: var(--blue); font-size: 16px; font-family: inherit; padding: 13px 16px; text-align: left; cursor: pointer; display: flex; align-items: center; gap: 6px; }
     .del-btn { background: none; border: none; color: var(--red); font-size: 20px; cursor: pointer; padding: 4px 8px; line-height: 1; flex-shrink: 0; }
+    @media (max-width: 640px) {
+      #app { max-width: 430px; }
+      .header {
+        padding: calc(var(--safe-top) + 12px) 16px 12px;
+        gap: 10px;
+      }
+      .title-wrap { text-align: center; min-width: 0; }
+      .file-actions { display: none; }
+      .file-menu-btn { display: flex; }
+      main { padding-bottom: calc(var(--safe-bottom) + 74px); }
+      .tab-bar {
+        position: fixed;
+        bottom: 0; top: auto; left: 50%; transform: translateX(-50%);
+        width: 100%; max-width: 430px;
+        margin: 0;
+        background: var(--tab-bg);
+        border: none;
+        border-top: 0.5px solid var(--sep);
+        border-radius: 0;
+        padding: 0 0 var(--safe-bottom);
+        gap: 0;
+        z-index: 100;
+      }
+      .tab-btn {
+        flex-direction: column;
+        padding: 8px 4px 4px;
+        gap: 3px;
+        min-height: 50px;
+        border-radius: 0;
+      }
+      .tab-btn.active { background: none; box-shadow: none; }
+      .tab-btn svg { width: 24px; height: 24px; }
+      .tab-btn span { font-size: 10px; font-weight: 500; }
+    }
     /* FILE MENU */
     [hidden] { display: none !important; }
     .sheet {
@@ -304,18 +367,21 @@
 <body>
 <div id="app">
   <header class="header">
-    <div class="header-actions">
-      <button class="hdr-btn" id="file-btn" onclick="openFileMenu()">File</button>
-    </div>
     <div class="title-wrap">
       <h1 id="page-title">Dashboard</h1>
       <div id="doc-status" class="doc-status">Untitled Budget</div>
     </div>
+    <div class="header-actions file-actions" aria-label="Budget file actions">
+      <button class="tool-btn" onclick="newBudget()">New</button>
+      <button class="tool-btn" onclick="openBudget()">Open</button>
+      <button class="tool-btn primary" onclick="saveBudget()">Save</button>
+      <button class="tool-btn" onclick="saveBudgetAs()">Save As</button>
+    </div>
     <div class="header-actions">
+      <button class="hdr-btn file-menu-btn" id="file-btn" onclick="openFileMenu()">File</button>
       <button class="hdr-btn" id="edit-btn" onclick="toggleEdit()">Edit</button>
     </div>
   </header>
-  <main id="main"></main>
   <nav class="tab-bar">
     <button class="tab-btn active" onclick="switchTab('home')" data-tab="home">
       <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
@@ -334,6 +400,7 @@
       <span>Settings</span>
     </button>
   </nav>
+  <main id="main"></main>
 </div>
 <div id="file-sheet" class="sheet" hidden onclick="closeFileMenu()">
   <div class="sheet-card" onclick="event.stopPropagation()">

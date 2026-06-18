@@ -4,14 +4,14 @@ A small browser/PWA family budget tracker.
 
 ## Workflow
 
-Use the File button in the header for the normal document workflow:
+Use the document toolbar in the header for the normal file workflow:
 
 - New starts a blank budget after warning about unsaved changes.
 - Open loads an existing `.json` budget file.
 - Save writes back to the current file when the browser supports file handles; otherwise it downloads the budget file.
 - Save As always prompts for or downloads a new budget file.
 
-The header shows the current file name and marks it as Unsaved after any budget edit. The app warns before closing the browser tab with unsaved changes and before New or Open would discard edits.
+The header shows the current file name and marks it as Unsaved after any budget edit. On smaller screens, the same file actions are available from the File button. The app warns before closing the browser tab with unsaved changes and before New or Open would discard edits.
 
 Bills are managed on the Bills tab. Subscriptions are managed on the Subscriptions tab. Household names and monthly net income are managed on Settings.
 
