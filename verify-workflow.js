@@ -137,6 +137,10 @@ function assert(condition, message) {
 }
 
 async function run() {
+  assert(!html.includes('data-tab="settings"'), 'Settings tab should not be present in the main navigation.');
+  assert(!html.includes('renderSettings'), 'Settings renderer should be removed after moving income to Dashboard.');
+  assert(html.includes('Household Income'), 'Dashboard should expose household income entry.');
+
   const legacy = {
     names: { papa: 'A', mama: 'B' },
     income: { papa: 6000, mama: 5000 },
@@ -158,6 +162,13 @@ async function run() {
   const yearlyBillForm = vm.runInContext('itemForm("bill", { id: 1, type: "bill", name: "Taxes", amount: 100, dueDay: 1, dueMonth: 4, person: "papa", freq: "yearly", cat: "misc" })', formFlow);
   assert(newBillForm.includes('id="nb-duemonth-field" hidden'), 'Monthly bill form should hide the yearly-only due month field.');
   assert(yearlyBillForm.includes('id="eb-duemonth-field" >'), 'Yearly bill form should show the due month field.');
+
+  const shellFlow = createHarness();
+  vm.runInContext('render()', shellFlow);
+  assert(shellFlow.__harness.elements.get('main').innerHTML.includes('Household Income'), 'Dashboard should render household income inputs.');
+  assert(shellFlow.__harness.elements.get('edit-btn').style.display === 'none', 'Home should not show a dead edit/delete control.');
+  vm.runInContext('switchTab("bills")', shellFlow);
+  assert(shellFlow.__harness.elements.get('edit-btn').style.display === 'flex', 'Bills should show the contextual delete control.');
 
   const dirtyGuard = createHarness({ confirms: [false] });
   vm.runInContext(`data.expenses.push({ id: 1, type: 'bill', name: 'Rent', amount: 1200, dueDay: 1, dueMonth: 1, person: 'papa', freq: 'monthly', cat: 'housing' }); isDirty = true;`, dirtyGuard);

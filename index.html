@@ -379,7 +379,7 @@
     </div>
     <div class="header-actions">
       <button class="hdr-btn file-menu-btn" id="file-btn" onclick="openFileMenu()">File</button>
-      <button class="hdr-btn" id="edit-btn" onclick="toggleEdit()">Edit</button>
+      <button class="hdr-btn" id="edit-btn" onclick="toggleEdit()">Delete</button>
     </div>
   </header>
   <nav class="tab-bar">
@@ -394,10 +394,6 @@
     <button class="tab-btn" onclick="switchTab('subs')" data-tab="subs">
       <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V8h16v10zM6 10h12v2H6zm0 4h8v2H6z"/></svg>
       <span>Subs</span>
-    </button>
-    <button class="tab-btn" onclick="switchTab('settings')" data-tab="settings">
-      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
-      <span>Settings</span>
     </button>
   </nav>
   <main id="main"></main>
@@ -799,13 +795,13 @@ function switchTab(tab) {
   editingBillId = null;
   editingSubId = null;
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
-  document.getElementById('edit-btn').textContent = 'Edit';
+  document.getElementById('edit-btn').textContent = 'Delete';
   render();
 }
 
 function toggleEdit() {
   editMode = !editMode;
-  document.getElementById('edit-btn').textContent = editMode ? 'Done' : 'Edit';
+  document.getElementById('edit-btn').textContent = editMode ? 'Done' : 'Delete';
   render();
 }
 
@@ -835,6 +831,28 @@ function renderHome() {
   let html = `<div style="padding:16px 16px 0">
     <div style="font-size:22px;font-weight:700;letter-spacing:-0.5px">${MONTHS_FULL[now.getMonth()]} ${now.getFullYear()}</div>
     <div style="font-size:14px;color:var(--text2);margin-top:2px">Monthly Budget Overview</div>
+  </div>`;
+
+  html += `<div class="section-label">Household Income</div>
+  <div class="settings-group">
+    <div class="settings-row">
+      <div style="flex:1;min-width:0">
+        <input class="form-input" type="text" value="${data.names.papa}" autocomplete="off" style="font-size:16px;margin-bottom:4px"
+          onchange="data.names.papa=this.value.trim()||'Papa';save();render()">
+        <div class="hint">Monthly net income</div>
+      </div>
+      <input class="edit-input" type="number" value="${data.income.papa}" inputmode="decimal"
+        onchange="data.income.papa=+this.value;save();render()">
+    </div>
+    <div class="settings-row">
+      <div style="flex:1;min-width:0">
+        <input class="form-input" type="text" value="${data.names.mama}" autocomplete="off" style="font-size:16px;margin-bottom:4px"
+          onchange="data.names.mama=this.value.trim()||'Mama';save();render()">
+        <div class="hint">Monthly net income</div>
+      </div>
+      <input class="edit-input" type="number" value="${data.income.mama}" inputmode="decimal"
+        onchange="data.income.mama=+this.value;save();render()">
+    </div>
   </div>`;
 
   // Summary cards
@@ -1145,61 +1163,6 @@ function itemForm(type, item) {
   </div>`;
 }
 
-function renderSettings() {
-  const xfer = calcExchange();
-
-  return `
-  <div class="section-label">Income (Monthly Net)</div>
-  <div class="settings-group">
-    <div class="settings-row">
-      <div style="flex:1;min-width:0">
-        <input class="form-input" type="text" value="${data.names.papa}" autocomplete="off" style="font-size:16px;margin-bottom:4px"
-          onchange="data.names.papa=this.value.trim()||'Papa';save();render()">
-        <div class="hint">Per month</div>
-      </div>
-      <input class="edit-input" type="number" value="${data.income.papa}" inputmode="decimal"
-        onchange="data.income.papa=+this.value;save();render()">
-    </div>
-    <div class="settings-row">
-      <div style="flex:1;min-width:0">
-        <input class="form-input" type="text" value="${data.names.mama}" autocomplete="off" style="font-size:16px;margin-bottom:4px"
-          onchange="data.names.mama=this.value.trim()||'Mama';save();render()">
-        <div class="hint">Per month</div>
-      </div>
-      <input class="edit-input" type="number" value="${data.income.mama}" inputmode="decimal"
-        onchange="data.income.mama=+this.value;save();render()">
-    </div>
-  </div>
-
-  <div class="section-label">Monthly Transfer</div>
-  <div class="settings-group">
-    <div class="settings-row">
-      <div><div>${xfer >= 0 ? data.names.papa+' → '+data.names.mama : data.names.mama+' → '+data.names.papa}</div><div class="hint">Auto-calculated to equalize balances</div></div>
-      <span style="font-size:16px;font-weight:500">${fmt(Math.abs(xfer))}</span>
-    </div>
-  </div>
-
-  <div class="section-label">Budget File</div>
-  <div class="settings-group">
-    <div class="settings-row">
-      <div>
-        <div>Current File</div>
-        <div class="hint">${documentName}</div>
-      </div>
-      <span style="color:${isDirty ? 'var(--orange)' : 'var(--green)'};font-size:14px">${isDirty ? 'Unsaved' : 'Saved'}</span>
-    </div>
-  </div>
-
-  <div class="section-label">App</div>
-  <div class="settings-group">
-    <div class="settings-row">
-      <div><div>Version</div></div>
-      <span style="color:var(--text2);font-size:14px">2.0</span>
-    </div>
-  </div>
-  <div style="height:16px"></div>`;
-}
-
 // ─── ACTIONS ─────────────────────────────────────────────────────────────────
 function updateDueMonthVisibility(prefix) {
   const freq = document.getElementById(`${prefix}-freq`);
@@ -1378,12 +1341,12 @@ function renderChartSection() {
 }
 // ─── RENDER DISPATCH ──────────────────────────────────────────────────────────
 function render() {
-  const titles = { home:'Dashboard', bills:'Bills', subs:'Subscriptions', settings:'Settings' };
+  const titles = { home:'Dashboard', bills:'Bills', subs:'Subscriptions' };
   document.getElementById('page-title').textContent = titles[currentTab];
   updateDocumentChrome();
-  const showEdit = currentTab !== 'settings';
-  document.getElementById('edit-btn').style.visibility = showEdit ? 'visible' : 'hidden';
-  const map = { home:renderHome, bills:renderBills, subs:renderSubs, settings:renderSettings };
+  const showEdit = currentTab === 'bills' || currentTab === 'subs';
+  document.getElementById('edit-btn').style.display = showEdit ? 'flex' : 'none';
+  const map = { home:renderHome, bills:renderBills, subs:renderSubs };
   document.getElementById('main').innerHTML = (map[currentTab] || renderHome)();
 }
 

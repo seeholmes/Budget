@@ -13,7 +13,7 @@ Use the document toolbar in the header for the normal file workflow:
 
 The header shows the current file name and marks it as Unsaved after any budget edit. On smaller screens, the same file actions are available from the File button. The app warns before closing the browser tab with unsaved changes and before New or Open would discard edits.
 
-Bills are managed on the Bills tab. Subscriptions are managed on the Subscriptions tab. Household names and monthly net income are managed on Settings.
+Household names and monthly net income are managed on the Dashboard. Bills are managed on the Bills tab. Subscriptions are managed on the Subscriptions tab.
 
 ## Data Compatibility
 
