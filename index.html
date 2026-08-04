@@ -345,6 +345,14 @@
       font-size: 13px;
       margin-top: 10px;
     }
+    .transfer-setup {
+      display: grid;
+      grid-template-columns: minmax(0, 1.4fr) minmax(120px, 1fr);
+      gap: 10px;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 0.5px solid var(--sep);
+    }
     .notice-card {
       margin: 12px 16px 0;
       padding: 12px 14px;
@@ -396,6 +404,7 @@
     }
     .ledger-stat-label { color: var(--text2); font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
     .ledger-stat-value { font-size: 15px; font-weight: 700; margin-top: 3px; }
+    .ledger-stat-detail { color: var(--text2); font-size: 10px; margin-top: 2px; line-height: 1.2; }
     .ledger-items { padding-top: 5px; }
     .ledger-item {
       display: grid;
@@ -409,14 +418,8 @@
     .ledger-item-name { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .ledger-item-date { color: var(--text2); font-size: 11px; margin-top: 2px; }
     .ledger-item-amount { font-size: 13px; font-weight: 600; white-space: nowrap; }
+    .ledger-item-amount.incoming { color: var(--green); }
     .ledger-empty { color: var(--text2); font-size: 13px; padding-top: 10px; }
-    .period-transfer {
-      padding: 10px 14px;
-      border-top: 0.5px solid var(--sep);
-      color: var(--text2);
-      font-size: 13px;
-      text-align: center;
-    }
     @media (max-width: 640px) {
       #app { max-width: 430px; }
       .header {
@@ -454,6 +457,9 @@
       .pay-setup-grid .pay-date-field { grid-column: 1 / -1; }
       .ledger-grid { grid-template-columns: 1fr; }
       .ledger + .ledger { border-left: none; border-top: 0.5px solid var(--sep); }
+    }
+    @media (max-width: 380px) {
+      .transfer-setup { grid-template-columns: 1fr; }
     }
     /* FILE MENU */
     [hidden] { display: none !important; }
@@ -563,13 +569,14 @@
 <script>
 // ─── DATA ───────────────────────────────────────────────────────────────────
 const DEFAULTS = {
-  schemaVersion: 3,
+  schemaVersion: 4,
   names: { papa: 'Papa', mama: 'Mama' },
   income: { papa: 0, mama: 0 },
   paySchedule: {
     cadence: 'biweekly',
     anchorDate: '',
-    paychecks: { papa: 0, mama: 0 }
+    paychecks: { papa: 0, mama: 0 },
+    transfer: { from: 'papa', amount: 0 }
   },
   expenses: []
 };
@@ -619,6 +626,12 @@ function normalizeBudget(raw) {
     paychecks: {
       papa: Number.isFinite(+(sourceSchedule.paychecks && sourceSchedule.paychecks.papa)) ? Math.max(0, +sourceSchedule.paychecks.papa) : 0,
       mama: Number.isFinite(+(sourceSchedule.paychecks && sourceSchedule.paychecks.mama)) ? Math.max(0, +sourceSchedule.paychecks.mama) : 0
+    },
+    transfer: {
+      from: sourceSchedule.transfer && sourceSchedule.transfer.from === 'mama' ? 'mama' : 'papa',
+      amount: Number.isFinite(+(sourceSchedule.transfer && sourceSchedule.transfer.amount))
+        ? Math.max(0, +sourceSchedule.transfer.amount)
+        : 0
     }
   };
   const legacyBills = Array.isArray(source.bills)
@@ -685,7 +698,7 @@ function ensureBudgetFileName(name) {
 function serializeBudget() {
   return JSON.stringify({
     ...normalizeBudget(data),
-    schemaVersion: 3,
+    schemaVersion: 4,
     savedAt: new Date().toISOString()
   }, null, 2);
 }
@@ -960,9 +973,18 @@ function expenseOccurrences(person, start, end) {
 function ledgerForPeriod(person, start) {
   const end = addDays(start, 14);
   const items = expenseOccurrences(person, start, end);
-  const income = data.paySchedule.paychecks[person] || 0;
-  const outgoing = items.reduce((sum, item) => sum + item.expense.amount, 0);
-  return { person, start, end, income, outgoing, net: income - outgoing, items };
+  const paycheck = data.paySchedule.paychecks[person] || 0;
+  const expenseOutgoing = items.reduce((sum, item) => sum + item.expense.amount, 0);
+  const transfer = data.paySchedule.transfer || DEFAULTS.paySchedule.transfer;
+  const transferTo = transfer.from === 'papa' ? 'mama' : 'papa';
+  const transferOut = person === transfer.from ? transfer.amount : 0;
+  const transferIn = person === transferTo ? transfer.amount : 0;
+  const income = paycheck + transferIn;
+  const outgoing = expenseOutgoing + transferOut;
+  return {
+    person, start, end, paycheck, expenseOutgoing, transferIn, transferOut,
+    income, outgoing, net: income - outgoing, items
+  };
 }
 
 function nextAnnualOccurrence(expense, today = new Date()) {
@@ -1114,7 +1136,7 @@ function renderHome() {
         <div class="sc-row"><span>Income/mo</span><input class="person-income-input" type="number" value="${income}" inputmode="decimal"
           onchange="updatePerson('${cls}','income',this.value)"></div>`}
       <div class="sc-row"><span>Outgoing</span><span style="color:var(--red)">–${fmt(bills)}</span></div>
-      <div class="sc-row"><span>Transfer</span><span style="color:${xferColor};font-size:12px">${xferLabel}</span></div>
+      <div class="sc-row"><span>Suggested/mo</span><span style="color:${xferColor};font-size:12px">${xferLabel}</span></div>
       <div class="sc-row total">
         <span>Balance</span>
         <span style="color:${bal >= 0 ? 'var(--green)' : 'var(--red)'}">${fmtSigned(bal)}</span>
@@ -1131,7 +1153,7 @@ function renderHome() {
     <div class="wide-card-title">Household Monthly</div>
     <div class="wc-row"><span class="label">Combined Income</span><span class="val">${fmt(totalIncome)}</span></div>
     <div class="wc-row"><span class="label">Total Expenses</span><span class="val" style="color:var(--red)">–${fmt(totalExp)}</span></div>
-    <div class="wc-row"><span class="label">${exchange >= 0 ? data.names.papa+' → '+data.names.mama : data.names.mama+' → '+data.names.papa}</span><span class="val" style="color:var(--text2)">${fmt(Math.abs(exchange))}</span></div>
+    <div class="wc-row"><span class="label">Suggested/month · ${exchange >= 0 ? data.names.papa+' → '+data.names.mama : data.names.mama+' → '+data.names.papa}</span><span class="val" style="color:var(--text2)">${fmt(Math.abs(exchange))}</span></div>
     <div class="wc-row" style="font-weight:600">
       <span class="label">Net Balance</span>
       <span class="val" style="color:${totalBal >= 0 ? 'var(--green)' : 'var(--red)'}">${fmtSigned(totalBal)}</span>
@@ -1187,21 +1209,40 @@ function renderHome() {
 function renderPersonLedger(ledger) {
   const person = ledger.person;
   const netColor = ledger.net >= 0 ? 'var(--green)' : 'var(--red)';
-  const items = ledger.items.length
-    ? ledger.items.map(({ expense, date }) => `<div class="ledger-item">
+  const otherPerson = person === 'papa' ? 'mama' : 'papa';
+  const transferItem = ledger.transferIn
+    ? `<div class="ledger-item">
+        <div>
+          <div class="ledger-item-name">Payday transfer</div>
+          <div class="ledger-item-date">${formatPeriodDate(ledger.start)} · From ${data.names[otherPerson]}</div>
+        </div>
+        <div class="ledger-item-amount incoming">+${fmt(ledger.transferIn)}</div>
+      </div>`
+    : ledger.transferOut
+      ? `<div class="ledger-item">
+          <div>
+            <div class="ledger-item-name">Payday transfer</div>
+            <div class="ledger-item-date">${formatPeriodDate(ledger.start)} · To ${data.names[otherPerson]}</div>
+          </div>
+          <div class="ledger-item-amount">–${fmt(ledger.transferOut)}</div>
+        </div>`
+      : '';
+  const expenseItems = ledger.items.map(({ expense, date }) => `<div class="ledger-item">
         <div>
           <div class="ledger-item-name">${expense.name}</div>
-          <div class="ledger-item-date">${formatPeriodDate(date)}${expense.freq === 'yearly' ? ' · Annual' : ''}</div>
+          <div class="ledger-item-date">${formatPeriodDate(date)} · ${expense.type === 'subscription' ? 'Subscription' : 'Bill'}${expense.freq === 'yearly' ? ' · Annual' : ''}</div>
         </div>
         <div class="ledger-item-amount">–${fmt(expense.amount)}</div>
-      </div>`).join('')
+      </div>`).join('');
+  const items = (transferItem || expenseItems)
+    ? transferItem + expenseItems
     : `<div class="ledger-empty">No payments due</div>`;
 
   return `<section class="ledger ${person}">
     <div class="ledger-name">${data.names[person]}</div>
     <div class="ledger-summary">
-      <div><div class="ledger-stat-label">Incoming</div><div class="ledger-stat-value" style="color:var(--green)">${fmt(ledger.income)}</div></div>
-      <div><div class="ledger-stat-label">Outgoing</div><div class="ledger-stat-value" style="color:var(--red)">${fmt(ledger.outgoing)}</div></div>
+      <div><div class="ledger-stat-label">Incoming</div><div class="ledger-stat-value" style="color:var(--green)">${fmt(ledger.income)}</div><div class="ledger-stat-detail">Pay ${fmt(ledger.paycheck)}${ledger.transferIn ? ` + transfer ${fmt(ledger.transferIn)}` : ''}</div></div>
+      <div><div class="ledger-stat-label">Outgoing</div><div class="ledger-stat-value" style="color:var(--red)">${fmt(ledger.outgoing)}</div><div class="ledger-stat-detail">Expenses ${fmt(ledger.expenseOutgoing)}${ledger.transferOut ? ` + transfer ${fmt(ledger.transferOut)}` : ''}</div></div>
       <div><div class="ledger-stat-label">Remaining</div><div class="ledger-stat-value" style="color:${netColor}">${fmtSigned(ledger.net)}</div></div>
     </div>
     <div class="ledger-items">${items}</div>
@@ -1254,6 +1295,19 @@ function renderPayPeriods() {
         <input class="form-input" type="number" inputmode="decimal" value="${schedule.paychecks.mama}" onchange="updatePaycheck('mama',this.value)">
       </label>
     </div>
+    <div class="transfer-setup">
+      <label class="form-field">
+        <span class="form-label">Payday transfer direction</span>
+        <select class="form-select" onchange="updatePayTransfer('from',this.value)">
+          <option value="papa" ${schedule.transfer.from === 'papa' ? 'selected' : ''}>${data.names.papa} to ${data.names.mama}</option>
+          <option value="mama" ${schedule.transfer.from === 'mama' ? 'selected' : ''}>${data.names.mama} to ${data.names.papa}</option>
+        </select>
+      </label>
+      <label class="form-field">
+        <span class="form-label">Actual amount each payday</span>
+        <input class="form-input" type="number" inputmode="decimal" min="0" step="0.01" value="${schedule.transfer.amount}" onchange="updatePayTransfer('amount',this.value)">
+      </label>
+    </div>
     <div class="pay-setup-note">Every two weeks · ${data.names.papa} ${fmt(monthlyIncome('papa'))}/mo avg · ${data.names.mama} ${fmt(monthlyIncome('mama'))}/mo avg</div>
   </div>`;
 
@@ -1279,10 +1333,6 @@ function renderPayPeriods() {
     const papa = ledgerForPeriod('papa', start);
     const mama = ledgerForPeriod('mama', start);
     const isCurrent = today >= start && today < end;
-    const transfer = (papa.net - mama.net) / 2;
-    const from = transfer >= 0 ? data.names.papa : data.names.mama;
-    const to = transfer >= 0 ? data.names.mama : data.names.papa;
-    const transferText = Math.abs(transfer) < 0.5 ? 'No balancing transfer needed' : `Suggested transfer: ${from} sends ${to} ${fmt(Math.abs(transfer))}`;
     html += `<article class="period-card${isCurrent ? ' current' : ''}">
       <div class="period-head">
         <div>
@@ -1292,7 +1342,6 @@ function renderPayPeriods() {
         ${isCurrent ? `<span class="period-badge">Current</span>` : ''}
       </div>
       <div class="ledger-grid">${renderPersonLedger(papa)}${renderPersonLedger(mama)}</div>
-      <div class="period-transfer">${transferText}</div>
     </article>`;
   }
   return html;
@@ -1556,6 +1605,13 @@ function updatePaySchedule(key, value) {
 
 function updatePaycheck(person, value) {
   data.paySchedule.paychecks[person] = Math.max(0, +value || 0);
+  save();
+  render();
+}
+
+function updatePayTransfer(key, value) {
+  if (key === 'from') data.paySchedule.transfer.from = value === 'mama' ? 'mama' : 'papa';
+  if (key === 'amount') data.paySchedule.transfer.amount = Math.max(0, +value || 0);
   save();
   render();
 }

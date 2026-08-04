@@ -12,13 +12,13 @@ Use the document toolbar in the header for the normal file workflow:
 
 The header shows the current file name and marks it as Unsaved after any budget edit. On smaller screens, the same file actions are available from the File button. The app warns before closing the browser tab with unsaved changes and before New or Open would discard edits.
 
-Household names and income are edited directly in the Papa and Mama Dashboard cards. The Pay tab stores one shared biweekly payday and a separate net paycheck for each person, then derives average monthly income automatically. Each pay period shows independent incoming, outgoing, and remaining totals for Papa and Mama, followed by a suggested balancing transfer.
+Household names and income are edited directly in the Papa and Mama Dashboard cards. The Pay tab stores one shared biweekly payday and a separate net paycheck for each person, then derives average monthly income automatically. A recurring actual transfer amount and direction can be entered for every payday. Each pay period counts that transfer as incoming for the receiver and outgoing for the sender. The Dashboard keeps its calculated monthly transfer as guidance.
 
 Bills are managed on the Bills tab. Subscriptions are managed on the Subscriptions tab, and every expense is assigned to the person responsible for paying it. Annual items use the actual payment amount and appear in both pay-period ledgers and the annual look-ahead. The header includes a saved light/dark mode toggle.
 
 ## Data Compatibility
 
-Version 3 stores a shared biweekly pay schedule, separate paycheck amounts, and a person on every bill or subscription. Yearly expenses store the actual annual payment while monthly summaries derive the monthly equivalent.
+Version 4 stores a shared biweekly pay schedule, separate paycheck amounts, the recurring payday transfer, and a person on every bill or subscription. Yearly expenses store the actual annual payment while monthly summaries derive the monthly equivalent.
 
 Older app data and backup files are migrated when loaded. Version 2 yearly averages are converted back to annual payments. Existing subscriptions without a person are kept as `unassigned` until Papa or Mama is selected, and older files with separate `bills` and `subscriptions` arrays remain supported. Existing local `budget_v1` browser data is also recovered on first launch and marked unsaved so it can be saved into the new file workflow.
 
@@ -30,4 +30,4 @@ Run the workflow verifier from the project root:
 node verify-workflow.js
 ```
 
-It checks legacy and annual-payment migration, pay-period calculations, separate ledgers, single-source serialization, dirty-state warnings, Open, Save, save fallback, and close-warning behavior.
+It checks legacy and annual-payment migration, recurring transfers, pay-period calculations, separate ledgers, single-source serialization, dirty-state warnings, Open, Save, save fallback, and close-warning behavior.
