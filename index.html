@@ -334,6 +334,89 @@
     .btn-cancel { background: var(--sep); color: var(--text); border: none; border-radius: 10px; padding: 12px 18px; font-size: 15px; font-family: inherit; font-weight: 500; cursor: pointer; }
     .btn-add-row { width: 100%; background: none; border: none; color: var(--blue); font-size: 16px; font-family: inherit; padding: 13px 16px; text-align: left; cursor: pointer; display: flex; align-items: center; gap: 6px; }
     .del-btn { background: none; border: none; color: var(--red); font-size: 20px; cursor: pointer; padding: 4px 8px; line-height: 1; flex-shrink: 0; }
+    /* PAY PERIODS */
+    .pay-setup-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr 1fr;
+      gap: 10px;
+    }
+    .pay-setup-note {
+      color: var(--text2);
+      font-size: 13px;
+      margin-top: 10px;
+    }
+    .notice-card {
+      margin: 12px 16px 0;
+      padding: 12px 14px;
+      background: rgba(255,149,0,0.1);
+      border: 1px solid rgba(255,149,0,0.35);
+      border-radius: 10px;
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.35;
+    }
+    .period-card {
+      margin: 0 16px 12px;
+      background: var(--card);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .period-card.current { box-shadow: inset 0 0 0 1.5px var(--blue); }
+    .period-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 13px 14px;
+      border-bottom: 0.5px solid var(--sep);
+    }
+    .period-title { font-size: 16px; font-weight: 700; }
+    .period-range { color: var(--text2); font-size: 13px; margin-top: 2px; }
+    .period-badge {
+      color: var(--blue);
+      background: rgba(0,122,255,0.1);
+      border-radius: 20px;
+      padding: 4px 8px;
+      font-size: 11px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .ledger-grid { display: grid; grid-template-columns: 1fr 1fr; }
+    .ledger { min-width: 0; padding: 14px; }
+    .ledger + .ledger { border-left: 0.5px solid var(--sep); }
+    .ledger-name { font-size: 14px; font-weight: 700; margin-bottom: 10px; }
+    .ledger.papa .ledger-name { color: var(--blue); }
+    .ledger.mama .ledger-name { color: var(--purple); }
+    .ledger-summary {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 6px;
+      padding-bottom: 10px;
+      border-bottom: 0.5px solid var(--sep);
+    }
+    .ledger-stat-label { color: var(--text2); font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .ledger-stat-value { font-size: 15px; font-weight: 700; margin-top: 3px; }
+    .ledger-items { padding-top: 5px; }
+    .ledger-item {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+      padding: 7px 0;
+      border-bottom: 0.5px solid var(--sep);
+    }
+    .ledger-item:last-child { border-bottom: none; }
+    .ledger-item-name { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .ledger-item-date { color: var(--text2); font-size: 11px; margin-top: 2px; }
+    .ledger-item-amount { font-size: 13px; font-weight: 600; white-space: nowrap; }
+    .ledger-empty { color: var(--text2); font-size: 13px; padding-top: 10px; }
+    .period-transfer {
+      padding: 10px 14px;
+      border-top: 0.5px solid var(--sep);
+      color: var(--text2);
+      font-size: 13px;
+      text-align: center;
+    }
     @media (max-width: 640px) {
       #app { max-width: 430px; }
       .header {
@@ -367,6 +450,10 @@
       .tab-btn.active { background: none; box-shadow: none; }
       .tab-btn svg { width: 24px; height: 24px; }
       .tab-btn span { font-size: 10px; font-weight: 500; }
+      .pay-setup-grid { grid-template-columns: 1fr 1fr; }
+      .pay-setup-grid .pay-date-field { grid-column: 1 / -1; }
+      .ledger-grid { grid-template-columns: 1fr; }
+      .ledger + .ledger { border-left: none; border-top: 0.5px solid var(--sep); }
     }
     /* FILE MENU */
     [hidden] { display: none !important; }
@@ -435,6 +522,10 @@
       <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
       <span>Home</span>
     </button>
+    <button class="tab-btn" onclick="switchTab('pay')" data-tab="pay">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11zm-7-9h5v5h-5z"/></svg>
+      <span>Pay</span>
+    </button>
     <button class="tab-btn" onclick="switchTab('bills')" data-tab="bills">
       <svg viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11zM8 15h8v2H8zm0-4h8v2H8zm0-4h5v2H8z"/></svg>
       <span>Bills</span>
@@ -472,9 +563,14 @@
 <script>
 // ─── DATA ───────────────────────────────────────────────────────────────────
 const DEFAULTS = {
-  schemaVersion: 2,
+  schemaVersion: 3,
   names: { papa: 'Papa', mama: 'Mama' },
   income: { papa: 0, mama: 0 },
+  paySchedule: {
+    cadence: 'biweekly',
+    anchorDate: '',
+    paychecks: { papa: 0, mama: 0 }
+  },
   expenses: []
 };
 
@@ -485,23 +581,28 @@ const DEFAULT_FILE_NAME = 'Untitled Budget.budget.json';
 
 const clone = value => JSON.parse(JSON.stringify(value));
 
-function normalizeExpense(item, fallbackId, type) {
+function normalizeExpense(item, fallbackId, type, sourceSchemaVersion) {
   const normalized = { ...item };
-  normalized.id = fallbackId;
+  normalized.id = Number.isFinite(+normalized.id) ? +normalized.id : fallbackId;
   normalized.type = type === 'subscription' ? 'subscription' : 'bill';
   normalized.name = String(normalized.name || '').trim() || (type === 'bill' ? 'New Bill' : 'New Subscription');
   normalized.amount = Number.isFinite(+normalized.amount) ? +normalized.amount : 0;
-  normalized.dueDay = Number.isFinite(+normalized.dueDay) ? +normalized.dueDay : 0;
-  normalized.dueMonth = Number.isFinite(+normalized.dueMonth) ? +normalized.dueMonth : 1;
+  normalized.dueDay = Number.isFinite(+normalized.dueDay) ? Math.max(0, Math.min(31, +normalized.dueDay)) : 0;
+  normalized.dueMonth = Number.isFinite(+normalized.dueMonth) ? Math.max(1, Math.min(12, +normalized.dueMonth)) : 1;
   normalized.freq = normalized.freq === 'yearly' ? 'yearly' : 'monthly';
+  if (sourceSchemaVersion < 3 && normalized.freq === 'yearly') normalized.amount *= 12;
   normalized.cat = normalized.cat || 'misc';
-  if (normalized.type === 'bill') normalized.person = normalized.person === 'mama' ? 'mama' : 'papa';
-  else delete normalized.person;
+  normalized.person = normalized.person === 'mama'
+    ? 'mama'
+    : normalized.person === 'papa'
+      ? 'papa'
+      : 'unassigned';
   return normalized;
 }
 
 function normalizeBudget(raw) {
   const source = raw && typeof raw === 'object' ? raw : {};
+  const sourceSchemaVersion = Number.isFinite(+source.schemaVersion) ? +source.schemaVersion : 1;
   const budget = clone(DEFAULTS);
   budget.names = {
     papa: source.names && source.names.papa ? String(source.names.papa) : 'Papa',
@@ -511,6 +612,15 @@ function normalizeBudget(raw) {
     papa: Number.isFinite(+(source.income && source.income.papa)) ? +source.income.papa : 0,
     mama: Number.isFinite(+(source.income && source.income.mama)) ? +source.income.mama : 0
   };
+  const sourceSchedule = source.paySchedule && typeof source.paySchedule === 'object' ? source.paySchedule : {};
+  budget.paySchedule = {
+    cadence: 'biweekly',
+    anchorDate: parseLocalDate(sourceSchedule.anchorDate) ? sourceSchedule.anchorDate : '',
+    paychecks: {
+      papa: Number.isFinite(+(sourceSchedule.paychecks && sourceSchedule.paychecks.papa)) ? Math.max(0, +sourceSchedule.paychecks.papa) : 0,
+      mama: Number.isFinite(+(sourceSchedule.paychecks && sourceSchedule.paychecks.mama)) ? Math.max(0, +sourceSchedule.paychecks.mama) : 0
+    }
+  };
   const legacyBills = Array.isArray(source.bills)
     ? source.bills.map(item => ({ ...item, type: 'bill' }))
     : [];
@@ -518,7 +628,7 @@ function normalizeBudget(raw) {
     ? source.subscriptions.map(item => ({ ...item, type: 'subscription' }))
     : [];
   const rawExpenses = Array.isArray(source.expenses) ? source.expenses : [...legacyBills, ...legacySubs];
-  budget.expenses = rawExpenses.map((item, index) => normalizeExpense(item, index + 1, item.type));
+  budget.expenses = rawExpenses.map((item, index) => normalizeExpense(item, index + 1, item.type, sourceSchemaVersion));
   return budget;
 }
 
@@ -575,7 +685,7 @@ function ensureBudgetFileName(name) {
 function serializeBudget() {
   return JSON.stringify({
     ...normalizeBudget(data),
-    schemaVersion: 2,
+    schemaVersion: 3,
     savedAt: new Date().toISOString()
   }, null, 2);
 }
@@ -781,35 +891,121 @@ const CAT_COLORS = {
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const MONTHS_FULL = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
+function parseLocalDate(value) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value || ''));
+  if (!match) return null;
+  const date = new Date(+match[1], +match[2] - 1, +match[3]);
+  return date.getFullYear() === +match[1] && date.getMonth() === +match[2] - 1 && date.getDate() === +match[3]
+    ? date
+    : null;
+}
+
+function startOfDay(value) {
+  const date = new Date(value);
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+function addDays(value, count) {
+  const date = startOfDay(value);
+  date.setDate(date.getDate() + count);
+  return date;
+}
+
+function dateKey(value) {
+  const date = startOfDay(value);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
+function formatPeriodDate(value) {
+  return value.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+function payScheduleReady() {
+  return !!parseLocalDate(data.paySchedule && data.paySchedule.anchorDate);
+}
+
+function monthlyIncome(person) {
+  if (!payScheduleReady()) return data.income[person] || 0;
+  return (data.paySchedule.paychecks[person] || 0) * 26 / 12;
+}
+
+function payPeriodStarts(count, today = new Date()) {
+  let start = parseLocalDate(data.paySchedule && data.paySchedule.anchorDate);
+  if (!start) return [];
+  const currentDay = startOfDay(today);
+  while (start > currentDay) start = addDays(start, -14);
+  while (addDays(start, 14) <= currentDay) start = addDays(start, 14);
+  return Array.from({ length: count }, (_, index) => addDays(start, index * 14));
+}
+
+function expenseOccursOn(expense, date) {
+  const dueDay = Math.max(1, expense.dueDay || 1);
+  if (expense.freq === 'yearly' && date.getMonth() + 1 !== expense.dueMonth) return false;
+  if (expense.freq === 'monthly' && !expense.dueDay) return false;
+  const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+  return date.getDate() === Math.min(dueDay, lastDay);
+}
+
+function expenseOccurrences(person, start, end) {
+  const owned = data.expenses.filter(expense => expense.person === person);
+  const occurrences = [];
+  for (let date = startOfDay(start); date < end; date = addDays(date, 1)) {
+    for (const expense of owned) {
+      if (expenseOccursOn(expense, date)) occurrences.push({ expense, date });
+    }
+  }
+  return occurrences.sort((a, b) => a.date - b.date || a.expense.name.localeCompare(b.expense.name));
+}
+
+function ledgerForPeriod(person, start) {
+  const end = addDays(start, 14);
+  const items = expenseOccurrences(person, start, end);
+  const income = data.paySchedule.paychecks[person] || 0;
+  const outgoing = items.reduce((sum, item) => sum + item.expense.amount, 0);
+  return { person, start, end, income, outgoing, net: income - outgoing, items };
+}
+
+function nextAnnualOccurrence(expense, today = new Date()) {
+  const currentDay = startOfDay(today);
+  const month = Math.max(1, Math.min(12, expense.dueMonth || 1));
+  const makeDate = year => {
+    const lastDay = new Date(year, month, 0).getDate();
+    return new Date(year, month - 1, Math.min(Math.max(1, expense.dueDay || 1), lastDay));
+  };
+  let date = makeDate(currentDay.getFullYear());
+  if (date < currentDay) date = makeDate(currentDay.getFullYear() + 1);
+  return date;
+}
+
 function daysUntil(dueDay, dueMonth) {
-  const now = new Date();
-  const today = now.getDate();
-  const thisMonth = now.getMonth() + 1;
-  const thisYear = now.getFullYear();
+  const today = startOfDay(new Date());
+  const dateInMonth = (year, monthIndex, day) => {
+    const lastDay = new Date(year, monthIndex + 1, 0).getDate();
+    return new Date(year, monthIndex, Math.min(Math.max(1, day || 1), lastDay));
+  };
 
   if (dueMonth) {
-    // Yearly bill
-    let targetYear = thisYear;
-    if (dueMonth < thisMonth || (dueMonth === thisMonth && dueDay < today)) targetYear++;
-    const target = new Date(targetYear, dueMonth - 1, dueDay || 1);
-    return Math.ceil((target - now) / 86400000);
+    let target = dateInMonth(today.getFullYear(), dueMonth - 1, dueDay);
+    if (target < today) target = dateInMonth(today.getFullYear() + 1, dueMonth - 1, dueDay);
+    return Math.round((target - today) / 86400000);
   }
   if (!dueDay) return null;
-  let target = new Date(thisYear, thisMonth - 1, dueDay);
-  if (dueDay < today) target = new Date(thisYear, thisMonth, dueDay);
-  return Math.ceil((target - now) / 86400000);
+  let target = dateInMonth(today.getFullYear(), today.getMonth(), dueDay);
+  if (target < today) target = dateInMonth(today.getFullYear(), today.getMonth() + 1, dueDay);
+  return Math.round((target - today) / 86400000);
 }
 
 function dueLabel(bill) {
   if (bill.freq === 'yearly') return `${MONTHS[bill.dueMonth-1]} ${bill.dueDay || 1}`;
   if (!bill.dueDay) return 'Various';
-  const sfx = ['','st','nd','rd'];
   const d = bill.dueDay;
-  return d + (sfx[d] || 'th');
+  const teen = d % 100 >= 11 && d % 100 <= 13;
+  const suffix = teen ? 'th' : d % 10 === 1 ? 'st' : d % 10 === 2 ? 'nd' : d % 10 === 3 ? 'rd' : 'th';
+  return d + suffix;
 }
 
 function monthlyEquiv(bill) {
-  return bill.amount; // all amounts are already monthly (yearly bills store the monthly average)
+  return bill.freq === 'yearly' ? bill.amount / 12 : bill.amount;
 }
 
 function expensesOf(type) {
@@ -820,18 +1016,22 @@ function nextExpenseId() {
   return data.expenses.length ? Math.max(...data.expenses.map(item => item.id)) + 1 : 1;
 }
 
-function billsFor(person) {
-  return expensesOf('bill').filter(b => b.person === person);
+function expensesFor(person) {
+  return data.expenses.filter(expense => expense.person === person);
 }
 
 function totalMonthly(person) {
-  return billsFor(person).reduce((s, b) => s + monthlyEquiv(b), 0);
+  return expensesFor(person).reduce((sum, expense) => sum + monthlyEquiv(expense), 0);
+}
+
+function totalHouseholdMonthly() {
+  return data.expenses.reduce((sum, expense) => sum + monthlyEquiv(expense), 0);
 }
 
 // Returns positive if papa sends to mama, negative if mama sends to papa
 function calcExchange() {
-  const papaNet = data.income.papa - totalMonthly('papa');
-  const mamaNet = data.income.mama - totalMonthly('mama');
+  const papaNet = monthlyIncome('papa') - totalMonthly('papa');
+  const mamaNet = monthlyIncome('mama') - totalMonthly('mama');
   return (papaNet - mamaNet) / 2;
 }
 
@@ -866,24 +1066,24 @@ function toggleEdit() {
 // ─── RENDER HOME ─────────────────────────────────────────────────────────────
 function renderHome() {
   const now = new Date();
-  const papaIncome = data.income.papa;
-  const mamaIncome = data.income.mama;
+  const papaIncome = monthlyIncome('papa');
+  const mamaIncome = monthlyIncome('mama');
   const exchange = calcExchange(); // positive = papa→mama, negative = mama→papa
-  const equalBal = (data.income.papa + data.income.mama - totalMonthly('papa') - totalMonthly('mama')) / 2;
+  const equalBal = (papaIncome + mamaIncome - totalMonthly('papa') - totalMonthly('mama')) / 2;
   const papaBal = equalBal;
   const mamaBal = equalBal;
 
-  // Upcoming bills this week (next 7 days)
-  const upcoming = expensesOf('bill')
+  // Upcoming monthly expenses this week (next 7 days)
+  const upcoming = data.expenses
     .filter(b => b.freq === 'monthly' && b.dueDay)
     .map(b => ({ ...b, days: daysUntil(b.dueDay, null) }))
     .filter(b => b.days !== null && b.days <= 7)
     .sort((a, b) => a.days - b.days);
 
-  const upcomingYearly = expensesOf('bill')
+  const upcomingYearly = data.expenses
     .filter(b => b.freq === 'yearly')
     .map(b => ({ ...b, days: daysUntil(b.dueDay, b.dueMonth) }))
-    .filter(b => b.days !== null && b.days <= 30)
+    .filter(b => b.days !== null && b.days <= 60)
     .sort((a, b) => a.days - b.days);
 
   let html = `<div style="padding:16px 16px 0">
@@ -907,13 +1107,17 @@ function renderHome() {
       <div class="sc-label" style="color:${color}">Household Member</div>
       <input class="person-name-input" type="text" value="${data.names[cls]}" autocomplete="off"
         onchange="updatePerson('${cls}','name',this.value)">
-      <div class="sc-row"><span>Income/mo</span><input class="person-income-input" type="number" value="${income}" inputmode="decimal"
-        onchange="updatePerson('${cls}','income',this.value)"></div>
-      <div class="sc-row"><span>Bills</span><span style="color:var(--red)">–${fmt(bills)}</span></div>
+      ${payScheduleReady() ? `
+        <div class="sc-row"><span>Paycheck</span><input class="person-income-input" type="number" value="${data.paySchedule.paychecks[cls]}" inputmode="decimal"
+          onchange="updatePaycheck('${cls}',this.value)"></div>
+        <div class="sc-row"><span>Income/mo avg</span><span>${fmt(income)}</span></div>` : `
+        <div class="sc-row"><span>Income/mo</span><input class="person-income-input" type="number" value="${income}" inputmode="decimal"
+          onchange="updatePerson('${cls}','income',this.value)"></div>`}
+      <div class="sc-row"><span>Outgoing</span><span style="color:var(--red)">–${fmt(bills)}</span></div>
       <div class="sc-row"><span>Transfer</span><span style="color:${xferColor};font-size:12px">${xferLabel}</span></div>
       <div class="sc-row total">
         <span>Balance</span>
-        <span class="pos">${fmt(bal)}</span>
+        <span style="color:${bal >= 0 ? 'var(--green)' : 'var(--red)'}">${fmtSigned(bal)}</span>
       </div>
     </div>`;
   }
@@ -921,7 +1125,7 @@ function renderHome() {
 
   // Household total
   const totalIncome = papaIncome + mamaIncome;
-  const totalExp = totalMonthly('papa') + totalMonthly('mama');
+  const totalExp = totalHouseholdMonthly();
   const totalBal = totalIncome - totalExp;
   html += `<div class="wide-card">
     <div class="wide-card-title">Household Monthly</div>
@@ -930,21 +1134,27 @@ function renderHome() {
     <div class="wc-row"><span class="label">${exchange >= 0 ? data.names.papa+' → '+data.names.mama : data.names.mama+' → '+data.names.papa}</span><span class="val" style="color:var(--text2)">${fmt(Math.abs(exchange))}</span></div>
     <div class="wc-row" style="font-weight:600">
       <span class="label">Net Balance</span>
-      <span class="val" style="color:${totalBal >= 0 ? 'var(--green)' : 'var(--red)'}">${fmt(totalBal)}</span>
+      <span class="val" style="color:${totalBal >= 0 ? 'var(--green)' : 'var(--red)'}">${fmtSigned(totalBal)}</span>
     </div>
   </div>`;
+
+  const unassignedCount = data.expenses.filter(expense => expense.person === 'unassigned').length;
+  if (unassignedCount) {
+    html += `<div class="notice-card">${unassignedCount} expense${unassignedCount === 1 ? '' : 's'} need${unassignedCount === 1 ? 's' : ''} a person before the individual ledgers are complete.</div>`;
+  }
 
   // Upcoming this week
   if (upcoming.length > 0 || upcomingYearly.length > 0) {
     html += `<div class="section-label">Upcoming</div><div class="card-list">`;
     for (const b of upcoming) {
-      const color = b.person === 'papa' ? 'var(--blue)' : 'var(--purple)';
+      const color = b.person === 'papa' ? 'var(--blue)' : b.person === 'mama' ? 'var(--purple)' : 'var(--orange)';
+      const owner = b.person === 'unassigned' ? 'Needs assignment' : data.names[b.person];
       const urgency = b.days <= 0 ? 'var(--red)' : b.days <= 3 ? 'var(--orange)' : 'var(--green)';
       html += `<div class="list-row">
         <div class="row-icon" style="background:rgba(${b.person==='papa'?'0,122,255':'175,82,222'},0.1)">${CAT_ICONS[b.cat]||'📋'}</div>
         <div class="row-main">
           <div class="row-title">${b.name}</div>
-          <div class="row-sub" style="color:${color}">${data.names[b.person]} · Due ${dueLabel(b)}</div>
+          <div class="row-sub" style="color:${color}">${owner} · Due ${dueLabel(b)}</div>
         </div>
         <div class="row-right">
           <div class="row-amount">${fmt(b.amount)}</div>
@@ -953,11 +1163,12 @@ function renderHome() {
       </div>`;
     }
     for (const b of upcomingYearly) {
+      const owner = b.person === 'unassigned' ? 'Needs assignment' : data.names[b.person];
       html += `<div class="list-row">
         <div class="row-icon" style="background:rgba(255,204,0,0.15)">${CAT_ICONS[b.cat]||'📋'}</div>
         <div class="row-main">
           <div class="row-title">${b.name}</div>
-          <div class="row-sub" style="color:#b8860b">Yearly · ${MONTHS[b.dueMonth-1]} ${b.dueDay}</div>
+          <div class="row-sub" style="color:#b8860b">${owner} · Annual · ${MONTHS[b.dueMonth-1]} ${b.dueDay || 1}</div>
         </div>
         <div class="row-right">
           <div class="row-amount">${fmt(b.amount)}</div>
@@ -972,10 +1183,127 @@ function renderHome() {
   return html;
 }
 
+// ─── RENDER PAY PERIODS ──────────────────────────────────────────────────────
+function renderPersonLedger(ledger) {
+  const person = ledger.person;
+  const netColor = ledger.net >= 0 ? 'var(--green)' : 'var(--red)';
+  const items = ledger.items.length
+    ? ledger.items.map(({ expense, date }) => `<div class="ledger-item">
+        <div>
+          <div class="ledger-item-name">${expense.name}</div>
+          <div class="ledger-item-date">${formatPeriodDate(date)}${expense.freq === 'yearly' ? ' · Annual' : ''}</div>
+        </div>
+        <div class="ledger-item-amount">–${fmt(expense.amount)}</div>
+      </div>`).join('')
+    : `<div class="ledger-empty">No payments due</div>`;
+
+  return `<section class="ledger ${person}">
+    <div class="ledger-name">${data.names[person]}</div>
+    <div class="ledger-summary">
+      <div><div class="ledger-stat-label">Incoming</div><div class="ledger-stat-value" style="color:var(--green)">${fmt(ledger.income)}</div></div>
+      <div><div class="ledger-stat-label">Outgoing</div><div class="ledger-stat-value" style="color:var(--red)">${fmt(ledger.outgoing)}</div></div>
+      <div><div class="ledger-stat-label">Remaining</div><div class="ledger-stat-value" style="color:${netColor}">${fmtSigned(ledger.net)}</div></div>
+    </div>
+    <div class="ledger-items">${items}</div>
+  </section>`;
+}
+
+function renderAnnualLookahead() {
+  const now = startOfDay(new Date());
+  const annual = data.expenses
+    .filter(expense => expense.freq === 'yearly')
+    .map(expense => ({ expense, date: nextAnnualOccurrence(expense, now) }))
+    .sort((a, b) => a.date - b.date || b.expense.amount - a.expense.amount)
+    .slice(0, 5);
+
+  if (!annual.length) return '';
+  let html = `<div class="section-label">Next Annual Payments</div><div class="card-list">`;
+  for (const { expense, date } of annual) {
+    const days = Math.round((date - now) / 86400000);
+    const owner = expense.person === 'unassigned' ? 'Needs assignment' : data.names[expense.person];
+    html += `<div class="list-row">
+      <div class="row-icon" style="background:rgba(255,204,0,0.15)">${CAT_ICONS[expense.cat] || '📋'}</div>
+      <div class="row-main">
+        <div class="row-title">${expense.name}</div>
+        <div class="row-sub" style="color:#b8860b">${owner} · ${date.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' })}</div>
+      </div>
+      <div class="row-right">
+        <div class="row-amount">${fmt(expense.amount)}</div>
+        <div style="font-size:12px;color:${days <= 60 ? 'var(--orange)' : 'var(--text2)'}">${days === 0 ? 'today' : `in ${days}d`}</div>
+      </div>
+    </div>`;
+  }
+  return html + `</div>`;
+}
+
+function renderPayPeriods() {
+  const schedule = data.paySchedule;
+  let html = `<div class="wide-card">
+    <div class="wide-card-title">Shared Pay Schedule</div>
+    <div class="pay-setup-grid">
+      <label class="form-field pay-date-field">
+        <span class="form-label">Known payday</span>
+        <input class="form-input" type="date" value="${schedule.anchorDate}" onchange="updatePaySchedule('anchorDate',this.value)">
+      </label>
+      <label class="form-field">
+        <span class="form-label">${data.names.papa} net paycheck</span>
+        <input class="form-input" type="number" inputmode="decimal" value="${schedule.paychecks.papa}" onchange="updatePaycheck('papa',this.value)">
+      </label>
+      <label class="form-field">
+        <span class="form-label">${data.names.mama} net paycheck</span>
+        <input class="form-input" type="number" inputmode="decimal" value="${schedule.paychecks.mama}" onchange="updatePaycheck('mama',this.value)">
+      </label>
+    </div>
+    <div class="pay-setup-note">Every two weeks · ${data.names.papa} ${fmt(monthlyIncome('papa'))}/mo avg · ${data.names.mama} ${fmt(monthlyIncome('mama'))}/mo avg</div>
+  </div>`;
+
+  const unassignedCount = data.expenses.filter(expense => expense.person === 'unassigned').length;
+  const undatedCount = data.expenses.filter(expense => expense.freq === 'monthly' && !expense.dueDay).length;
+  if (unassignedCount || undatedCount) {
+    const parts = [];
+    if (unassignedCount) parts.push(`${unassignedCount} need${unassignedCount === 1 ? 's' : ''} a person`);
+    if (undatedCount) parts.push(`${undatedCount} need${undatedCount === 1 ? 's' : ''} a due day`);
+    html += `<div class="notice-card">Some expenses cannot appear in a personal pay period yet: ${parts.join(' and ')}.</div>`;
+  }
+
+  html += renderAnnualLookahead();
+
+  if (!payScheduleReady()) {
+    return html + `<div class="section-label">Pay Periods</div><div class="card-list"><div class="empty">Choose one known payday to build the biweekly ledgers.</div></div>`;
+  }
+
+  const today = startOfDay(new Date());
+  html += `<div class="section-label">Biweekly Ledgers</div>`;
+  for (const start of payPeriodStarts(6, today)) {
+    const end = addDays(start, 14);
+    const papa = ledgerForPeriod('papa', start);
+    const mama = ledgerForPeriod('mama', start);
+    const isCurrent = today >= start && today < end;
+    const transfer = (papa.net - mama.net) / 2;
+    const from = transfer >= 0 ? data.names.papa : data.names.mama;
+    const to = transfer >= 0 ? data.names.mama : data.names.papa;
+    const transferText = Math.abs(transfer) < 0.5 ? 'No balancing transfer needed' : `Suggested transfer: ${from} sends ${to} ${fmt(Math.abs(transfer))}`;
+    html += `<article class="period-card${isCurrent ? ' current' : ''}">
+      <div class="period-head">
+        <div>
+          <div class="period-title">Payday ${formatPeriodDate(start)}</div>
+          <div class="period-range">${formatPeriodDate(start)} – ${formatPeriodDate(addDays(end, -1))}</div>
+        </div>
+        ${isCurrent ? `<span class="period-badge">Current</span>` : ''}
+      </div>
+      <div class="ledger-grid">${renderPersonLedger(papa)}${renderPersonLedger(mama)}</div>
+      <div class="period-transfer">${transferText}</div>
+    </article>`;
+  }
+  return html;
+}
+
 // ─── RENDER BILLS ─────────────────────────────────────────────────────────────
 function renderBills() {
   let bills = expensesOf('bill');
   if (billFilter !== 'all') bills = bills.filter(b => b.person === billFilter);
+  const billFilters = ['all','papa','mama'];
+  if (expensesOf('bill').some(b => b.person === 'unassigned')) billFilters.push('unassigned');
 
   const monthly = bills.filter(b => b.freq === 'monthly').sort((a,b) => {
     if (!a.dueDay && !b.dueDay) return 0;
@@ -989,7 +1317,7 @@ function renderBills() {
   const totalY = bills.filter(b=>b.freq==='yearly').reduce((s,b)=>s+b.amount,0);
 
   let html = `<div class="filter-row">
-    ${['all','papa','mama'].map(f=>`<button class="filter-chip${billFilter===f?' active':''}" onclick="setBillFilter('${f}')">${f==='all'?'All Bills':data.names[f]}</button>`).join('')}
+    ${billFilters.map(f=>`<button class="filter-chip${billFilter===f?' active':''}" onclick="setBillFilter('${f}')">${f==='all' ? 'All Bills' : f === 'unassigned' ? 'Needs assignment' : data.names[f]}</button>`).join('')}
   </div>`;
 
   html += `<div class="section-label">Monthly Bills</div><div class="card-list">`;
@@ -999,7 +1327,8 @@ function renderBills() {
       continue;
     }
     const days = b.dueDay ? daysUntil(b.dueDay, null) : null;
-    const personColor = b.person === 'papa' ? 'var(--blue)' : 'var(--purple)';
+    const personColor = b.person === 'papa' ? 'var(--blue)' : b.person === 'mama' ? 'var(--purple)' : 'var(--orange)';
+    const personName = b.person === 'unassigned' ? 'Needs assignment' : data.names[b.person];
     const daysText = days !== null
       ? (days <= 0 ? '<span style="color:var(--red);font-weight:600;font-size:12px">TODAY</span>'
         : days <= 3 ? `<span style="color:var(--orange);font-weight:600;font-size:12px">in ${days}d</span>`
@@ -1010,7 +1339,7 @@ function renderBills() {
       <div class="row-icon" style="background:rgba(${b.person==='papa'?'0,122,255':'175,82,222'},0.1)">${CAT_ICONS[b.cat]||'📋'}</div>
       <div class="row-main">
         <div class="row-title">${b.name}</div>
-        <div class="row-sub" style="color:${personColor}">${data.names[b.person]}${b.note ? ' · <span style="color:var(--text2)">'+b.note+'</span>' : ''}</div>
+        <div class="row-sub" style="color:${personColor}">${personName}${b.note ? ' · <span style="color:var(--text2)">'+b.note+'</span>' : ''}</div>
       </div>
       <div class="row-right">
         <div class="row-amount">${fmt(b.amount)}</div>
@@ -1025,18 +1354,19 @@ function renderBills() {
   </div></div>`;
 
   if (yearly.length) {
-    html += `<div class="section-label">Yearly Bills</div><div class="card-list">`;
+    html += `<div class="section-label">Annual Bills</div><div class="card-list">`;
     for (const b of yearly) {
       if (editingBillId === b.id) {
         html += itemForm('bill', b);
         continue;
       }
       const days = daysUntil(b.dueDay, b.dueMonth);
+      const personName = b.person === 'unassigned' ? 'Needs assignment' : data.names[b.person];
       html += `<div class="list-row" style="cursor:pointer" onclick="editingBillId=${b.id};addingBill=false;render()">
         <div class="row-icon" style="background:rgba(255,204,0,0.15)">${CAT_ICONS[b.cat]||'📋'}</div>
         <div class="row-main">
           <div class="row-title">${b.name}</div>
-          <div class="row-sub" style="color:#b8860b">Yearly · Paid in ${MONTHS[b.dueMonth-1]} · ${fmt(b.amount * 12)} annual</div>
+          <div class="row-sub" style="color:#b8860b">${personName} · Annual · ${MONTHS[b.dueMonth-1]} ${b.dueDay || 1}</div>
         </div>
         <div class="row-right">
           <div class="row-amount">${fmt(b.amount)}</div>
@@ -1046,7 +1376,7 @@ function renderBills() {
       </div>`;
     }
     html += `<div class="list-row" style="background:rgba(0,0,0,0.02)">
-      <div class="row-main" style="font-weight:600">Yearly Total</div>
+      <div class="row-main" style="font-weight:600">Annual Total</div>
       <div class="row-right"><div class="row-amount" style="color:var(--red)">${fmt(totalY)}</div>
         <div style="font-size:12px;color:var(--text2);text-align:right">~${fmt(totalY/12)}/mo</div>
       </div>
@@ -1066,7 +1396,7 @@ function renderSubs() {
   const yearly  = expensesOf('subscription').filter(s=>s.freq==='yearly').sort((a,b)=>a.dueMonth-b.dueMonth);
   const totalM  = monthly.reduce((s,x)=>s+x.amount,0);
   const totalY  = yearly.reduce((s,x)=>s+x.amount,0);
-  const grandMo = totalM + totalY;
+  const grandMo = totalM + totalY / 12;
 
   let html = `<div class="section-label">Monthly Subscriptions</div><div class="card-list">`;
   for (const s of monthly) {
@@ -1075,6 +1405,8 @@ function renderSubs() {
       continue;
     }
     const days = s.dueDay ? daysUntil(s.dueDay, null) : null;
+    const personColor = s.person === 'papa' ? 'var(--blue)' : s.person === 'mama' ? 'var(--purple)' : 'var(--orange)';
+    const personName = s.person === 'unassigned' ? 'Needs assignment' : data.names[s.person];
     const daysText = days !== null
       ? (days <= 0 ? `<span style="color:var(--red);font-size:12px;font-weight:600">TODAY</span>`
         : days <= 3 ? `<span style="color:var(--orange);font-size:12px;font-weight:600">in ${days}d</span>`
@@ -1084,6 +1416,7 @@ function renderSubs() {
       <div class="row-icon" style="background:rgba(0,122,255,0.1)">${CAT_ICONS[s.cat]||'📱'}</div>
       <div class="row-main">
         <div class="row-title">${s.name}</div>
+        <div class="row-sub" style="color:${personColor}">${personName}</div>
       </div>
       <div class="row-right">
         <div class="row-amount">${fmt(s.amount)}</div>
@@ -1098,18 +1431,19 @@ function renderSubs() {
   </div></div>`;
 
   if (yearly.length) {
-    html += `<div class="section-label">Yearly Subscriptions</div><div class="card-list">`;
+    html += `<div class="section-label">Annual Subscriptions</div><div class="card-list">`;
     for (const s of yearly) {
       if (editingSubId === s.id) {
         html += itemForm('sub', s);
         continue;
       }
       const days = daysUntil(s.dueDay||1, s.dueMonth);
+      const personName = s.person === 'unassigned' ? 'Needs assignment' : data.names[s.person];
       html += `<div class="list-row" style="cursor:pointer" onclick="editingSubId=${s.id};addingSub=false;render()">
         <div class="row-icon" style="background:rgba(255,204,0,0.15)">${CAT_ICONS[s.cat]||'📱'}</div>
         <div class="row-main">
           <div class="row-title">${s.name}</div>
-          <div class="row-sub" style="color:#b8860b">Yearly · Paid in ${MONTHS[s.dueMonth-1]} · ${fmt(s.amount * 12)} annual</div>
+          <div class="row-sub" style="color:#b8860b">${personName} · Annual · ${MONTHS[s.dueMonth-1]} ${s.dueDay || 1}</div>
         </div>
         <div class="row-right">
           <div class="row-amount">${fmt(s.amount)}</div>
@@ -1119,15 +1453,17 @@ function renderSubs() {
       </div>`;
     }
     html += `<div class="list-row" style="background:rgba(0,0,0,0.02)">
-      <div class="row-main" style="font-weight:600">Yearly Total</div>
-      <div class="row-right"><div class="row-amount" style="color:var(--red)">${fmt(totalY)}</div></div>
+      <div class="row-main" style="font-weight:600">Annual Total</div>
+      <div class="row-right"><div class="row-amount" style="color:var(--red)">${fmt(totalY)}</div>
+        <div style="font-size:12px;color:var(--text2);text-align:right">~${fmt(totalY/12)}/mo</div>
+      </div>
     </div></div>`;
   }
 
   html += `<div class="wide-card">
     <div class="wide-card-title">Summary</div>
     <div class="wc-row"><span class="label">Monthly subs</span><span class="val">${fmt(totalM)}</span></div>
-    <div class="wc-row"><span class="label">Yearly (avg/mo)</span><span class="val">${fmt(totalY)}</span></div>
+    <div class="wc-row"><span class="label">Annual (avg/mo)</span><span class="val">${fmt(totalY/12)}</span></div>
     <div class="wc-row" style="font-weight:600"><span class="label">Total/month</span><span class="val" style="color:var(--red)">${fmt(grandMo)}</span></div>
   </div>`;
 
@@ -1138,7 +1474,7 @@ function renderSubs() {
   return html;
 }
 
-// ─── RENDER SETTINGS ──────────────────────────────────────────────────────────
+// ─── ITEM FORM ────────────────────────────────────────────────────────────────
 function itemForm(type, item) {
   const isBill = type === 'bill';
   const isEdit = item !== null;
@@ -1149,6 +1485,7 @@ function itemForm(type, item) {
   const sel = (k, val) => isEdit && item[k] === val ? 'selected' : '';
   const cancelAction = isEdit ? (isBill ? 'editingBillId=null' : 'editingSubId=null') : (isBill ? 'addingBill=false' : 'addingSub=false');
   const saveAction = isEdit ? `saveEdit('${type}',${item.id})` : `submitNew('${type}')`;
+  const personValue = isEdit ? item.person : 'papa';
   return `<div class="add-form">
     <div style="font-weight:600;font-size:15px;margin-bottom:10px">${isEdit ? 'Edit' : 'New'} ${isBill ? 'Bill' : 'Subscription'}</div>
     <div class="form-grid full"><div class="form-field">
@@ -1157,7 +1494,7 @@ function itemForm(type, item) {
     </div></div>
     <div class="form-grid">
       <div class="form-field">
-        <span class="form-label">Amount ($/mo avg)</span>
+        <span class="form-label" id="${prefix}-amount-label">${freqValue === 'yearly' ? 'Annual payment' : 'Monthly amount'}</span>
         <input id="${prefix}-amount" class="form-input" type="number" inputmode="decimal" value="${v('amount')}" placeholder="0">
       </div>
       <div class="form-field">
@@ -1168,13 +1505,14 @@ function itemForm(type, item) {
       </div>
     </div>
     <div class="form-grid">
-      ${isBill ? `<div class="form-field">
+      <div class="form-field">
         <span class="form-label">Person</span>
         <select id="${prefix}-person" class="form-select">
-          <option value="papa" ${sel('person','papa')}>${data.names.papa}</option>
-          <option value="mama" ${sel('person','mama')}>${data.names.mama}</option>
+          <option value="papa" ${personValue === 'papa' ? 'selected' : ''}>${data.names.papa}</option>
+          <option value="mama" ${personValue === 'mama' ? 'selected' : ''}>${data.names.mama}</option>
+          ${personValue === 'unassigned' ? '<option value="unassigned" selected>Needs assignment</option>' : ''}
         </select>
-      </div>` : ''}
+      </div>
       <div class="form-field">
         <span class="form-label">Frequency</span>
         <select id="${prefix}-freq" class="form-select" onchange="updateDueMonthVisibility('${prefix}')">
@@ -1185,11 +1523,11 @@ function itemForm(type, item) {
     </div>
     <div class="form-grid">
       <div class="form-field">
-        <span class="form-label">Due Day (0 = various)</span>
+        <span class="form-label" id="${prefix}-dueday-label">${freqValue === 'yearly' ? 'Payment day' : 'Due day (0 = various)'}</span>
         <input id="${prefix}-dueday" class="form-input" type="number" inputmode="numeric" value="${isEdit ? item.dueDay : 0}" min="0" max="31">
       </div>
       <div class="form-field" id="${prefix}-duemonth-field" ${freqValue === 'yearly' ? '' : 'hidden'}>
-        <span class="form-label">Due Month</span>
+        <span class="form-label">Payment month</span>
         <select id="${prefix}-duemonth" class="form-select">
           ${MONTHS.map((m,i)=>`<option value="${i+1}" ${isEdit && item.dueMonth===i+1?'selected':''}>${m}</option>`).join('')}
         </select>
@@ -1210,10 +1548,26 @@ function updatePerson(person, key, value) {
   render();
 }
 
+function updatePaySchedule(key, value) {
+  if (key === 'anchorDate') data.paySchedule.anchorDate = parseLocalDate(value) ? value : '';
+  save();
+  render();
+}
+
+function updatePaycheck(person, value) {
+  data.paySchedule.paychecks[person] = Math.max(0, +value || 0);
+  save();
+  render();
+}
+
 function updateDueMonthVisibility(prefix) {
   const freq = document.getElementById(`${prefix}-freq`);
   const field = document.getElementById(`${prefix}-duemonth-field`);
   if (freq && field) field.hidden = freq.value !== 'yearly';
+  const amountLabel = document.getElementById(`${prefix}-amount-label`);
+  const dueDayLabel = document.getElementById(`${prefix}-dueday-label`);
+  if (amountLabel && freq) amountLabel.textContent = freq.value === 'yearly' ? 'Annual payment' : 'Monthly amount';
+  if (dueDayLabel && freq) dueDayLabel.textContent = freq.value === 'yearly' ? 'Payment day' : 'Due day (0 = various)';
 }
 
 function setBillFilter(f) { billFilter = f; render(); }
@@ -1233,19 +1587,20 @@ function submitNew(type) {
   const name = document.getElementById(`${p}-name`).value.trim();
   const amount = parseFloat(document.getElementById(`${p}-amount`).value);
   const freq = document.getElementById(`${p}-freq`).value;
-  const dueDay = parseInt(document.getElementById(`${p}-dueday`).value) || 0;
+  const enteredDueDay = parseInt(document.getElementById(`${p}-dueday`).value) || 0;
+  const dueDay = freq === 'yearly' ? enteredDueDay || 1 : enteredDueDay;
   const dueMonth = parseInt(document.getElementById(`${p}-duemonth`).value) || 1;
   const cat = document.getElementById(`${p}-cat`).value;
+  const person = document.getElementById(`${p}-person`).value;
   if (!name || isNaN(amount) || amount <= 0) { alert('Please enter a name and amount.'); return; }
   const newId = nextExpenseId();
   if (isBill) {
-    const person = document.getElementById(`${p}-person`).value;
     const bill = { id:newId, type:'bill', name, amount, dueDay, person, freq, cat, note:'' };
     if (freq === 'yearly') bill.dueMonth = dueMonth;
     data.expenses.push(bill);
     addingBill = false;
   } else {
-    const sub = { id:newId, type:'subscription', name, amount, dueDay, freq, cat };
+    const sub = { id:newId, type:'subscription', name, amount, dueDay, person, freq, cat };
     if (freq === 'yearly') sub.dueMonth = dueMonth;
     data.expenses.push(sub);
     addingSub = false;
@@ -1259,18 +1614,19 @@ function saveEdit(type, id) {
   const name = document.getElementById(p+'-name').value.trim();
   const amount = parseFloat(document.getElementById(p+'-amount').value);
   const freq = document.getElementById(p+'-freq').value;
-  const dueDay = parseInt(document.getElementById(p+'-dueday').value) || 0;
+  const enteredDueDay = parseInt(document.getElementById(p+'-dueday').value) || 0;
+  const dueDay = freq === 'yearly' ? enteredDueDay || 1 : enteredDueDay;
   const dueMonth = parseInt(document.getElementById(p+'-duemonth').value) || 1;
   const cat = document.getElementById(p+'-cat').value;
+  const person = document.getElementById(p+'-person').value;
   if (!name || isNaN(amount) || amount <= 0) { alert('Please enter a name and amount.'); return; }
   if (isBill) {
-    const person = document.getElementById(p+'-person').value;
     const b = data.expenses.find(x => x.type === 'bill' && x.id === id);
     if (b) { b.name=name; b.amount=amount; b.freq=freq; b.dueDay=dueDay; b.cat=cat; b.person=person; if (freq==='yearly') b.dueMonth=dueMonth; }
     editingBillId = null;
   } else {
     const s = data.expenses.find(x => x.type === 'subscription' && x.id === id);
-    if (s) { s.name=name; s.amount=amount; s.freq=freq; s.dueDay=dueDay; s.cat=cat; if (freq==='yearly') s.dueMonth=dueMonth; }
+    if (s) { s.name=name; s.amount=amount; s.freq=freq; s.dueDay=dueDay; s.cat=cat; s.person=person; if (freq==='yearly') s.dueMonth=dueMonth; }
     editingSubId = null;
   }
   save(); render();
@@ -1304,7 +1660,7 @@ function renderChartSection() {
   // Main chart: bills only (subs are tracked separately below)
   const totals = {};
   for (const b of expensesOf('bill')) {
-    totals[b.cat] = (totals[b.cat] || 0) + b.amount;
+    totals[b.cat] = (totals[b.cat] || 0) + monthlyEquiv(b);
   }
   const entries = Object.entries(totals)
     .map(([cat, val]) => ({ cat, val, color: CAT_COLORS[cat] || '#8E8E93', label: cat[0].toUpperCase()+cat.slice(1), icon: CAT_ICONS[cat] || '📋' }))
@@ -1328,7 +1684,7 @@ function renderChartSection() {
   // Subscriptions chart: grouped by category
   const subTotals = {};
   for (const s of expensesOf('subscription')) {
-    if (s.amount > 0) subTotals[s.cat] = (subTotals[s.cat] || 0) + s.amount;
+    if (s.amount > 0) subTotals[s.cat] = (subTotals[s.cat] || 0) + monthlyEquiv(s);
   }
   const subEntries = Object.entries(subTotals)
     .map(([cat, val]) => ({ val, color: CAT_COLORS[cat] || '#8E8E93', label: cat[0].toUpperCase()+cat.slice(1), icon: CAT_ICONS[cat] || '📱' }))
@@ -1387,13 +1743,13 @@ function renderChartSection() {
 }
 // ─── RENDER DISPATCH ──────────────────────────────────────────────────────────
 function render() {
-  const titles = { home:'Dashboard', bills:'Bills', subs:'Subscriptions' };
+  const titles = { home:'Dashboard', pay:'Pay Periods', bills:'Bills', subs:'Subscriptions' };
   document.getElementById('page-title').textContent = titles[currentTab];
   applyTheme();
   updateDocumentChrome();
   const showEdit = currentTab === 'bills' || currentTab === 'subs';
   document.getElementById('edit-btn').style.display = showEdit ? 'flex' : 'none';
-  const map = { home:renderHome, bills:renderBills, subs:renderSubs };
+  const map = { home:renderHome, pay:renderPayPeriods, bills:renderBills, subs:renderSubs };
   document.getElementById('main').innerHTML = (map[currentTab] || renderHome)();
 }
 

@@ -144,6 +144,8 @@ async function run() {
   assert(!html.includes('saveBudgetAs'), 'Save As handler should not remain as a public workflow.');
   assert(html.includes('person-income-input'), 'Dashboard summary cards should expose household income entry.');
   assert(html.includes('theme-btn'), 'Header should include the light/dark theme toggle.');
+  assert(html.includes('data-tab="pay"'), 'Navigation should include the Pay Periods tab.');
+  assert(html.includes('renderPayPeriods'), 'Pay Periods should have a dedicated renderer.');
 
   const legacy = {
     names: { papa: 'A', mama: 'B' },
@@ -160,12 +162,60 @@ async function run() {
   assert(!Object.hasOwn(saved, 'bills'), 'Serialized v2 budget should not contain bills.');
   assert(!Object.hasOwn(saved, 'subscriptions'), 'Serialized v2 budget should not contain subscriptions.');
   assert(saved.expenses.map(item => item.type).join(',') === 'bill,subscription', 'Migrated expenses should keep item types.');
+  assert(saved.schemaVersion === 3, 'Serialized budgets should use schema version 3.');
+  assert(saved.expenses[1].person === 'unassigned', 'Legacy subscriptions should be preserved for explicit person assignment.');
+
+  const annualMigration = createHarness();
+  vm.runInContext(`data = normalizeBudget({
+    schemaVersion: 2,
+    expenses: [{ id: 1, type: 'bill', name: 'Insurance', amount: 100, dueDay: 15, dueMonth: 8, person: 'papa', freq: 'yearly', cat: 'insurance' }]
+  });`, annualMigration);
+  assert(vm.runInContext('data.expenses[0].amount', annualMigration) === 1200, 'Version 2 yearly averages should migrate to actual annual payments.');
+  assert(vm.runInContext('monthlyEquiv(data.expenses[0])', annualMigration) === 100, 'Migrated annual payments should retain their monthly equivalent.');
+  const migratedAnnualSave = JSON.parse(vm.runInContext('serializeBudget()', annualMigration));
+  vm.runInContext(`data = normalizeBudget(${JSON.stringify(migratedAnnualSave)});`, annualMigration);
+  assert(vm.runInContext('data.expenses[0].amount', annualMigration) === 1200, 'Saved annual payments should not be converted twice.');
+
+  const currentAnnual = createHarness();
+  vm.runInContext(`data = normalizeBudget({
+    schemaVersion: 3,
+    expenses: [{ id: 1, type: 'subscription', name: 'Software', amount: 240, dueDay: 1, dueMonth: 9, person: 'mama', freq: 'yearly', cat: 'tech' }]
+  });`, currentAnnual);
+  assert(vm.runInContext('data.expenses[0].amount', currentAnnual) === 240, 'Version 3 annual payments should not be multiplied again.');
+  assert(vm.runInContext('data.expenses[0].person', currentAnnual) === 'mama', 'Subscription responsibility should be preserved.');
 
   const formFlow = createHarness();
   const newBillForm = vm.runInContext('itemForm("bill", null)', formFlow);
   const yearlyBillForm = vm.runInContext('itemForm("bill", { id: 1, type: "bill", name: "Taxes", amount: 100, dueDay: 1, dueMonth: 4, person: "papa", freq: "yearly", cat: "misc" })', formFlow);
   assert(newBillForm.includes('id="nb-duemonth-field" hidden'), 'Monthly bill form should hide the yearly-only due month field.');
   assert(yearlyBillForm.includes('id="eb-duemonth-field" >'), 'Yearly bill form should show the due month field.');
+  assert(yearlyBillForm.includes('Annual payment'), 'Yearly forms should request the actual annual payment.');
+
+  const periodFlow = createHarness();
+  vm.runInContext(`data = normalizeBudget({
+    schemaVersion: 3,
+    names: { papa: 'Alex', mama: 'Sam' },
+    income: { papa: 0, mama: 0 },
+    paySchedule: { cadence: 'biweekly', anchorDate: '2026-08-07', paychecks: { papa: 2500, mama: 1800 } },
+    expenses: [
+      { id: 1, type: 'bill', name: 'Mortgage', amount: 1000, dueDay: 10, person: 'papa', freq: 'monthly', cat: 'housing' },
+      { id: 2, type: 'subscription', name: 'Annual Software', amount: 600, dueDay: 15, dueMonth: 8, person: 'mama', freq: 'yearly', cat: 'tech' },
+      { id: 3, type: 'subscription', name: 'Undated', amount: 20, dueDay: 0, person: 'mama', freq: 'monthly', cat: 'media' }
+    ]
+  });`, periodFlow);
+  assert(Math.abs(vm.runInContext('monthlyIncome("papa")', periodFlow) - (2500 * 26 / 12)) < 0.001, 'Biweekly paycheck should derive monthly average income.');
+  assert(vm.runInContext('dateKey(payPeriodStarts(1, new Date(2026, 7, 12))[0])', periodFlow) === '2026-08-07', 'Known payday should anchor the current 14-day period.');
+  assert(vm.runInContext('ledgerForPeriod("papa", parseLocalDate("2026-08-07")).outgoing', periodFlow) === 1000, 'Papa ledger should include only Papa expenses in the period.');
+  assert(vm.runInContext('ledgerForPeriod("mama", parseLocalDate("2026-08-07")).outgoing', periodFlow) === 600, 'Mama ledger should include Mama annual payments in the period.');
+  assert(vm.runInContext('ledgerForPeriod("mama", parseLocalDate("2026-08-07")).items.length', periodFlow) === 1, 'Undated monthly expenses should not be placed on an invented date.');
+  assert(vm.runInContext(`expenseOccursOn({ freq: 'monthly', dueDay: 31 }, new Date(2027, 1, 28))`, periodFlow), 'End-of-month expenses should clamp to the last calendar day.');
+  assert(vm.runInContext('parseLocalDate("2026-02-31")', periodFlow) === null, 'Invalid calendar dates should not become pay schedule anchors.');
+  const payHtml = vm.runInContext('renderPayPeriods()', periodFlow);
+  assert(payHtml.includes('Alex') && payHtml.includes('Sam'), 'Pay Periods should render separate named ledgers.');
+  assert(payHtml.includes('Annual Software') && payHtml.includes('$600'), 'Pay Periods should surface actual annual charges.');
+  assert(!vm.runInContext('renderHome()', periodFlow).includes('undefined'), 'Dashboard should render assigned and annual expenses cleanly.');
+  assert(!vm.runInContext('renderBills()', periodFlow).includes('undefined'), 'Bills should render the version 3 data model cleanly.');
+  assert(!vm.runInContext('renderSubs()', periodFlow).includes('undefined'), 'Subscriptions should render the version 3 data model cleanly.');
 
   const shellFlow = createHarness();
   vm.runInContext('render()', shellFlow);
@@ -175,6 +225,9 @@ async function run() {
   vm.runInContext('toggleTheme()', shellFlow);
   assert(shellFlow.__harness.elements.get('theme-btn').textContent === 'Light', 'Theme toggle should switch to offering light mode in dark mode.');
   assert(shellFlow.__harness.storage.get('budget_theme') === 'dark', 'Theme selection should be saved.');
+  vm.runInContext('switchTab("pay")', shellFlow);
+  assert(shellFlow.__harness.elements.get('main').innerHTML.includes('Shared Pay Schedule'), 'Pay tab should expose the shared biweekly setup.');
+  assert(shellFlow.__harness.elements.get('edit-btn').style.display === 'none', 'Pay tab should not show the bill delete control.');
   vm.runInContext('switchTab("bills")', shellFlow);
   assert(shellFlow.__harness.elements.get('edit-btn').style.display === 'flex', 'Bills should show the contextual delete control.');
 
