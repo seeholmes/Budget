@@ -569,7 +569,7 @@
 <script>
 // ─── DATA ───────────────────────────────────────────────────────────────────
 const DEFAULTS = {
-  schemaVersion: 4,
+  schemaVersion: 5,
   names: { papa: 'Papa', mama: 'Mama' },
   income: { papa: 0, mama: 0 },
   paySchedule: {
@@ -596,8 +596,10 @@ function normalizeExpense(item, fallbackId, type, sourceSchemaVersion) {
   normalized.amount = Number.isFinite(+normalized.amount) ? +normalized.amount : 0;
   normalized.dueDay = Number.isFinite(+normalized.dueDay) ? Math.max(0, Math.min(31, +normalized.dueDay)) : 0;
   normalized.dueMonth = Number.isFinite(+normalized.dueMonth) ? Math.max(1, Math.min(12, +normalized.dueMonth)) : 1;
-  normalized.freq = normalized.freq === 'yearly' ? 'yearly' : 'monthly';
+  normalized.freq = normalized.freq === 'yearly' ? 'yearly' : normalized.freq === 'weekly' ? 'weekly' : 'monthly';
   if (sourceSchemaVersion < 3 && normalized.freq === 'yearly') normalized.amount *= 12;
+  normalized.weekday = Number.isFinite(+normalized.weekday) ? Math.max(0, Math.min(6, Math.trunc(+normalized.weekday))) : 5;
+  if (normalized.freq !== 'weekly') delete normalized.weekday;
   normalized.cat = normalized.cat || 'misc';
   normalized.person = normalized.person === 'mama'
     ? 'mama'
@@ -698,7 +700,7 @@ function ensureBudgetFileName(name) {
 function serializeBudget() {
   return JSON.stringify({
     ...normalizeBudget(data),
-    schemaVersion: 4,
+    schemaVersion: 5,
     savedAt: new Date().toISOString()
   }, null, 2);
 }
@@ -903,6 +905,7 @@ const CAT_COLORS = {
 };
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const MONTHS_FULL = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const WEEKDAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 
 function parseLocalDate(value) {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value || ''));
@@ -952,6 +955,7 @@ function payPeriodStarts(count, today = new Date()) {
 }
 
 function expenseOccursOn(expense, date) {
+  if (expense.freq === 'weekly') return date.getDay() === expense.weekday;
   const dueDay = Math.max(1, expense.dueDay || 1);
   if (expense.freq === 'yearly' && date.getMonth() + 1 !== expense.dueMonth) return false;
   if (expense.freq === 'monthly' && !expense.dueDay) return false;
@@ -1017,7 +1021,13 @@ function daysUntil(dueDay, dueMonth) {
   return Math.round((target - today) / 86400000);
 }
 
+function daysUntilWeekday(weekday) {
+  const today = startOfDay(new Date());
+  return (weekday - today.getDay() + 7) % 7;
+}
+
 function dueLabel(bill) {
+  if (bill.freq === 'weekly') return `Every ${WEEKDAYS[bill.weekday]}`;
   if (bill.freq === 'yearly') return `${MONTHS[bill.dueMonth-1]} ${bill.dueDay || 1}`;
   if (!bill.dueDay) return 'Various';
   const d = bill.dueDay;
@@ -1027,7 +1037,9 @@ function dueLabel(bill) {
 }
 
 function monthlyEquiv(bill) {
-  return bill.freq === 'yearly' ? bill.amount / 12 : bill.amount;
+  if (bill.freq === 'yearly') return bill.amount / 12;
+  if (bill.freq === 'weekly') return bill.amount * 52 / 12;
+  return bill.amount;
 }
 
 function expensesOf(type) {
@@ -1095,10 +1107,10 @@ function renderHome() {
   const papaBal = equalBal;
   const mamaBal = equalBal;
 
-  // Upcoming monthly expenses this week (next 7 days)
+  // Upcoming recurring expenses this week (next 7 days)
   const upcoming = data.expenses
-    .filter(b => b.freq === 'monthly' && b.dueDay)
-    .map(b => ({ ...b, days: daysUntil(b.dueDay, null) }))
+    .filter(b => b.freq === 'weekly' || (b.freq === 'monthly' && b.dueDay))
+    .map(b => ({ ...b, days: b.freq === 'weekly' ? daysUntilWeekday(b.weekday) : daysUntil(b.dueDay, null) }))
     .filter(b => b.days !== null && b.days <= 7)
     .sort((a, b) => a.days - b.days);
 
@@ -1230,7 +1242,7 @@ function renderPersonLedger(ledger) {
   const expenseItems = ledger.items.map(({ expense, date }) => `<div class="ledger-item">
         <div>
           <div class="ledger-item-name">${expense.name}</div>
-          <div class="ledger-item-date">${formatPeriodDate(date)} · ${expense.type === 'subscription' ? 'Subscription' : 'Bill'}${expense.freq === 'yearly' ? ' · Annual' : ''}</div>
+          <div class="ledger-item-date">${formatPeriodDate(date)} · ${expense.type === 'subscription' ? 'Subscription' : 'Bill'}${expense.freq === 'yearly' ? ' · Annual' : expense.freq === 'weekly' ? ' · Weekly' : ''}</div>
         </div>
         <div class="ledger-item-amount">–${fmt(expense.amount)}</div>
       </div>`).join('');
@@ -1360,14 +1372,47 @@ function renderBills() {
     if (!b.dueDay) return -1;
     return a.dueDay - b.dueDay;
   });
+  const weekly = bills.filter(b => b.freq === 'weekly').sort((a,b) => a.weekday - b.weekday || a.name.localeCompare(b.name));
   const yearly = bills.filter(b => b.freq === 'yearly').sort((a,b) => a.dueMonth - b.dueMonth);
 
+  const totalW = weekly.reduce((sum,bill)=>sum+bill.amount,0);
   const totalM = bills.filter(b=>b.freq==='monthly').reduce((s,b)=>s+b.amount,0);
   const totalY = bills.filter(b=>b.freq==='yearly').reduce((s,b)=>s+b.amount,0);
 
   let html = `<div class="filter-row">
     ${billFilters.map(f=>`<button class="filter-chip${billFilter===f?' active':''}" onclick="setBillFilter('${f}')">${f==='all' ? 'All Bills' : f === 'unassigned' ? 'Needs assignment' : data.names[f]}</button>`).join('')}
   </div>`;
+
+  if (weekly.length) {
+    html += `<div class="section-label">Weekly Bills</div><div class="card-list">`;
+    for (const b of weekly) {
+      if (editingBillId === b.id) {
+        html += itemForm('bill', b);
+        continue;
+      }
+      const days = daysUntilWeekday(b.weekday);
+      const personColor = b.person === 'papa' ? 'var(--blue)' : b.person === 'mama' ? 'var(--purple)' : 'var(--orange)';
+      const personName = b.person === 'unassigned' ? 'Needs assignment' : data.names[b.person];
+      html += `<div class="list-row" style="cursor:pointer" onclick="editingBillId=${b.id};addingBill=false;render()">
+        <div class="row-icon" style="background:rgba(${b.person==='papa'?'0,122,255':'175,82,222'},0.1)">${CAT_ICONS[b.cat]||'📋'}</div>
+        <div class="row-main">
+          <div class="row-title">${b.name}</div>
+          <div class="row-sub" style="color:${personColor}">${personName} · Every ${WEEKDAYS[b.weekday]} · ${fmt(b.amount*52)}/yr</div>
+        </div>
+        <div class="row-right">
+          <div class="row-amount">${fmt(b.amount)}/wk</div>
+          <div style="font-size:12px;color:${days <= 1 ? 'var(--orange)' : 'var(--text3)'};text-align:right">${days === 0 ? 'TODAY' : `in ${days}d`}</div>
+        </div>
+        ${editMode ? `<button class="del-btn" onclick="event.stopPropagation();deleteBill(${b.id})">−</button>` : `<span class="chevron">›</span>`}
+      </div>`;
+    }
+    html += `<div class="list-row" style="background:rgba(0,0,0,0.02)">
+      <div class="row-main" style="font-weight:600">Weekly Total</div>
+      <div class="row-right"><div class="row-amount" style="color:var(--red)">${fmt(totalW)}/wk</div>
+        <div style="font-size:12px;color:var(--text2);text-align:right">~${fmt(totalW*52/12)}/mo</div>
+      </div>
+    </div></div>`;
+  }
 
   html += `<div class="section-label">Monthly Bills</div><div class="card-list">`;
   for (const b of monthly) {
@@ -1441,13 +1486,47 @@ function renderBills() {
 
 // ─── RENDER SUBS ─────────────────────────────────────────────────────────────
 function renderSubs() {
+  const weekly  = expensesOf('subscription').filter(s=>s.freq==='weekly').sort((a,b)=>a.weekday-b.weekday || a.name.localeCompare(b.name));
   const monthly = expensesOf('subscription').filter(s=>s.freq==='monthly').sort((a,b)=>a.dueDay-b.dueDay);
   const yearly  = expensesOf('subscription').filter(s=>s.freq==='yearly').sort((a,b)=>a.dueMonth-b.dueMonth);
+  const totalW  = weekly.reduce((s,x)=>s+x.amount,0);
   const totalM  = monthly.reduce((s,x)=>s+x.amount,0);
   const totalY  = yearly.reduce((s,x)=>s+x.amount,0);
-  const grandMo = totalM + totalY / 12;
+  const grandMo = totalW * 52 / 12 + totalM + totalY / 12;
 
-  let html = `<div class="section-label">Monthly Subscriptions</div><div class="card-list">`;
+  let html = '';
+  if (weekly.length) {
+    html += `<div class="section-label">Weekly Subscriptions</div><div class="card-list">`;
+    for (const s of weekly) {
+      if (editingSubId === s.id) {
+        html += itemForm('sub', s);
+        continue;
+      }
+      const days = daysUntilWeekday(s.weekday);
+      const personColor = s.person === 'papa' ? 'var(--blue)' : s.person === 'mama' ? 'var(--purple)' : 'var(--orange)';
+      const personName = s.person === 'unassigned' ? 'Needs assignment' : data.names[s.person];
+      html += `<div class="list-row" style="cursor:pointer" onclick="editingSubId=${s.id};addingSub=false;render()">
+        <div class="row-icon" style="background:rgba(0,122,255,0.1)">${CAT_ICONS[s.cat]||'📱'}</div>
+        <div class="row-main">
+          <div class="row-title">${s.name}</div>
+          <div class="row-sub" style="color:${personColor}">${personName} · Every ${WEEKDAYS[s.weekday]} · ${fmt(s.amount*52)}/yr</div>
+        </div>
+        <div class="row-right">
+          <div class="row-amount">${fmt(s.amount)}/wk</div>
+          <div style="font-size:12px;color:${days <= 1 ? 'var(--orange)' : 'var(--text3)'};text-align:right">${days === 0 ? 'TODAY' : `in ${days}d`}</div>
+        </div>
+        ${editMode ? `<button class="del-btn" onclick="event.stopPropagation();deleteSub(${s.id})">−</button>` : `<span class="chevron">›</span>`}
+      </div>`;
+    }
+    html += `<div class="list-row" style="background:rgba(0,0,0,0.02)">
+      <div class="row-main" style="font-weight:600">Weekly Total</div>
+      <div class="row-right"><div class="row-amount" style="color:var(--red)">${fmt(totalW)}/wk</div>
+        <div style="font-size:12px;color:var(--text2);text-align:right">~${fmt(totalW*52/12)}/mo</div>
+      </div>
+    </div></div>`;
+  }
+
+  html += `<div class="section-label">Monthly Subscriptions</div><div class="card-list">`;
   for (const s of monthly) {
     if (editingSubId === s.id) {
       html += itemForm('sub', s);
@@ -1511,6 +1590,7 @@ function renderSubs() {
 
   html += `<div class="wide-card">
     <div class="wide-card-title">Summary</div>
+    ${weekly.length ? `<div class="wc-row"><span class="label">Weekly (avg/mo)</span><span class="val">${fmt(totalW*52/12)}</span></div>` : ''}
     <div class="wc-row"><span class="label">Monthly subs</span><span class="val">${fmt(totalM)}</span></div>
     <div class="wc-row"><span class="label">Annual (avg/mo)</span><span class="val">${fmt(totalY/12)}</span></div>
     <div class="wc-row" style="font-weight:600"><span class="label">Total/month</span><span class="val" style="color:var(--red)">${fmt(grandMo)}</span></div>
@@ -1530,6 +1610,8 @@ function itemForm(type, item) {
   const prefix = isEdit ? (isBill ? 'eb' : 'es') : (isBill ? 'nb' : 'ns');
   const cats = Object.keys(CAT_ICONS);
   const freqValue = isEdit && item.freq ? item.freq : 'monthly';
+  const weekdayValue = isEdit && item.weekday != null ? item.weekday : 5;
+  const amountLabel = freqValue === 'yearly' ? 'Annual payment' : freqValue === 'weekly' ? 'Weekly payment' : 'Monthly amount';
   const v = k => isEdit && item[k] != null ? item[k] : '';
   const sel = (k, val) => isEdit && item[k] === val ? 'selected' : '';
   const cancelAction = isEdit ? (isBill ? 'editingBillId=null' : 'editingSubId=null') : (isBill ? 'addingBill=false' : 'addingSub=false');
@@ -1543,7 +1625,7 @@ function itemForm(type, item) {
     </div></div>
     <div class="form-grid">
       <div class="form-field">
-        <span class="form-label" id="${prefix}-amount-label">${freqValue === 'yearly' ? 'Annual payment' : 'Monthly amount'}</span>
+        <span class="form-label" id="${prefix}-amount-label">${amountLabel}</span>
         <input id="${prefix}-amount" class="form-input" type="number" inputmode="decimal" value="${v('amount')}" placeholder="0">
       </div>
       <div class="form-field">
@@ -1566,12 +1648,13 @@ function itemForm(type, item) {
         <span class="form-label">Frequency</span>
         <select id="${prefix}-freq" class="form-select" onchange="updateDueMonthVisibility('${prefix}')">
           <option value="monthly" ${sel('freq','monthly')}>Monthly</option>
+          <option value="weekly" ${sel('freq','weekly')}>Weekly</option>
           <option value="yearly" ${sel('freq','yearly')}>Yearly</option>
         </select>
       </div>
     </div>
     <div class="form-grid">
-      <div class="form-field">
+      <div class="form-field" id="${prefix}-dueday-field" ${freqValue === 'weekly' ? 'hidden' : ''}>
         <span class="form-label" id="${prefix}-dueday-label">${freqValue === 'yearly' ? 'Payment day' : 'Due day (0 = various)'}</span>
         <input id="${prefix}-dueday" class="form-input" type="number" inputmode="numeric" value="${isEdit ? item.dueDay : 0}" min="0" max="31">
       </div>
@@ -1579,6 +1662,12 @@ function itemForm(type, item) {
         <span class="form-label">Payment month</span>
         <select id="${prefix}-duemonth" class="form-select">
           ${MONTHS.map((m,i)=>`<option value="${i+1}" ${isEdit && item.dueMonth===i+1?'selected':''}>${m}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-field" id="${prefix}-weekday-field" ${freqValue === 'weekly' ? '' : 'hidden'}>
+        <span class="form-label">Payment day</span>
+        <select id="${prefix}-weekday" class="form-select">
+          ${WEEKDAYS.map((day,index)=>`<option value="${index}" ${weekdayValue === index ? 'selected' : ''}>${day}</option>`).join('')}
         </select>
       </div>
     </div>
@@ -1618,11 +1707,15 @@ function updatePayTransfer(key, value) {
 
 function updateDueMonthVisibility(prefix) {
   const freq = document.getElementById(`${prefix}-freq`);
-  const field = document.getElementById(`${prefix}-duemonth-field`);
-  if (freq && field) field.hidden = freq.value !== 'yearly';
+  const monthField = document.getElementById(`${prefix}-duemonth-field`);
+  const dayField = document.getElementById(`${prefix}-dueday-field`);
+  const weekdayField = document.getElementById(`${prefix}-weekday-field`);
+  if (freq && monthField) monthField.hidden = freq.value !== 'yearly';
+  if (freq && dayField) dayField.hidden = freq.value === 'weekly';
+  if (freq && weekdayField) weekdayField.hidden = freq.value !== 'weekly';
   const amountLabel = document.getElementById(`${prefix}-amount-label`);
   const dueDayLabel = document.getElementById(`${prefix}-dueday-label`);
-  if (amountLabel && freq) amountLabel.textContent = freq.value === 'yearly' ? 'Annual payment' : 'Monthly amount';
+  if (amountLabel && freq) amountLabel.textContent = freq.value === 'yearly' ? 'Annual payment' : freq.value === 'weekly' ? 'Weekly payment' : 'Monthly amount';
   if (dueDayLabel && freq) dueDayLabel.textContent = freq.value === 'yearly' ? 'Payment day' : 'Due day (0 = various)';
 }
 
@@ -1644,8 +1737,9 @@ function submitNew(type) {
   const amount = parseFloat(document.getElementById(`${p}-amount`).value);
   const freq = document.getElementById(`${p}-freq`).value;
   const enteredDueDay = parseInt(document.getElementById(`${p}-dueday`).value) || 0;
-  const dueDay = freq === 'yearly' ? enteredDueDay || 1 : enteredDueDay;
+  const dueDay = freq === 'weekly' ? 0 : freq === 'yearly' ? enteredDueDay || 1 : enteredDueDay;
   const dueMonth = parseInt(document.getElementById(`${p}-duemonth`).value) || 1;
+  const weekday = parseInt(document.getElementById(`${p}-weekday`).value);
   const cat = document.getElementById(`${p}-cat`).value;
   const person = document.getElementById(`${p}-person`).value;
   if (!name || isNaN(amount) || amount <= 0) { alert('Please enter a name and amount.'); return; }
@@ -1653,11 +1747,13 @@ function submitNew(type) {
   if (isBill) {
     const bill = { id:newId, type:'bill', name, amount, dueDay, person, freq, cat, note:'' };
     if (freq === 'yearly') bill.dueMonth = dueMonth;
+    if (freq === 'weekly') bill.weekday = Number.isFinite(weekday) ? weekday : 5;
     data.expenses.push(bill);
     addingBill = false;
   } else {
     const sub = { id:newId, type:'subscription', name, amount, dueDay, person, freq, cat };
     if (freq === 'yearly') sub.dueMonth = dueMonth;
+    if (freq === 'weekly') sub.weekday = Number.isFinite(weekday) ? weekday : 5;
     data.expenses.push(sub);
     addingSub = false;
   }
@@ -1671,18 +1767,27 @@ function saveEdit(type, id) {
   const amount = parseFloat(document.getElementById(p+'-amount').value);
   const freq = document.getElementById(p+'-freq').value;
   const enteredDueDay = parseInt(document.getElementById(p+'-dueday').value) || 0;
-  const dueDay = freq === 'yearly' ? enteredDueDay || 1 : enteredDueDay;
+  const dueDay = freq === 'weekly' ? 0 : freq === 'yearly' ? enteredDueDay || 1 : enteredDueDay;
   const dueMonth = parseInt(document.getElementById(p+'-duemonth').value) || 1;
+  const weekday = parseInt(document.getElementById(p+'-weekday').value);
   const cat = document.getElementById(p+'-cat').value;
   const person = document.getElementById(p+'-person').value;
   if (!name || isNaN(amount) || amount <= 0) { alert('Please enter a name and amount.'); return; }
   if (isBill) {
     const b = data.expenses.find(x => x.type === 'bill' && x.id === id);
-    if (b) { b.name=name; b.amount=amount; b.freq=freq; b.dueDay=dueDay; b.cat=cat; b.person=person; if (freq==='yearly') b.dueMonth=dueMonth; }
+    if (b) {
+      b.name=name; b.amount=amount; b.freq=freq; b.dueDay=dueDay; b.cat=cat; b.person=person;
+      if (freq==='yearly') b.dueMonth=dueMonth; else delete b.dueMonth;
+      if (freq==='weekly') b.weekday=Number.isFinite(weekday) ? weekday : 5; else delete b.weekday;
+    }
     editingBillId = null;
   } else {
     const s = data.expenses.find(x => x.type === 'subscription' && x.id === id);
-    if (s) { s.name=name; s.amount=amount; s.freq=freq; s.dueDay=dueDay; s.cat=cat; s.person=person; if (freq==='yearly') s.dueMonth=dueMonth; }
+    if (s) {
+      s.name=name; s.amount=amount; s.freq=freq; s.dueDay=dueDay; s.cat=cat; s.person=person;
+      if (freq==='yearly') s.dueMonth=dueMonth; else delete s.dueMonth;
+      if (freq==='weekly') s.weekday=Number.isFinite(weekday) ? weekday : 5; else delete s.weekday;
+    }
     editingSubId = null;
   }
   save(); render();
