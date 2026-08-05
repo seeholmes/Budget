@@ -424,6 +424,7 @@
       min-width: 0; max-width: 100%;
     }
     .form-input:focus, .form-select:focus { border-color: var(--blue); outline: none; }
+    .form-input[type="date"] { padding-left: 0; padding-right: 0; }
     .form-select { -webkit-appearance: none; appearance: none; }
     .form-actions { display: flex; gap: 8px; margin-top: 10px; }
     .btn-save { flex:1; background: var(--blue); color: white; border: none; border-radius: 8px; padding: 12px; font-size: 15px; font-family: inherit; font-weight: 600; cursor: pointer; }
@@ -441,7 +442,7 @@
     .pay-person-title { margin-bottom: 8px; font-family: var(--display-font); font-size: 17px; font-weight: 600; }
     .pay-person-setup.papa .pay-person-title { color: var(--blue); }
     .pay-person-setup.mama .pay-person-title { color: var(--purple); }
-    .pay-person-fields { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 10px; }
+    .pay-person-fields { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(120px, 1fr); gap: 10px; }
     .pay-setup-note {
       color: var(--text2);
       font-size: 13px;

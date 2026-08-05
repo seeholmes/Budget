@@ -171,6 +171,8 @@ async function run() {
   assert(html.includes('font-family: var(--display-font)') && html.includes('household-summary'), 'The dashboard should include editorial display type and the emphasized household summary.');
   assert(html.includes('.summary-row { grid-template-columns: 1fr; }'), 'Phone layouts should stack the two household member cards.');
   assert(html.includes('min-width: 0; max-width: 100%;'), 'Form controls should stay inside narrow mobile grid columns.');
+  assert(html.includes('.form-input[type="date"] { padding-left: 0; padding-right: 0; }'), 'Date controls should avoid the iOS width-plus-padding overflow bug.');
+  assert(html.includes('.pay-person-fields { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(120px, 1fr); gap: 10px; }'), 'Payday and transfer fields should use matching mobile column geometry.');
   assert(html.includes('ledger-table'), 'Expanded desktop ledgers should include a transaction table.');
   assert(html.includes('grid-template-columns: minmax(180px, 1fr) 330px 18px;'), 'Desktop period headers should reserve stable columns for summary totals.');
   assert(!html.includes('.period-head-summary { display: none; }'), 'Phone layouts should keep collapsed period summaries visible.');
