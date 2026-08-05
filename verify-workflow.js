@@ -189,7 +189,7 @@ async function run() {
   assert(!Object.hasOwn(saved, 'bills'), 'Serialized v2 budget should not contain bills.');
   assert(!Object.hasOwn(saved, 'subscriptions'), 'Serialized v2 budget should not contain subscriptions.');
   assert(saved.expenses.map(item => item.type).join(',') === 'bill,subscription', 'Migrated expenses should keep item types.');
-  assert(saved.schemaVersion === 5, 'Serialized budgets should use schema version 5.');
+  assert(saved.schemaVersion === 6, 'Serialized budgets should use schema version 6.');
   assert(saved.paySchedule.transfer.amount === 0, 'Older budgets should default to no recorded payday transfer.');
   assert(saved.expenses[1].person === 'unassigned', 'Legacy subscriptions should be preserved for explicit person assignment.');
 
@@ -213,6 +213,21 @@ async function run() {
   assert(vm.runInContext('data.expenses[0].person', currentAnnual) === 'mama', 'Subscription responsibility should be preserved.');
   assert(vm.runInContext('data.paySchedule.transfer.amount', currentAnnual) === 0, 'Version 3 budgets should gain a zero transfer without changing totals.');
 
+  const sharedPaydayMigration = createHarness();
+  vm.runInContext(`data = normalizeBudget({
+    schemaVersion: 5,
+    paySchedule: {
+      cadence: 'biweekly',
+      anchorDate: '2026-08-07',
+      paychecks: { papa: 2500, mama: 1800 },
+      transfer: { from: 'papa', amount: 300 }
+    }
+  });`, sharedPaydayMigration);
+  assert(vm.runInContext('data.paySchedule.anchorDates.papa', sharedPaydayMigration) === '2026-08-07', 'The shared payday should migrate to Papa.');
+  assert(vm.runInContext('data.paySchedule.anchorDates.mama', sharedPaydayMigration) === '2026-08-07', 'The shared payday should migrate to Mama.');
+  const migratedPaydaySave = JSON.parse(vm.runInContext('serializeBudget()', sharedPaydayMigration));
+  assert(!Object.hasOwn(migratedPaydaySave.paySchedule, 'anchorDate'), 'Saved version 6 budgets should omit the legacy shared payday.');
+
   const formFlow = createHarness();
   const newBillForm = vm.runInContext('itemForm("bill", null)', formFlow);
   const yearlyBillForm = vm.runInContext('itemForm("bill", { id: 1, type: "bill", name: "Taxes", amount: 100, dueDay: 1, dueMonth: 4, person: "papa", freq: "yearly", cat: "misc" })', formFlow);
@@ -227,12 +242,12 @@ async function run() {
 
   const periodFlow = createHarness();
   vm.runInContext(`data = normalizeBudget({
-    schemaVersion: 5,
+    schemaVersion: 6,
     names: { papa: 'Alex', mama: 'Sam' },
     income: { papa: 0, mama: 0 },
     paySchedule: {
       cadence: 'biweekly',
-      anchorDate: '2026-08-07',
+      anchorDates: { papa: '2026-08-07', mama: '2026-08-14' },
       paychecks: { papa: 2500, mama: 1800 },
       transfer: { from: 'papa', amount: 300 }
     },
@@ -244,18 +259,20 @@ async function run() {
     ]
   });`, periodFlow);
   assert(Math.abs(vm.runInContext('monthlyIncome("papa")', periodFlow) - (2500 * 26 / 12)) < 0.001, 'Biweekly paycheck should derive monthly average income.');
-  assert(vm.runInContext('dateKey(payPeriodStarts(1, new Date(2026, 7, 12))[0])', periodFlow) === '2026-08-07', 'Known payday should anchor the current 14-day period.');
+  assert(vm.runInContext('dateKey(payPeriodStarts("papa", 1, new Date(2026, 7, 12))[0])', periodFlow) === '2026-08-07', 'Papa payday should anchor Papa\'s current 14-day period.');
+  assert(vm.runInContext('dateKey(payPeriodStarts("mama", 1, new Date(2026, 7, 15))[0])', periodFlow) === '2026-08-14', 'Mama payday should independently anchor Mama\'s current 14-day period.');
   assert(vm.runInContext('payPeriodCountForRange(12)', periodFlow) === 26, 'The one-year ledger range should contain 26 pay periods.');
-  assert(vm.runInContext('paydaysInMonth(new Date(2026, 9, 1)).length', periodFlow) === 3, 'October 2026 should be detected as a three-paycheck month.');
-  assert(vm.runInContext('paydaysInMonth(new Date(2026, 7, 1)).length', periodFlow) === 2, 'A normal month should not be marked as a three-paycheck month.');
+  assert(vm.runInContext('paydaysInMonth("papa", new Date(2026, 9, 1)).length', periodFlow) === 3, 'October 2026 should be detected as a three-paycheck month for Papa.');
+  assert(vm.runInContext('paydaysInMonth("papa", new Date(2026, 7, 1)).length', periodFlow) === 2, 'A normal month should not be marked as a three-paycheck month.');
   assert(vm.runInContext('expenseOccurrences("papa", parseLocalDate("2026-08-07"), parseLocalDate("2026-08-21")).filter(item => item.expense.name === "Loan2").length', periodFlow) === 2, 'A Friday weekly bill should occur twice in a biweekly period.');
   assert(vm.runInContext('ledgerForPeriod("papa", parseLocalDate("2026-08-07")).expenseOutgoing', periodFlow) === 1200, 'Papa ledger should include monthly and both weekly transactions in the period.');
   assert(vm.runInContext('ledgerForPeriod("papa", parseLocalDate("2026-08-07")).outgoing', periodFlow) === 1500, 'Papa outgoing should include expenses and the actual payday transfer.');
   assert(vm.runInContext('ledgerForPeriod("papa", parseLocalDate("2026-08-07")).transferOut', periodFlow) === 300, 'The sender should record the transfer as Money Out.');
-  assert(vm.runInContext('ledgerForPeriod("mama", parseLocalDate("2026-08-07")).outgoing', periodFlow) === 600, 'Mama ledger should include Mama annual payments in the period.');
-  assert(vm.runInContext('ledgerForPeriod("mama", parseLocalDate("2026-08-07")).income', periodFlow) === 2100, 'The receiver should include the transfer in Money In.');
-  assert(vm.runInContext('ledgerForPeriod("mama", parseLocalDate("2026-08-07")).transferIn', periodFlow) === 300, 'The receiver should record the transfer as Money In.');
-  assert(vm.runInContext('ledgerForPeriod("mama", parseLocalDate("2026-08-07")).items.length', periodFlow) === 1, 'Undated monthly expenses should not be placed on an invented date.');
+  assert(vm.runInContext('ledgerForPeriod("mama", parseLocalDate("2026-08-14")).outgoing', periodFlow) === 600, 'Mama ledger should include Mama annual payments in the period.');
+  assert(vm.runInContext('ledgerForPeriod("mama", parseLocalDate("2026-08-14")).income', periodFlow) === 2100, 'The receiver should include the transfer in Money In.');
+  assert(vm.runInContext('ledgerForPeriod("mama", parseLocalDate("2026-08-14")).transferIn', periodFlow) === 300, 'The receiver should record the transfer as Money In.');
+  assert(vm.runInContext('dateKey(ledgerForPeriod("mama", parseLocalDate("2026-08-14")).transferDates[0])', periodFlow) === '2026-08-21', 'The receiver should record the transfer on the sender\'s payday.');
+  assert(vm.runInContext('ledgerForPeriod("mama", parseLocalDate("2026-08-14")).items.length', periodFlow) === 1, 'Undated monthly expenses should not be placed on an invented date.');
   assert(vm.runInContext(`expenseOccursOn({ freq: 'monthly', dueDay: 31 }, new Date(2027, 1, 28))`, periodFlow), 'End-of-month expenses should clamp to the last calendar day.');
   assert(vm.runInContext(`expenseOccursOn({ freq: 'weekly', weekday: 5 }, new Date(2026, 7, 7))`, periodFlow), 'Weekly expenses should occur on the selected weekday.');
   assert(!vm.runInContext(`expenseOccursOn({ freq: 'weekly', weekday: 5 }, new Date(2026, 7, 8))`, periodFlow), 'Weekly expenses should not occur on other weekdays.');
@@ -267,7 +284,9 @@ async function run() {
   assert(initialPayHtml.includes('onclick="setLedgerRange(3)"') && initialPayHtml.includes('3 Months'), 'Pay Periods should expose the remembered horizon control.');
   assert(initialPayHtml.includes('<section class="ledger papa">') && !initialPayHtml.includes('<section class="ledger mama">'), 'Pay Periods should render only the selected person ledger.');
   assert((initialPayHtml.match(/aria-expanded="true"/g) || []).length === 1, 'Only the current pay period should be expanded initially.');
-  assert(initialPayHtml.includes('Actual amount each payday'), 'Pay setup should label the recurring transfer amount clearly.');
+  assert((initialPayHtml.match(/Known payday/g) || []).length === 2, 'Pay setup should show a known payday for each person.');
+  assert(initialPayHtml.includes('value="2026-08-07"') && initialPayHtml.includes('value="2026-08-14"'), 'Pay setup should show each person\'s own payday.');
+  assert(initialPayHtml.includes('Actual amount each sender payday'), 'Pay setup should label the recurring transfer amount clearly.');
 
   vm.runInContext('setAllPayPeriods(true)', periodFlow);
   const papaPayHtml = vm.runInContext('renderPayPeriods()', periodFlow);
@@ -276,6 +295,7 @@ async function run() {
   assert((papaPayHtml.match(/aria-expanded="true"/g) || []).length === 7, 'Expand all should open every displayed three-month period.');
 
   vm.runInContext('setLedgerPerson("mama")', periodFlow);
+  vm.runInContext('setAllPayPeriods(true)', periodFlow);
   const mamaPayHtml = vm.runInContext('renderPayPeriods()', periodFlow);
   assert(mamaPayHtml.includes('<section class="ledger mama">') && !mamaPayHtml.includes('<section class="ledger papa">'), 'The ledger selector should switch to Mama without showing a combined view.');
   assert(mamaPayHtml.includes('Annual Software') && mamaPayHtml.includes('$600'), 'The selected ledger should surface actual annual charges.');
@@ -294,17 +314,19 @@ async function run() {
   assert(homeGuidanceHtml.includes('Suggested/mo') && homeGuidanceHtml.includes('Suggested/payday'), 'Dashboard should show monthly and biweekly calculated transfer guidance.');
   const periodSaved = JSON.parse(vm.runInContext('serializeBudget()', periodFlow));
   assert(periodSaved.paySchedule.transfer.from === 'papa' && periodSaved.paySchedule.transfer.amount === 300, 'Actual transfer settings should be saved with the budget.');
+  assert(periodSaved.paySchedule.anchorDates.papa === '2026-08-07' && periodSaved.paySchedule.anchorDates.mama === '2026-08-14', 'Each known payday should be saved independently.');
+  assert(!Object.hasOwn(periodSaved.paySchedule, 'anchorDate'), 'Current saves should not retain the legacy shared payday.');
   assert(periodSaved.expenses.find(item => item.name === 'Loan2').weekday === 5, 'Weekly payment day should be saved with the expense.');
   vm.runInContext(`data.paySchedule.transfer = { from: 'mama', amount: 125 };`, periodFlow);
   assert(vm.runInContext('ledgerForPeriod("papa", parseLocalDate("2026-08-07")).transferIn', periodFlow) === 125, 'Reversing direction should make Papa the transfer receiver.');
-  assert(vm.runInContext('ledgerForPeriod("mama", parseLocalDate("2026-08-07")).transferOut', periodFlow) === 125, 'Reversing direction should make Mama the transfer sender.');
+  assert(vm.runInContext('ledgerForPeriod("mama", parseLocalDate("2026-08-14")).transferOut', periodFlow) === 125, 'Reversing direction should make Mama the transfer sender.');
   assert(!vm.runInContext('renderHome()', periodFlow).includes('undefined'), 'Dashboard should render assigned and annual expenses cleanly.');
   const billsHtml = vm.runInContext('renderBills()', periodFlow);
   assert(billsHtml.includes('Weekly Bills') && billsHtml.includes('$100/wk'), 'Bills should include the actual weekly payment.');
   assert(billsHtml.includes('$5,200/yr') && billsHtml.includes('~$433/mo'), 'Weekly bills should show annual and monthly equivalents.');
   assert(vm.runInContext('renderPayPeriods()', periodFlow).includes('1 needs a due day'), 'Weekly items should not trigger the missing monthly due-day warning.');
-  assert(!vm.runInContext('renderBills()', periodFlow).includes('undefined'), 'Bills should render the version 5 data model cleanly.');
-  assert(!vm.runInContext('renderSubs()', periodFlow).includes('undefined'), 'Subscriptions should render the version 5 data model cleanly.');
+  assert(!vm.runInContext('renderBills()', periodFlow).includes('undefined'), 'Bills should render the version 6 data model cleanly.');
+  assert(!vm.runInContext('renderSubs()', periodFlow).includes('undefined'), 'Subscriptions should render the version 6 data model cleanly.');
 
   const shellFlow = createHarness();
   vm.runInContext('render()', shellFlow);
@@ -316,8 +338,9 @@ async function run() {
   assert(shellFlow.__harness.elements.get('theme-icon').getAttribute('href') === '#icon-sun', 'Theme toggle should switch to the sun icon in dark mode.');
   assert(shellFlow.__harness.storage.get('budget_theme') === 'dark', 'Theme selection should be saved.');
   vm.runInContext('switchTab("pay")', shellFlow);
-  assert(shellFlow.__harness.elements.get('main').innerHTML.includes('Shared Pay Schedule'), 'Pay tab should expose the shared biweekly setup.');
-  assert(shellFlow.__harness.elements.get('main').innerHTML.includes('Actual amount each payday'), 'Pay tab should expose the recurring transfer amount.');
+  assert(shellFlow.__harness.elements.get('main').innerHTML.includes('Pay Schedules'), 'Pay tab should expose separate biweekly schedules.');
+  assert((shellFlow.__harness.elements.get('main').innerHTML.match(/Known payday/g) || []).length === 2, 'Pay tab should expose a known payday for each person.');
+  assert(shellFlow.__harness.elements.get('main').innerHTML.includes('Actual amount each sender payday'), 'Pay tab should expose the recurring transfer amount.');
   assert(shellFlow.__harness.elements.get('edit-btn').style.display === 'none', 'Pay tab should not show the bill delete control.');
   vm.runInContext('switchTab("bills")', shellFlow);
   assert(shellFlow.__harness.elements.get('edit-btn').style.display === 'flex', 'Bills should show the contextual delete control.');

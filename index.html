@@ -432,9 +432,15 @@
     /* PAY PERIODS */
     .pay-setup-grid {
       display: grid;
-      grid-template-columns: 1.2fr 1fr 1fr;
-      gap: 10px;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
     }
+    .pay-person-setup { min-width: 0; padding-right: 14px; }
+    .pay-person-setup + .pay-person-setup { padding-right: 0; padding-left: 14px; border-left: 1px solid var(--sep); }
+    .pay-person-title { margin-bottom: 8px; font-family: var(--display-font); font-size: 17px; font-weight: 600; }
+    .pay-person-setup.papa .pay-person-title { color: var(--blue); }
+    .pay-person-setup.mama .pay-person-title { color: var(--purple); }
+    .pay-person-fields { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 10px; }
     .pay-setup-note {
       color: var(--text2);
       font-size: 13px;
@@ -768,8 +774,9 @@
       .summary-row { grid-template-columns: 1fr; }
       .household-summary-lead { align-items: flex-start; padding: 16px; }
       .household-net strong { font-size: 30px; }
-      .pay-setup-grid { grid-template-columns: 1fr 1fr; }
-      .pay-setup-grid .pay-date-field { grid-column: 1 / -1; }
+      .pay-setup-grid { grid-template-columns: 1fr; }
+      .pay-person-setup { padding-right: 0; }
+      .pay-person-setup + .pay-person-setup { margin-top: 14px; padding: 14px 0 0; border-top: 1px solid var(--sep); border-left: none; }
       .ledger-grid { grid-template-columns: 1fr; }
       .ledger + .ledger { border-left: none; border-top: 0.5px solid var(--sep); }
       .pay-ledger-toolbar { align-items: stretch; flex-direction: column; }
@@ -784,6 +791,7 @@
     }
     @media (max-width: 380px) {
       .transfer-setup { grid-template-columns: 1fr; }
+      .pay-person-fields { grid-template-columns: 1fr; }
     }
     /* FILE MENU */
     [hidden] { display: none !important; }
@@ -940,12 +948,12 @@
 <script>
 // ─── DATA ───────────────────────────────────────────────────────────────────
 const DEFAULTS = {
-  schemaVersion: 5,
+  schemaVersion: 6,
   names: { papa: 'Papa', mama: 'Mama' },
   income: { papa: 0, mama: 0 },
   paySchedule: {
     cadence: 'biweekly',
-    anchorDate: '',
+    anchorDates: { papa: '', mama: '' },
     paychecks: { papa: 0, mama: 0 },
     transfer: { from: 'papa', amount: 0 }
   },
@@ -993,9 +1001,16 @@ function normalizeBudget(raw) {
     mama: Number.isFinite(+(source.income && source.income.mama)) ? +source.income.mama : 0
   };
   const sourceSchedule = source.paySchedule && typeof source.paySchedule === 'object' ? source.paySchedule : {};
+  const legacyAnchorDate = parseLocalDate(sourceSchedule.anchorDate) ? sourceSchedule.anchorDate : '';
+  const sourceAnchorDates = sourceSchedule.anchorDates && typeof sourceSchedule.anchorDates === 'object'
+    ? sourceSchedule.anchorDates
+    : {};
   budget.paySchedule = {
     cadence: 'biweekly',
-    anchorDate: parseLocalDate(sourceSchedule.anchorDate) ? sourceSchedule.anchorDate : '',
+    anchorDates: {
+      papa: parseLocalDate(sourceAnchorDates.papa) ? sourceAnchorDates.papa : legacyAnchorDate,
+      mama: parseLocalDate(sourceAnchorDates.mama) ? sourceAnchorDates.mama : legacyAnchorDate
+    },
     paychecks: {
       papa: Number.isFinite(+(sourceSchedule.paychecks && sourceSchedule.paychecks.papa)) ? Math.max(0, +sourceSchedule.paychecks.papa) : 0,
       mama: Number.isFinite(+(sourceSchedule.paychecks && sourceSchedule.paychecks.mama)) ? Math.max(0, +sourceSchedule.paychecks.mama) : 0
@@ -1076,7 +1091,7 @@ function ensureBudgetFileName(name) {
 function serializeBudget() {
   return JSON.stringify({
     ...normalizeBudget(data),
-    schemaVersion: 5,
+    schemaVersion: 6,
     savedAt: new Date().toISOString()
   }, null, 2);
 }
@@ -1315,17 +1330,22 @@ function formatPeriodDate(value) {
   return value.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
-function payScheduleReady() {
-  return !!parseLocalDate(data.paySchedule && data.paySchedule.anchorDate);
+function paydayAnchor(person) {
+  return parseLocalDate(data.paySchedule && data.paySchedule.anchorDates && data.paySchedule.anchorDates[person]);
+}
+
+function payScheduleReady(person) {
+  if (person === 'papa' || person === 'mama') return !!paydayAnchor(person);
+  return !!paydayAnchor('papa') && !!paydayAnchor('mama');
 }
 
 function monthlyIncome(person) {
-  if (!payScheduleReady()) return data.income[person] || 0;
+  if (!payScheduleReady(person)) return data.income[person] || 0;
   return (data.paySchedule.paychecks[person] || 0) * 26 / 12;
 }
 
-function payPeriodStarts(count, today = new Date()) {
-  let start = parseLocalDate(data.paySchedule && data.paySchedule.anchorDate);
+function payPeriodStarts(person, count, today = new Date()) {
+  let start = paydayAnchor(person);
   if (!start) return [];
   const currentDay = startOfDay(today);
   while (start > currentDay) start = addDays(start, -14);
@@ -1337,8 +1357,8 @@ function payPeriodCountForRange(months) {
   return months === 12 ? 26 : months === 6 ? 13 : 7;
 }
 
-function paydaysInMonth(value) {
-  const anchor = parseLocalDate(data.paySchedule && data.paySchedule.anchorDate);
+function paydaysInMonth(person, value) {
+  const anchor = paydayAnchor(person);
   if (!anchor) return [];
   const year = value.getFullYear();
   const month = value.getMonth();
@@ -1349,6 +1369,20 @@ function paydaysInMonth(value) {
   while (payday < first) payday = addDays(payday, 14);
   const dates = [];
   while (payday <= last) {
+    dates.push(payday);
+    payday = addDays(payday, 14);
+  }
+  return dates;
+}
+
+function paydaysBetween(person, start, end) {
+  const anchor = paydayAnchor(person);
+  if (!anchor) return [];
+  let payday = startOfDay(anchor);
+  while (payday >= end) payday = addDays(payday, -14);
+  while (payday < start) payday = addDays(payday, 14);
+  const dates = [];
+  while (payday < end) {
     dates.push(payday);
     payday = addDays(payday, 14);
   }
@@ -1382,12 +1416,14 @@ function ledgerForPeriod(person, start) {
   const expenseOutgoing = items.reduce((sum, item) => sum + item.expense.amount, 0);
   const transfer = data.paySchedule.transfer || DEFAULTS.paySchedule.transfer;
   const transferTo = transfer.from === 'papa' ? 'mama' : 'papa';
-  const transferOut = person === transfer.from ? transfer.amount : 0;
-  const transferIn = person === transferTo ? transfer.amount : 0;
+  const transferDates = paydaysBetween(transfer.from, start, end);
+  const transferTotal = transfer.amount * transferDates.length;
+  const transferOut = person === transfer.from ? transferTotal : 0;
+  const transferIn = person === transferTo ? transferTotal : 0;
   const income = paycheck + transferIn;
   const outgoing = expenseOutgoing + transferOut;
   return {
-    person, start, end, paycheck, expenseOutgoing, transferIn, transferOut,
+    person, start, end, paycheck, expenseOutgoing, transferIn, transferOut, transferDates,
     income, outgoing, net: income - outgoing, items
   };
 }
@@ -1520,6 +1556,8 @@ function toggleEdit() {
 function setLedgerPerson(person) {
   ledgerPerson = person === 'mama' ? 'mama' : 'papa';
   localStorage.setItem(LEDGER_PERSON_KEY, ledgerPerson);
+  expandedPayPeriods.clear();
+  payPeriodsInitialized = false;
   render();
 }
 
@@ -1539,7 +1577,7 @@ function togglePayPeriod(key) {
 
 function setAllPayPeriods(expand) {
   expandedPayPeriods = expand
-    ? new Set(payPeriodStarts(payPeriodCountForRange(ledgerRangeMonths), startOfDay(new Date())).map(dateKey))
+    ? new Set(payPeriodStarts(ledgerPerson, payPeriodCountForRange(ledgerRangeMonths), startOfDay(new Date())).map(dateKey))
     : new Set();
   payPeriodsInitialized = true;
   render();
@@ -1594,7 +1632,7 @@ function renderHome() {
       <div class="sc-label" style="color:${color}">Household Member</div>
       <input class="person-name-input" type="text" value="${data.names[cls]}" autocomplete="off"
         onchange="updatePerson('${cls}','name',this.value)">
-      ${payScheduleReady() ? `
+      ${payScheduleReady(cls) ? `
         <div class="sc-row"><span>Paycheck</span><input class="person-income-input" type="number" value="${data.paySchedule.paychecks[cls]}" inputmode="decimal"
           onchange="updatePaycheck('${cls}',this.value)"></div>
         <div class="sc-row"><span>Income/mo avg</span><span>${fmt(income)}</span></div>` : `
@@ -1692,22 +1730,23 @@ function renderPersonLedger(ledger) {
     outgoing: 0,
     order: 0
   }];
-  if (ledger.transferIn) transactions.push({
-    date: ledger.start,
+  const transferAmount = data.paySchedule.transfer.amount || 0;
+  if (ledger.transferIn) ledger.transferDates.forEach(date => transactions.push({
+    date,
     name: `Transfer from ${data.names[otherPerson]}`,
     type: 'Transfer',
-    incoming: ledger.transferIn,
+    incoming: transferAmount,
     outgoing: 0,
     order: 1
-  });
-  if (ledger.transferOut) transactions.push({
-    date: ledger.start,
+  }));
+  if (ledger.transferOut) ledger.transferDates.forEach(date => transactions.push({
+    date,
     name: `Transfer to ${data.names[otherPerson]}`,
     type: 'Transfer',
     incoming: 0,
-    outgoing: ledger.transferOut,
+    outgoing: transferAmount,
     order: 1
-  });
+  }));
   ledger.items.forEach(({ expense, date }) => transactions.push({
     date,
     name: expense.name,
@@ -1729,22 +1768,22 @@ function renderPersonLedger(ledger) {
       <td class="money running" style="color:${running >= 0 ? 'var(--green)' : 'var(--red)'}">${fmtSigned(running)}</td>
     </tr>`;
   }).join('');
-  const transferItem = ledger.transferIn
-    ? `<div class="ledger-item">
+  const transferItems = ledger.transferIn
+    ? ledger.transferDates.map(date => `<div class="ledger-item">
         <div>
           <div class="ledger-item-name">Payday transfer</div>
-          <div class="ledger-item-date">${formatPeriodDate(ledger.start)} · From ${data.names[otherPerson]}</div>
+          <div class="ledger-item-date">${formatPeriodDate(date)} · From ${data.names[otherPerson]}</div>
         </div>
-        <div class="ledger-item-amount incoming">+${fmt(ledger.transferIn)}</div>
-      </div>`
+        <div class="ledger-item-amount incoming">+${fmt(transferAmount)}</div>
+      </div>`).join('')
     : ledger.transferOut
-      ? `<div class="ledger-item">
+      ? ledger.transferDates.map(date => `<div class="ledger-item">
           <div>
             <div class="ledger-item-name">Payday transfer</div>
-            <div class="ledger-item-date">${formatPeriodDate(ledger.start)} · To ${data.names[otherPerson]}</div>
+            <div class="ledger-item-date">${formatPeriodDate(date)} · To ${data.names[otherPerson]}</div>
           </div>
-          <div class="ledger-item-amount">–${fmt(ledger.transferOut)}</div>
-        </div>`
+          <div class="ledger-item-amount">–${fmt(transferAmount)}</div>
+        </div>`).join('')
       : '';
   const expenseItems = ledger.items.map(({ expense, date }) => `<div class="ledger-item">
         <div>
@@ -1753,8 +1792,8 @@ function renderPersonLedger(ledger) {
         </div>
         <div class="ledger-item-amount">–${fmt(expense.amount)}</div>
       </div>`).join('');
-  const items = (transferItem || expenseItems)
-    ? transferItem + expenseItems
+  const items = (transferItems || expenseItems)
+    ? transferItems + expenseItems
     : `<div class="ledger-empty">No payments due</div>`;
 
   return `<section class="ledger ${person}">
@@ -1805,20 +1844,34 @@ function renderAnnualLookahead() {
 function renderPayPeriods() {
   const schedule = data.paySchedule;
   let html = `<div class="wide-card">
-    <div class="wide-card-title">Shared Pay Schedule</div>
+    <div class="wide-card-title">Pay Schedules</div>
     <div class="pay-setup-grid">
-      <label class="form-field pay-date-field">
-        <span class="form-label">Known payday</span>
-        <input class="form-input" type="date" value="${schedule.anchorDate}" onchange="updatePaySchedule('anchorDate',this.value)">
-      </label>
-      <label class="form-field">
-        <span class="form-label">${data.names.papa} net paycheck</span>
-        <input class="form-input" type="number" inputmode="decimal" value="${schedule.paychecks.papa}" onchange="updatePaycheck('papa',this.value)">
-      </label>
-      <label class="form-field">
-        <span class="form-label">${data.names.mama} net paycheck</span>
-        <input class="form-input" type="number" inputmode="decimal" value="${schedule.paychecks.mama}" onchange="updatePaycheck('mama',this.value)">
-      </label>
+      <div class="pay-person-setup papa">
+        <div class="pay-person-title">${data.names.papa}</div>
+        <div class="pay-person-fields">
+          <label class="form-field">
+            <span class="form-label">Known payday</span>
+            <input class="form-input" type="date" value="${schedule.anchorDates.papa}" onchange="updatePaySchedule('papa',this.value)">
+          </label>
+          <label class="form-field">
+            <span class="form-label">Net paycheck</span>
+            <input class="form-input" type="number" inputmode="decimal" value="${schedule.paychecks.papa}" onchange="updatePaycheck('papa',this.value)">
+          </label>
+        </div>
+      </div>
+      <div class="pay-person-setup mama">
+        <div class="pay-person-title">${data.names.mama}</div>
+        <div class="pay-person-fields">
+          <label class="form-field">
+            <span class="form-label">Known payday</span>
+            <input class="form-input" type="date" value="${schedule.anchorDates.mama}" onchange="updatePaySchedule('mama',this.value)">
+          </label>
+          <label class="form-field">
+            <span class="form-label">Net paycheck</span>
+            <input class="form-input" type="number" inputmode="decimal" value="${schedule.paychecks.mama}" onchange="updatePaycheck('mama',this.value)">
+          </label>
+        </div>
+      </div>
     </div>
     <div class="transfer-setup">
       <label class="form-field">
@@ -1829,11 +1882,11 @@ function renderPayPeriods() {
         </select>
       </label>
       <label class="form-field">
-        <span class="form-label">Actual amount each payday</span>
+        <span class="form-label">Actual amount each sender payday</span>
         <input class="form-input" type="number" inputmode="decimal" min="0" step="0.01" value="${schedule.transfer.amount}" onchange="updatePayTransfer('amount',this.value)">
       </label>
     </div>
-    <div class="pay-setup-note">Every two weeks · ${data.names.papa} ${fmt(monthlyIncome('papa'))}/mo avg · ${data.names.mama} ${fmt(monthlyIncome('mama'))}/mo avg</div>
+    <div class="pay-setup-note">Each schedule repeats every two weeks · ${data.names.papa} ${fmt(monthlyIncome('papa'))}/mo avg · ${data.names.mama} ${fmt(monthlyIncome('mama'))}/mo avg</div>
   </div>`;
 
   const unassignedCount = data.expenses.filter(expense => expense.person === 'unassigned').length;
@@ -1846,18 +1899,7 @@ function renderPayPeriods() {
   }
 
   html += renderAnnualLookahead();
-
-  if (!payScheduleReady()) {
-    return html + `<div class="section-label">Pay Periods</div><div class="card-list"><div class="empty">Choose one known payday to build the biweekly ledgers.</div></div>`;
-  }
-
-  const today = startOfDay(new Date());
-  const starts = payPeriodStarts(payPeriodCountForRange(ledgerRangeMonths), today);
-  if (!payPeriodsInitialized) {
-    const currentStart = starts.find(start => today >= start && today < addDays(start, 14));
-    expandedPayPeriods = new Set(currentStart ? [dateKey(currentStart)] : []);
-    payPeriodsInitialized = true;
-  }
+  const selectedScheduleReady = payScheduleReady(ledgerPerson);
   html += `<div class="section-label">Biweekly Ledgers</div>
     <div class="pay-ledger-toolbar">
       <div class="pay-ledger-filters">
@@ -1871,11 +1913,23 @@ function renderPayPeriods() {
           <button class="segment-btn${ledgerRangeMonths === 12 ? ' active' : ''}" onclick="setLedgerRange(12)">1 Year</button>
         </div>
       </div>
-      <div class="period-controls">
+      ${selectedScheduleReady ? `<div class="period-controls">
         <button class="compact-btn expand-all-btn" onclick="setAllPayPeriods(true)">Expand all</button>
         <button class="compact-btn" onclick="setAllPayPeriods(false)">Collapse all</button>
-      </div>
+      </div>` : ''}
     </div>`;
+
+  if (!selectedScheduleReady) {
+    return html + `<div class="card-list"><div class="empty">Choose a known payday for ${data.names[ledgerPerson]} to build this ledger.</div></div>`;
+  }
+
+  const today = startOfDay(new Date());
+  const starts = payPeriodStarts(ledgerPerson, payPeriodCountForRange(ledgerRangeMonths), today);
+  if (!payPeriodsInitialized) {
+    const currentStart = starts.find(start => today >= start && today < addDays(start, 14));
+    expandedPayPeriods = new Set(currentStart ? [dateKey(currentStart)] : []);
+    payPeriodsInitialized = true;
+  }
   let previousMonth = '';
   for (const start of starts) {
     const end = addDays(start, 14);
@@ -1885,7 +1939,7 @@ function renderPayPeriods() {
     const isExpanded = expandedPayPeriods.has(key);
     const monthKey = `${start.getFullYear()}-${start.getMonth()}`;
     if (monthKey !== previousMonth) {
-      const paydayCount = paydaysInMonth(start).length;
+      const paydayCount = paydaysInMonth(ledgerPerson, start).length;
       const isThreePaycheckMonth = paydayCount === 3;
       html += `<div class="pay-month-head${isThreePaycheckMonth ? ' three-paycheck' : ''}">
         <span class="pay-month-name">${MONTHS_FULL[start.getMonth()]} ${start.getFullYear()}</span>
@@ -2254,8 +2308,9 @@ function updatePerson(person, key, value) {
   render();
 }
 
-function updatePaySchedule(key, value) {
-  if (key === 'anchorDate') data.paySchedule.anchorDate = parseLocalDate(value) ? value : '';
+function updatePaySchedule(person, value) {
+  if (person !== 'papa' && person !== 'mama') return;
+  data.paySchedule.anchorDates[person] = parseLocalDate(value) ? value : '';
   expandedPayPeriods.clear();
   payPeriodsInitialized = false;
   save();
