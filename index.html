@@ -475,13 +475,14 @@
     }
     .period-card.current { box-shadow: inset 0 0 0 1.5px var(--blue); }
     .period-head {
-      display: flex;
-      justify-content: space-between;
+      display: grid;
+      grid-template-columns: minmax(180px, 1fr) 330px 18px;
       align-items: center;
       gap: 12px;
       padding: 13px 14px;
       border-bottom: 0.5px solid var(--sep);
     }
+    .period-title-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
     .period-title { font-family: var(--display-font); font-size: 17px; font-weight: 600; }
     .period-range { color: var(--text2); font-size: 13px; margin-top: 2px; }
     .period-badge {
@@ -582,16 +583,17 @@
       text-align: left;
       cursor: pointer;
     }
-    .period-head-main { min-width: 160px; }
+    .period-head-main { min-width: 0; }
     .period-head-summary {
       display: grid;
-      grid-template-columns: repeat(3, minmax(76px, auto));
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 18px;
-      margin-left: auto;
+      width: 330px;
     }
+    .period-head-summary > div { min-width: 0; }
     .period-mini-label { display: block; color: var(--text2); font-size: 10px; text-transform: uppercase; }
-    .period-mini-value { display: block; margin-top: 2px; font-size: 13px; font-weight: 700; }
-    .period-head-end { display: flex; align-items: center; gap: 10px; }
+    .period-mini-value { display: block; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; font-size: 13px; font-weight: 700; white-space: nowrap; }
+    .period-head-end { display: flex; width: 18px; align-items: center; justify-content: flex-end; }
     .period-chevron { color: var(--text2); font-size: 18px; line-height: 1; transform: rotate(0deg); transition: transform 0.15s ease; }
     .period-head[aria-expanded="true"] .period-chevron { transform: rotate(90deg); }
     .pay-month-head {
@@ -786,9 +788,24 @@
       .segment-btn { min-width: 0; }
       .period-controls { justify-content: flex-end; }
       .expand-all-btn { display: none; }
-      .period-head { align-items: flex-start; }
-      .period-head-summary { display: none; }
-      .period-head-end { margin-left: auto; }
+      .period-head {
+        grid-template-columns: minmax(0, 1fr) 18px;
+        align-items: center;
+        column-gap: 8px;
+        row-gap: 10px;
+      }
+      .period-head-summary {
+        grid-column: 1 / -1;
+        grid-row: 2;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+        width: 100%;
+        padding-top: 10px;
+        border-top: 0.5px solid var(--sep);
+      }
+      .period-head-summary > div:nth-child(2) { text-align: center; }
+      .period-head-summary > div:last-child { text-align: right; }
+      .period-head-end { grid-column: 2; grid-row: 1; }
     }
     @media (max-width: 380px) {
       .transfer-setup { grid-template-columns: 1fr; }
@@ -1951,16 +1968,18 @@ function renderPayPeriods() {
     html += `<article class="period-card${isCurrent ? ' current' : ''}">
       <button class="period-head" type="button" aria-expanded="${isExpanded}" onclick="togglePayPeriod('${key}')">
         <div class="period-head-main">
-          <div class="period-title">Payday ${formatPeriodDate(start)}</div>
+          <div class="period-title-row">
+            <div class="period-title">Payday ${formatPeriodDate(start)}</div>
+            ${isCurrent ? `<span class="period-badge">Current</span>` : ''}
+          </div>
           <div class="period-range">${formatPeriodDate(start)} – ${formatPeriodDate(addDays(end, -1))}</div>
         </div>
-        <div class="period-head-summary" aria-hidden="true">
+        <div class="period-head-summary">
           <div><span class="period-mini-label">Incoming</span><span class="period-mini-value" style="color:var(--green)">${fmt(ledger.income)}</span></div>
           <div><span class="period-mini-label">Outgoing</span><span class="period-mini-value" style="color:var(--red)">${fmt(ledger.outgoing)}</span></div>
           <div><span class="period-mini-label">Remaining</span><span class="period-mini-value" style="color:${ledger.net >= 0 ? 'var(--green)' : 'var(--red)'}">${fmtSigned(ledger.net)}</span></div>
         </div>
         <div class="period-head-end">
-          ${isCurrent ? `<span class="period-badge">Current</span>` : ''}
           <span class="period-chevron" aria-hidden="true">&rsaquo;</span>
         </div>
       </button>
