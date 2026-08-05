@@ -241,6 +241,7 @@ async function run() {
   assert(vm.runInContext(`expenseOccursOn({ freq: 'weekly', weekday: 5 }, new Date(2026, 7, 7))`, periodFlow), 'Weekly expenses should occur on the selected weekday.');
   assert(!vm.runInContext(`expenseOccursOn({ freq: 'weekly', weekday: 5 }, new Date(2026, 7, 8))`, periodFlow), 'Weekly expenses should not occur on other weekdays.');
   assert(Math.abs(vm.runInContext(`monthlyEquiv({ freq: 'weekly', amount: 100 })`, periodFlow) - (100 * 52 / 12)) < 0.001, 'Weekly payments should derive their monthly equivalent from 52 occurrences.');
+  assert(Math.abs(vm.runInContext('monthlyToBiweekly(1300)', periodFlow) - 600) < 0.001, 'Monthly transfer guidance should convert to 26 equal biweekly payments.');
   assert(vm.runInContext('parseLocalDate("2026-02-31")', periodFlow) === null, 'Invalid calendar dates should not become pay schedule anchors.');
   const initialPayHtml = vm.runInContext('renderPayPeriods()', periodFlow);
   assert(initialPayHtml.includes('segment-btn papa active'), 'Pay Periods should default to Papa as the selected ledger.');
@@ -270,7 +271,8 @@ async function run() {
 
   vm.runInContext('setAllPayPeriods(false)', periodFlow);
   assert(vm.runInContext('expandedPayPeriods.size', periodFlow) === 0, 'Collapse all should close every pay period.');
-  assert(vm.runInContext('renderHome()', periodFlow).includes('Suggested/mo'), 'Dashboard should retain the calculated transfer as guidance.');
+  const homeGuidanceHtml = vm.runInContext('renderHome()', periodFlow);
+  assert(homeGuidanceHtml.includes('Suggested/mo') && homeGuidanceHtml.includes('Suggested/payday'), 'Dashboard should show monthly and biweekly calculated transfer guidance.');
   const periodSaved = JSON.parse(vm.runInContext('serializeBudget()', periodFlow));
   assert(periodSaved.paySchedule.transfer.from === 'papa' && periodSaved.paySchedule.transfer.amount === 300, 'Actual transfer settings should be saved with the budget.');
   assert(periodSaved.expenses.find(item => item.name === 'Loan2').weekday === 5, 'Weekly payment day should be saved with the expense.');
