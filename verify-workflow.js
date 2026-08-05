@@ -146,6 +146,9 @@ async function run() {
   assert(html.includes('theme-btn'), 'Header should include the light/dark theme toggle.');
   assert(html.includes('data-tab="pay"'), 'Navigation should include the Pay Periods tab.');
   assert(html.includes('renderPayPeriods'), 'Pay Periods should have a dedicated renderer.');
+  assert(html.includes('class="sidebar"') && html.includes('class="workspace"'), 'The responsive app shell should include a desktop sidebar and workspace.');
+  assert(html.includes('ledger-table'), 'Expanded desktop ledgers should include a transaction table.');
+  assert(html.includes('expense-table-head'), 'Desktop expense lists should include table headers.');
   assert(html.includes('updatePayTransfer'), 'Pay setup should expose the recurring actual transfer.');
   assert(html.includes('<option value="weekly"'), 'Expense frequency should include Weekly.');
 
@@ -233,12 +236,27 @@ async function run() {
   assert(!vm.runInContext(`expenseOccursOn({ freq: 'weekly', weekday: 5 }, new Date(2026, 7, 8))`, periodFlow), 'Weekly expenses should not occur on other weekdays.');
   assert(Math.abs(vm.runInContext(`monthlyEquiv({ freq: 'weekly', amount: 100 })`, periodFlow) - (100 * 52 / 12)) < 0.001, 'Weekly payments should derive their monthly equivalent from 52 occurrences.');
   assert(vm.runInContext('parseLocalDate("2026-02-31")', periodFlow) === null, 'Invalid calendar dates should not become pay schedule anchors.');
-  const payHtml = vm.runInContext('renderPayPeriods()', periodFlow);
-  assert(payHtml.includes('Alex') && payHtml.includes('Sam'), 'Pay Periods should render separate named ledgers.');
-  assert(payHtml.includes('Annual Software') && payHtml.includes('$600'), 'Pay Periods should surface actual annual charges.');
-  assert(payHtml.includes('Actual amount each payday'), 'Pay setup should label the recurring transfer amount clearly.');
-  assert(payHtml.includes('Payday transfer') && payHtml.includes('+$300'), 'Pay Periods should show the actual transfer transaction.');
-  assert((payHtml.match(/Loan2/g) || []).length >= 2, 'Pay Periods should show both Friday Loan2 transactions.');
+  const initialPayHtml = vm.runInContext('renderPayPeriods()', periodFlow);
+  assert(initialPayHtml.includes('segment-btn papa active'), 'Pay Periods should default to Papa as the selected ledger.');
+  assert(initialPayHtml.includes('<section class="ledger papa">') && !initialPayHtml.includes('<section class="ledger mama">'), 'Pay Periods should render only the selected person ledger.');
+  assert((initialPayHtml.match(/aria-expanded="true"/g) || []).length === 1, 'Only the current pay period should be expanded initially.');
+  assert(initialPayHtml.includes('Actual amount each payday'), 'Pay setup should label the recurring transfer amount clearly.');
+
+  vm.runInContext('setAllPayPeriods(true)', periodFlow);
+  const papaPayHtml = vm.runInContext('renderPayPeriods()', periodFlow);
+  assert(papaPayHtml.includes('Transfer to Sam') && papaPayHtml.includes('-$300'), 'The sender ledger should show the actual payday transfer as Money Out.');
+  assert((papaPayHtml.match(/Loan2/g) || []).length >= 2, 'Expanded Pay Periods should show both Friday Loan2 transactions.');
+  assert((papaPayHtml.match(/aria-expanded="true"/g) || []).length === 6, 'Expand all should open every displayed period.');
+
+  vm.runInContext('setLedgerPerson("mama")', periodFlow);
+  const mamaPayHtml = vm.runInContext('renderPayPeriods()', periodFlow);
+  assert(mamaPayHtml.includes('<section class="ledger mama">') && !mamaPayHtml.includes('<section class="ledger papa">'), 'The ledger selector should switch to Mama without showing a combined view.');
+  assert(mamaPayHtml.includes('Annual Software') && mamaPayHtml.includes('$600'), 'The selected ledger should surface actual annual charges.');
+  assert(mamaPayHtml.includes('Transfer from Alex') && mamaPayHtml.includes('+$300'), 'The receiver ledger should show the actual payday transfer as Money In.');
+  assert(periodFlow.__harness.storage.get('budget_ledger_person') === 'mama', 'The selected ledger person should be remembered locally.');
+
+  vm.runInContext('setAllPayPeriods(false)', periodFlow);
+  assert(vm.runInContext('expandedPayPeriods.size', periodFlow) === 0, 'Collapse all should close every pay period.');
   assert(vm.runInContext('renderHome()', periodFlow).includes('Suggested/mo'), 'Dashboard should retain the calculated transfer as guidance.');
   const periodSaved = JSON.parse(vm.runInContext('serializeBudget()', periodFlow));
   assert(periodSaved.paySchedule.transfer.from === 'papa' && periodSaved.paySchedule.transfer.amount === 300, 'Actual transfer settings should be saved with the budget.');

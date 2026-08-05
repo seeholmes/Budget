@@ -14,7 +14,11 @@ The header shows the current file name and marks it as Unsaved after any budget 
 
 Household names and income are edited directly in the Papa and Mama Dashboard cards. The Pay tab stores one shared biweekly payday and a separate net paycheck for each person, then derives average monthly income automatically. A recurring actual transfer amount and direction can be entered for every payday. Each pay period counts that transfer as incoming for the receiver and outgoing for the sender. The Dashboard keeps its calculated monthly transfer as guidance.
 
-Bills are managed on the Bills tab. Subscriptions are managed on the Subscriptions tab, and every expense is assigned to the person responsible for paying it. Weekly items use the actual weekly payment and a weekday, then appear on that day in every pay-period ledger; monthly and annual equivalents are derived automatically. Annual items use the actual payment amount and appear in both pay-period ledgers and the annual look-ahead. The header includes a saved light/dark mode toggle.
+The Pay tab has a remembered Papa/Mama selector and shows one personal ledger at a time. The current period opens by default, future periods stay collapsed, and all periods can be expanded or collapsed together. Expanded desktop ledgers use a transaction table with a running balance; mobile keeps the compact stacked transaction view.
+
+Bills are managed on the Bills tab. Subscriptions are managed on the Subscriptions tab, and every expense is assigned to the person responsible for paying it. Weekly items use the actual weekly payment and a weekday, then appear on that day in every pay-period ledger; monthly and annual equivalents are derived automatically. Annual items use the actual payment amount and appear in the responsible person's ledger and the annual look-ahead. The header includes a saved light/dark mode toggle.
+
+At desktop widths the app uses persistent side navigation, denser expense tables, and a right-side expense editor. Smaller screens retain the bottom navigation and stacked lists.
 
 ## Data Compatibility
 
@@ -30,4 +34,4 @@ Run the workflow verifier from the project root:
 node verify-workflow.js
 ```
 
-It checks legacy and annual-payment migration, weekly recurrences, recurring transfers, pay-period calculations, separate ledgers, single-source serialization, dirty-state warnings, Open, Save, save fallback, and close-warning behavior.
+It checks legacy and annual-payment migration, weekly recurrences, recurring transfers, pay-period calculations, person-filtered collapsible ledgers, responsive shell markup, single-source serialization, dirty-state warnings, Open, Save, save fallback, and close-warning behavior.

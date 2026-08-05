@@ -11,50 +11,58 @@
   <link rel="apple-touch-icon" href="icon-192.png">
   <style>
     :root {
-      --bg: #f2f2f7;
+      --bg: #f5f6f8;
       --card: #ffffff;
-      --text: #1c1c1e;
-      --text2: #6c6c70;
-      --text3: #aeaeb2;
-      --sep: #e5e5ea;
-      --blue: #007aff;
-      --purple: #af52de;
-      --green: #34c759;
-      --red: #ff3b30;
-      --orange: #ff9500;
+      --surface2: #eef0f3;
+      --text: #1d2025;
+      --text2: #626873;
+      --text3: #969da8;
+      --sep: #dfe3e8;
+      --blue: #2563eb;
+      --purple: #8b5cf6;
+      --green: #16834b;
+      --red: #d64545;
+      --orange: #c96b12;
       --yellow: #ffcc00;
-      --tab-bg: rgba(249,249,249,0.94);
-      --header-bg: rgba(242,242,247,0.94);
+      --tab-bg: #ffffff;
+      --header-bg: #ffffff;
+      --sidebar-bg: #202124;
+      --sidebar-text: #e7e9ec;
+      --sidebar-muted: #9da2aa;
       --safe-bottom: env(safe-area-inset-bottom, 0px);
       --safe-top: env(safe-area-inset-top, 0px);
       color-scheme: light;
     }
     @media (prefers-color-scheme: dark) {
       :root:not([data-theme="light"]) {
-        --bg: #1c1c1e;
-        --card: #2c2c2e;
-        --text: #ffffff;
-        --text2: #8e8e93;
-        --text3: #48484a;
-        --sep: #38383a;
-        --tab-bg: rgba(28,28,30,0.94);
-        --header-bg: rgba(28,28,30,0.94);
+        --bg: #151618;
+        --card: #1f2124;
+        --surface2: #292c30;
+        --text: #f4f5f6;
+        --text2: #a6abb3;
+        --text3: #747b85;
+        --sep: #34383e;
+        --tab-bg: #1f2124;
+        --header-bg: #1f2124;
+        --sidebar-bg: #101113;
         color-scheme: dark;
       }
     }
     :root[data-theme="dark"] {
-      --bg: #1c1c1e;
-      --card: #2c2c2e;
-      --text: #ffffff;
-      --text2: #8e8e93;
-      --text3: #48484a;
-      --sep: #38383a;
-      --tab-bg: rgba(28,28,30,0.94);
-      --header-bg: rgba(28,28,30,0.94);
+      --bg: #151618;
+      --card: #1f2124;
+      --surface2: #292c30;
+      --text: #f4f5f6;
+      --text2: #a6abb3;
+      --text3: #747b85;
+      --sep: #34383e;
+      --tab-bg: #1f2124;
+      --header-bg: #1f2124;
+      --sidebar-bg: #101113;
       color-scheme: dark;
     }
     :root[data-theme="light"] { color-scheme: light; }
-    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    * { box-sizing: border-box; margin: 0; padding: 0; letter-spacing: 0; -webkit-tap-highlight-color: transparent; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
       background: var(--bg);
@@ -63,18 +71,20 @@
       overflow-x: hidden;
     }
     #app {
-      max-width: 1120px;
+      display: flex;
+      flex-direction: column;
       min-height: 100dvh;
-      margin: 0 auto;
     }
+    .sidebar { display: contents; }
+    .sidebar-brand { display: none; }
+    .workspace { display: contents; min-width: 0; }
     /* HEADER */
     .header {
+      order: 1;
       position: sticky;
       top: 0;
       z-index: 100;
       background: var(--header-bg);
-      backdrop-filter: saturate(180%) blur(20px);
-      -webkit-backdrop-filter: saturate(180%) blur(20px);
       padding: calc(var(--safe-top) + 14px) 20px 14px;
       border-bottom: 0.5px solid var(--sep);
       display: flex;
@@ -83,7 +93,7 @@
       gap: 14px;
     }
     .title-wrap { flex: 1; min-width: 160px; text-align: left; }
-    .header h1 { font-size: 17px; font-weight: 600; letter-spacing: -0.4px; }
+    .header h1 { font-size: 17px; font-weight: 600; }
     .doc-status {
       color: var(--text2);
       font-size: 11px;
@@ -134,19 +144,19 @@
     }
     /* MAIN SCROLL AREA */
     main {
+      order: 3;
       padding-bottom: calc(var(--safe-bottom) + 32px);
       min-height: calc(100dvh - 50px);
     }
     /* BOTTOM TAB BAR */
     .tab-bar {
+      order: 2;
       position: sticky;
       top: calc(var(--safe-top) + 66px);
       margin: 12px 16px 4px;
       width: auto;
       max-width: none;
       background: var(--tab-bg);
-      backdrop-filter: saturate(180%) blur(20px);
-      -webkit-backdrop-filter: saturate(180%) blur(20px);
       border: 1px solid var(--sep);
       border-radius: 10px;
       display: flex;
@@ -168,13 +178,14 @@
     /* SECTION LABEL */
     .section-label {
       font-size: 13px; font-weight: 600; color: var(--text2);
-      text-transform: uppercase; letter-spacing: 0.5px;
+      text-transform: uppercase;
       padding: 20px 16px 6px;
     }
     /* CARD LIST */
     .card-list {
       background: var(--card);
-      border-radius: 12px;
+      border-radius: 8px;
+      border: 1px solid var(--sep);
       margin: 0 16px;
       overflow: hidden;
     }
@@ -212,11 +223,11 @@
       gap: 12px; padding: 16px 16px 0;
     }
     .summary-card {
-      background: var(--card); border-radius: 14px; padding: 14px;
+      background: var(--card); border: 1px solid var(--sep); border-radius: 8px; padding: 14px;
     }
     .summary-card.papa { border-top: 3px solid var(--blue); }
     .summary-card.mama { border-top: 3px solid var(--purple); }
-    .sc-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text2); margin-bottom: 6px; }
+    .sc-label { font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--text2); margin-bottom: 6px; }
     .sc-name { font-size: 15px; font-weight: 600; margin-bottom: 10px; }
     .sc-row { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px; }
     .sc-row.total {
@@ -251,10 +262,10 @@
     }
     /* WIDE CARD */
     .wide-card {
-      background: var(--card); border-radius: 14px;
+      background: var(--card); border: 1px solid var(--sep); border-radius: 8px;
       margin: 12px 16px 0; padding: 14px;
     }
-    .wide-card-title { font-size: 13px; font-weight: 600; color: var(--text2); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .wide-card-title { font-size: 13px; font-weight: 600; color: var(--text2); margin-bottom: 10px; text-transform: uppercase; }
     .wc-row { display: flex; justify-content: space-between; align-items: center; font-size: 15px; padding: 5px 0; border-bottom: 0.5px solid var(--sep); }
     .wc-row:last-child { border-bottom: none; }
     .wc-row .label { color: var(--text); }
@@ -281,7 +292,7 @@
       width: 100px; text-align: right;
     }
     /* SETTINGS */
-    .settings-group { margin: 0 16px; background: var(--card); border-radius: 12px; overflow: hidden; }
+    .settings-group { margin: 0 16px; background: var(--card); border: 1px solid var(--sep); border-radius: 8px; overflow: hidden; }
     .settings-row {
       display: flex; align-items: center; justify-content: space-between;
       padding: 14px 16px; border-bottom: 0.5px solid var(--sep); gap: 12px;
@@ -291,7 +302,7 @@
     .settings-row .hint { font-size: 13px; color: var(--text2); margin-top: 2px; }
     .btn-danger {
       background: var(--red); color: white; border: none;
-      border-radius: 12px; padding: 14px; font-size: 16px;
+      border-radius: 8px; padding: 14px; font-size: 16px;
       font-family: inherit; font-weight: 500; cursor: pointer;
       width: 100%; margin: 0 16px; width: calc(100% - 32px);
     }
@@ -330,8 +341,8 @@
     .form-input:focus, .form-select:focus { border-color: var(--blue); outline: none; }
     .form-select { -webkit-appearance: none; appearance: none; }
     .form-actions { display: flex; gap: 8px; margin-top: 10px; }
-    .btn-save { flex:1; background: var(--blue); color: white; border: none; border-radius: 10px; padding: 12px; font-size: 15px; font-family: inherit; font-weight: 600; cursor: pointer; }
-    .btn-cancel { background: var(--sep); color: var(--text); border: none; border-radius: 10px; padding: 12px 18px; font-size: 15px; font-family: inherit; font-weight: 500; cursor: pointer; }
+    .btn-save { flex:1; background: var(--blue); color: white; border: none; border-radius: 8px; padding: 12px; font-size: 15px; font-family: inherit; font-weight: 600; cursor: pointer; }
+    .btn-cancel { background: var(--sep); color: var(--text); border: none; border-radius: 8px; padding: 12px 18px; font-size: 15px; font-family: inherit; font-weight: 500; cursor: pointer; }
     .btn-add-row { width: 100%; background: none; border: none; color: var(--blue); font-size: 16px; font-family: inherit; padding: 13px 16px; text-align: left; cursor: pointer; display: flex; align-items: center; gap: 6px; }
     .del-btn { background: none; border: none; color: var(--red); font-size: 20px; cursor: pointer; padding: 4px 8px; line-height: 1; flex-shrink: 0; }
     /* PAY PERIODS */
@@ -358,7 +369,7 @@
       padding: 12px 14px;
       background: rgba(255,149,0,0.1);
       border: 1px solid rgba(255,149,0,0.35);
-      border-radius: 10px;
+      border-radius: 8px;
       color: var(--text);
       font-size: 14px;
       line-height: 1.35;
@@ -366,7 +377,8 @@
     .period-card {
       margin: 0 16px 12px;
       background: var(--card);
-      border-radius: 12px;
+      border: 1px solid var(--sep);
+      border-radius: 8px;
       overflow: hidden;
     }
     .period-card.current { box-shadow: inset 0 0 0 1.5px var(--blue); }
@@ -402,7 +414,7 @@
       padding-bottom: 10px;
       border-bottom: 0.5px solid var(--sep);
     }
-    .ledger-stat-label { color: var(--text2); font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .ledger-stat-label { color: var(--text2); font-size: 10px; text-transform: uppercase; }
     .ledger-stat-value { font-size: 15px; font-weight: 700; margin-top: 3px; }
     .ledger-stat-detail { color: var(--text2); font-size: 10px; margin-top: 2px; line-height: 1.2; }
     .ledger-items { padding-top: 5px; }
@@ -420,8 +432,198 @@
     .ledger-item-amount { font-size: 13px; font-weight: 600; white-space: nowrap; }
     .ledger-item-amount.incoming { color: var(--green); }
     .ledger-empty { color: var(--text2); font-size: 13px; padding-top: 10px; }
+    .pay-ledger-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 0 16px 12px;
+    }
+    .person-segment {
+      display: inline-grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3px;
+      padding: 3px;
+      border: 1px solid var(--sep);
+      border-radius: 8px;
+      background: var(--surface2);
+    }
+    .segment-btn {
+      min-width: 108px;
+      min-height: 34px;
+      padding: 6px 12px;
+      border: none;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--text2);
+      font: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .segment-btn.active { background: var(--card); color: var(--text); box-shadow: 0 1px 2px rgba(0,0,0,0.08); }
+    .segment-btn.papa.active { color: var(--blue); }
+    .segment-btn.mama.active { color: var(--purple); }
+    .period-controls { display: flex; gap: 6px; }
+    .compact-btn {
+      min-height: 34px;
+      padding: 6px 10px;
+      border: 1px solid var(--sep);
+      border-radius: 6px;
+      background: var(--card);
+      color: var(--text2);
+      font: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .period-head {
+      width: 100%;
+      border: none;
+      background: transparent;
+      color: var(--text);
+      font: inherit;
+      text-align: left;
+      cursor: pointer;
+    }
+    .period-head-main { min-width: 160px; }
+    .period-head-summary {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(76px, auto));
+      gap: 18px;
+      margin-left: auto;
+    }
+    .period-mini-label { display: block; color: var(--text2); font-size: 10px; text-transform: uppercase; }
+    .period-mini-value { display: block; margin-top: 2px; font-size: 13px; font-weight: 700; }
+    .period-head-end { display: flex; align-items: center; gap: 10px; }
+    .period-chevron { color: var(--text2); font-size: 18px; line-height: 1; transform: rotate(0deg); transition: transform 0.15s ease; }
+    .period-head[aria-expanded="true"] .period-chevron { transform: rotate(90deg); }
+    .ledger-grid.single { grid-template-columns: 1fr; }
+    .ledger-grid.single .ledger { padding: 16px; }
+    .ledger-table-wrap { display: none; }
+    .ledger-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .ledger-table th {
+      padding: 9px 10px;
+      color: var(--text2);
+      font-size: 10px;
+      font-weight: 600;
+      text-align: left;
+      text-transform: uppercase;
+      border-bottom: 1px solid var(--sep);
+    }
+    .ledger-table td { padding: 10px; border-bottom: 1px solid var(--sep); }
+    .ledger-table tbody tr:last-child td { border-bottom: none; }
+    .ledger-table .money { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .ledger-table .money.incoming { color: var(--green); }
+    .ledger-table .running { font-weight: 700; }
+    .transaction-type { color: var(--text2); font-size: 12px; }
+    .expense-table-head { display: none; }
+    .row-schedule { display: none; color: var(--text2); font-size: 13px; }
+
+    @media (min-width: 900px) {
+      #app { display: grid; grid-template-columns: 220px minmax(0, 1fr); }
+      .sidebar {
+        position: sticky;
+        top: 0;
+        height: 100dvh;
+        display: flex;
+        flex-direction: column;
+        padding: 20px 14px;
+        background: var(--sidebar-bg);
+      }
+      .sidebar-brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 2px 8px 22px;
+        color: var(--sidebar-text);
+        font-size: 15px;
+        font-weight: 700;
+      }
+      .brand-mark {
+        width: 30px;
+        height: 30px;
+        display: grid;
+        place-items: center;
+        border-radius: 7px;
+        background: var(--blue);
+        color: white;
+        font-size: 14px;
+      }
+      .tab-bar {
+        position: static;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        flex-direction: column;
+        gap: 4px;
+        border: none;
+        border-radius: 0;
+        background: transparent;
+      }
+      .tab-btn {
+        flex: none;
+        width: 100%;
+        min-height: 42px;
+        justify-content: flex-start;
+        padding: 9px 10px;
+        color: var(--sidebar-muted);
+        border-radius: 7px;
+      }
+      .tab-btn.active { color: white; background: rgba(255,255,255,0.1); box-shadow: none; }
+      .tab-btn svg { width: 19px; height: 19px; }
+      .tab-btn span { font-size: 14px; }
+      .workspace { display: block; min-height: 100dvh; }
+      .header { padding: 14px 24px; }
+      .header h1 { font-size: 19px; }
+      .hdr-btn { min-height: 38px; font-size: 14px; }
+      main { width: 100%; max-width: 1320px; margin: 0 auto; padding: 4px 18px 48px; }
+      .summary-row { grid-template-columns: repeat(2, minmax(260px, 1fr)); }
+      .card-list, .wide-card, .settings-group, .period-card, .notice-card { margin-left: 16px; margin-right: 16px; }
+      .expense-list .expense-table-head,
+      .expense-list .list-row {
+        display: grid;
+        grid-template-columns: 42px minmax(220px, 1.4fr) minmax(180px, 1fr) 130px 24px;
+        align-items: center;
+        column-gap: 12px;
+      }
+      .expense-table-head {
+        min-height: 38px;
+        padding: 0 16px;
+        border-bottom: 1px solid var(--sep);
+        color: var(--text2);
+        font-size: 10px;
+        font-weight: 600;
+        text-transform: uppercase;
+      }
+      .expense-table-head span:nth-child(3),
+      .expense-table-head span:nth-child(4) { text-align: right; }
+      .expense-list .row-schedule { display: block; text-align: right; }
+      .expense-list .row-sub { margin-top: 3px; }
+      .expense-list .row-right { min-width: 0; }
+      .expense-list .total-row .row-main { grid-column: 2; }
+      .expense-list .total-row .row-right { grid-column: 4; }
+      .expense-list .add-form,
+      .settings-group .add-form {
+        position: fixed;
+        z-index: 180;
+        top: 82px;
+        right: 24px;
+        width: min(410px, calc(100vw - 268px));
+        max-height: calc(100dvh - 106px);
+        overflow-y: auto;
+        padding: 18px;
+        border: 1px solid var(--sep);
+        border-radius: 8px;
+        background: var(--card);
+        box-shadow: 0 18px 45px rgba(0,0,0,0.2);
+      }
+      .ledger-summary { grid-template-columns: repeat(3, minmax(150px, 1fr)); }
+      .ledger-mobile-items { display: none; }
+      .ledger-table-wrap { display: block; margin-top: 12px; overflow-x: auto; }
+    }
     @media (max-width: 640px) {
-      #app { max-width: 430px; }
+      #app { max-width: 430px; margin: 0 auto; }
       .header {
         padding: calc(var(--safe-top) + 12px) 16px 12px;
         gap: 10px;
@@ -457,6 +659,13 @@
       .pay-setup-grid .pay-date-field { grid-column: 1 / -1; }
       .ledger-grid { grid-template-columns: 1fr; }
       .ledger + .ledger { border-left: none; border-top: 0.5px solid var(--sep); }
+      .pay-ledger-toolbar { align-items: stretch; flex-direction: column; }
+      .person-segment { width: 100%; }
+      .segment-btn { min-width: 0; }
+      .period-controls { justify-content: flex-end; }
+      .period-head { align-items: flex-start; }
+      .period-head-summary { display: none; }
+      .period-head-end { margin-left: auto; }
     }
     @media (max-width: 380px) {
       .transfer-setup { grid-template-columns: 1fr; }
@@ -507,41 +716,46 @@
 </head>
 <body>
 <div id="app">
-  <header class="header">
-    <div class="title-wrap">
-      <h1 id="page-title">Dashboard</h1>
-      <div id="doc-status" class="doc-status">Untitled Budget</div>
-    </div>
-    <div class="header-actions file-actions" aria-label="Budget file actions">
-      <button class="tool-btn" onclick="newBudget()">New</button>
-      <button class="tool-btn" onclick="openBudget()">Open</button>
-      <button class="tool-btn primary" onclick="saveBudget()">Save</button>
-    </div>
-    <div class="header-actions">
-      <button class="hdr-btn file-menu-btn" id="file-btn" onclick="openFileMenu()">File</button>
-      <button class="hdr-btn theme-btn" id="theme-btn" onclick="toggleTheme()">Dark</button>
-      <button class="hdr-btn" id="edit-btn" onclick="toggleEdit()">Delete</button>
-    </div>
-  </header>
-  <nav class="tab-bar">
-    <button class="tab-btn active" onclick="switchTab('home')" data-tab="home">
-      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
-      <span>Home</span>
-    </button>
-    <button class="tab-btn" onclick="switchTab('pay')" data-tab="pay">
-      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11zm-7-9h5v5h-5z"/></svg>
-      <span>Pay</span>
-    </button>
-    <button class="tab-btn" onclick="switchTab('bills')" data-tab="bills">
-      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11zM8 15h8v2H8zm0-4h8v2H8zm0-4h5v2H8z"/></svg>
-      <span>Bills</span>
-    </button>
-    <button class="tab-btn" onclick="switchTab('subs')" data-tab="subs">
-      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V8h16v10zM6 10h12v2H6zm0 4h8v2H6z"/></svg>
-      <span>Subs</span>
-    </button>
-  </nav>
-  <main id="main"></main>
+  <aside class="sidebar">
+    <div class="sidebar-brand"><span class="brand-mark">B</span><span>Family Budget</span></div>
+    <nav class="tab-bar" aria-label="Budget sections">
+      <button class="tab-btn active" onclick="switchTab('home')" data-tab="home">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+        <span>Home</span>
+      </button>
+      <button class="tab-btn" onclick="switchTab('pay')" data-tab="pay">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11zm-7-9h5v5h-5z"/></svg>
+        <span>Pay</span>
+      </button>
+      <button class="tab-btn" onclick="switchTab('bills')" data-tab="bills">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11zM8 15h8v2H8zm0-4h8v2H8zm0-4h5v2H8z"/></svg>
+        <span>Bills</span>
+      </button>
+      <button class="tab-btn" onclick="switchTab('subs')" data-tab="subs">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V8h16v10zM6 10h12v2H6zm0 4h8v2H6z"/></svg>
+        <span>Subs</span>
+      </button>
+    </nav>
+  </aside>
+  <div class="workspace">
+    <header class="header">
+      <div class="title-wrap">
+        <h1 id="page-title">Dashboard</h1>
+        <div id="doc-status" class="doc-status">Untitled Budget</div>
+      </div>
+      <div class="header-actions file-actions" aria-label="Budget file actions">
+        <button class="tool-btn" onclick="newBudget()">New</button>
+        <button class="tool-btn" onclick="openBudget()">Open</button>
+        <button class="tool-btn primary" onclick="saveBudget()">Save</button>
+      </div>
+      <div class="header-actions">
+        <button class="hdr-btn file-menu-btn" id="file-btn" onclick="openFileMenu()">File</button>
+        <button class="hdr-btn theme-btn" id="theme-btn" onclick="toggleTheme()">Dark</button>
+        <button class="hdr-btn" id="edit-btn" onclick="toggleEdit()">Delete</button>
+      </div>
+    </header>
+    <main id="main"></main>
+  </div>
 </div>
 <div id="file-sheet" class="sheet" hidden onclick="closeFileMenu()">
   <div class="sheet-card" onclick="event.stopPropagation()">
@@ -748,6 +962,8 @@ function resetTransientState() {
   addingSub = false;
   editingBillId = null;
   editingSubId = null;
+  expandedPayPeriods.clear();
+  payPeriodsInitialized = false;
 }
 
 function confirmDiscardChanges(nextAction) {
@@ -1077,6 +1293,10 @@ let addingBill = false;
 let addingSub = false;
 let editingBillId = null;
 let editingSubId = null;
+const LEDGER_PERSON_KEY = 'budget_ledger_person';
+let ledgerPerson = localStorage.getItem(LEDGER_PERSON_KEY) === 'mama' ? 'mama' : 'papa';
+let expandedPayPeriods = new Set();
+let payPeriodsInitialized = false;
 
 function switchTab(tab) {
   currentTab = tab;
@@ -1094,6 +1314,26 @@ function switchTab(tab) {
 function toggleEdit() {
   editMode = !editMode;
   document.getElementById('edit-btn').textContent = editMode ? 'Done' : 'Delete';
+  render();
+}
+
+function setLedgerPerson(person) {
+  ledgerPerson = person === 'mama' ? 'mama' : 'papa';
+  localStorage.setItem(LEDGER_PERSON_KEY, ledgerPerson);
+  render();
+}
+
+function togglePayPeriod(key) {
+  if (expandedPayPeriods.has(key)) expandedPayPeriods.delete(key);
+  else expandedPayPeriods.add(key);
+  render();
+}
+
+function setAllPayPeriods(expand) {
+  expandedPayPeriods = expand
+    ? new Set(payPeriodStarts(6, startOfDay(new Date())).map(dateKey))
+    : new Set();
+  payPeriodsInitialized = true;
   render();
 }
 
@@ -1121,7 +1361,7 @@ function renderHome() {
     .sort((a, b) => a.days - b.days);
 
   let html = `<div style="padding:16px 16px 0">
-    <div style="font-size:22px;font-weight:700;letter-spacing:-0.5px">${MONTHS_FULL[now.getMonth()]} ${now.getFullYear()}</div>
+    <div style="font-size:22px;font-weight:700">${MONTHS_FULL[now.getMonth()]} ${now.getFullYear()}</div>
     <div style="font-size:14px;color:var(--text2);margin-top:2px">Monthly Budget Overview</div>
   </div>`;
 
@@ -1222,6 +1462,51 @@ function renderPersonLedger(ledger) {
   const person = ledger.person;
   const netColor = ledger.net >= 0 ? 'var(--green)' : 'var(--red)';
   const otherPerson = person === 'papa' ? 'mama' : 'papa';
+  const transactions = [{
+    date: ledger.start,
+    name: `${data.names[person]} paycheck`,
+    type: 'Paycheck',
+    incoming: ledger.paycheck,
+    outgoing: 0,
+    order: 0
+  }];
+  if (ledger.transferIn) transactions.push({
+    date: ledger.start,
+    name: `Transfer from ${data.names[otherPerson]}`,
+    type: 'Transfer',
+    incoming: ledger.transferIn,
+    outgoing: 0,
+    order: 1
+  });
+  if (ledger.transferOut) transactions.push({
+    date: ledger.start,
+    name: `Transfer to ${data.names[otherPerson]}`,
+    type: 'Transfer',
+    incoming: 0,
+    outgoing: ledger.transferOut,
+    order: 1
+  });
+  ledger.items.forEach(({ expense, date }) => transactions.push({
+    date,
+    name: expense.name,
+    type: expense.type === 'subscription' ? 'Subscription' : 'Bill',
+    incoming: 0,
+    outgoing: expense.amount,
+    order: 2
+  }));
+  transactions.sort((a, b) => a.date - b.date || a.order - b.order || a.name.localeCompare(b.name));
+  let running = 0;
+  const tableRows = transactions.map(transaction => {
+    running += transaction.incoming - transaction.outgoing;
+    return `<tr>
+      <td>${formatPeriodDate(transaction.date)}</td>
+      <td>${transaction.name}</td>
+      <td><span class="transaction-type">${transaction.type}</span></td>
+      <td class="money incoming">${transaction.incoming ? `+${fmt(transaction.incoming)}` : ''}</td>
+      <td class="money">${transaction.outgoing ? `-${fmt(transaction.outgoing)}` : ''}</td>
+      <td class="money running" style="color:${running >= 0 ? 'var(--green)' : 'var(--red)'}">${fmtSigned(running)}</td>
+    </tr>`;
+  }).join('');
   const transferItem = ledger.transferIn
     ? `<div class="ledger-item">
         <div>
@@ -1257,7 +1542,13 @@ function renderPersonLedger(ledger) {
       <div><div class="ledger-stat-label">Outgoing</div><div class="ledger-stat-value" style="color:var(--red)">${fmt(ledger.outgoing)}</div><div class="ledger-stat-detail">Expenses ${fmt(ledger.expenseOutgoing)}${ledger.transferOut ? ` + transfer ${fmt(ledger.transferOut)}` : ''}</div></div>
       <div><div class="ledger-stat-label">Remaining</div><div class="ledger-stat-value" style="color:${netColor}">${fmtSigned(ledger.net)}</div></div>
     </div>
-    <div class="ledger-items">${items}</div>
+    <div class="ledger-items ledger-mobile-items">${items}</div>
+    <div class="ledger-table-wrap">
+      <table class="ledger-table">
+        <thead><tr><th>Date</th><th>Description</th><th>Type</th><th class="money">Money In</th><th class="money">Money Out</th><th class="money">Running</th></tr></thead>
+        <tbody>${tableRows}</tbody>
+      </table>
+    </div>
   </section>`;
 }
 
@@ -1339,21 +1630,46 @@ function renderPayPeriods() {
   }
 
   const today = startOfDay(new Date());
-  html += `<div class="section-label">Biweekly Ledgers</div>`;
-  for (const start of payPeriodStarts(6, today)) {
+  const starts = payPeriodStarts(6, today);
+  if (!payPeriodsInitialized) {
+    const currentStart = starts.find(start => today >= start && today < addDays(start, 14));
+    expandedPayPeriods = new Set(currentStart ? [dateKey(currentStart)] : []);
+    payPeriodsInitialized = true;
+  }
+  html += `<div class="section-label">Biweekly Ledgers</div>
+    <div class="pay-ledger-toolbar">
+      <div class="person-segment" role="group" aria-label="Ledger person">
+        <button class="segment-btn papa${ledgerPerson === 'papa' ? ' active' : ''}" onclick="setLedgerPerson('papa')">${data.names.papa}</button>
+        <button class="segment-btn mama${ledgerPerson === 'mama' ? ' active' : ''}" onclick="setLedgerPerson('mama')">${data.names.mama}</button>
+      </div>
+      <div class="period-controls">
+        <button class="compact-btn" onclick="setAllPayPeriods(true)">Expand all</button>
+        <button class="compact-btn" onclick="setAllPayPeriods(false)">Collapse all</button>
+      </div>
+    </div>`;
+  for (const start of starts) {
     const end = addDays(start, 14);
-    const papa = ledgerForPeriod('papa', start);
-    const mama = ledgerForPeriod('mama', start);
+    const key = dateKey(start);
+    const ledger = ledgerForPeriod(ledgerPerson, start);
     const isCurrent = today >= start && today < end;
+    const isExpanded = expandedPayPeriods.has(key);
     html += `<article class="period-card${isCurrent ? ' current' : ''}">
-      <div class="period-head">
-        <div>
+      <button class="period-head" type="button" aria-expanded="${isExpanded}" onclick="togglePayPeriod('${key}')">
+        <div class="period-head-main">
           <div class="period-title">Payday ${formatPeriodDate(start)}</div>
           <div class="period-range">${formatPeriodDate(start)} – ${formatPeriodDate(addDays(end, -1))}</div>
         </div>
-        ${isCurrent ? `<span class="period-badge">Current</span>` : ''}
-      </div>
-      <div class="ledger-grid">${renderPersonLedger(papa)}${renderPersonLedger(mama)}</div>
+        <div class="period-head-summary" aria-hidden="true">
+          <div><span class="period-mini-label">Incoming</span><span class="period-mini-value" style="color:var(--green)">${fmt(ledger.income)}</span></div>
+          <div><span class="period-mini-label">Outgoing</span><span class="period-mini-value" style="color:var(--red)">${fmt(ledger.outgoing)}</span></div>
+          <div><span class="period-mini-label">Remaining</span><span class="period-mini-value" style="color:${ledger.net >= 0 ? 'var(--green)' : 'var(--red)'}">${fmtSigned(ledger.net)}</span></div>
+        </div>
+        <div class="period-head-end">
+          ${isCurrent ? `<span class="period-badge">Current</span>` : ''}
+          <span class="period-chevron" aria-hidden="true">&rsaquo;</span>
+        </div>
+      </button>
+      ${isExpanded ? `<div class="ledger-grid single">${renderPersonLedger(ledger)}</div>` : ''}
     </article>`;
   }
   return html;
@@ -1384,7 +1700,8 @@ function renderBills() {
   </div>`;
 
   if (weekly.length) {
-    html += `<div class="section-label">Weekly Bills</div><div class="card-list">`;
+    html += `<div class="section-label">Weekly Bills</div><div class="card-list expense-list">
+      <div class="expense-table-head"><span></span><span>Item</span><span>Schedule</span><span>Amount</span><span></span></div>`;
     for (const b of weekly) {
       if (editingBillId === b.id) {
         html += itemForm('bill', b);
@@ -1399,6 +1716,7 @@ function renderBills() {
           <div class="row-title">${b.name}</div>
           <div class="row-sub" style="color:${personColor}">${personName} · Every ${WEEKDAYS[b.weekday]} · ${fmt(b.amount*52)}/yr</div>
         </div>
+        <div class="row-schedule">Every ${WEEKDAYS[b.weekday]}</div>
         <div class="row-right">
           <div class="row-amount">${fmt(b.amount)}/wk</div>
           <div style="font-size:12px;color:${days <= 1 ? 'var(--orange)' : 'var(--text3)'};text-align:right">${days === 0 ? 'TODAY' : `in ${days}d`}</div>
@@ -1406,7 +1724,7 @@ function renderBills() {
         ${editMode ? `<button class="del-btn" onclick="event.stopPropagation();deleteBill(${b.id})">−</button>` : `<span class="chevron">›</span>`}
       </div>`;
     }
-    html += `<div class="list-row" style="background:rgba(0,0,0,0.02)">
+    html += `<div class="list-row total-row" style="background:rgba(0,0,0,0.02)"><div></div>
       <div class="row-main" style="font-weight:600">Weekly Total</div>
       <div class="row-right"><div class="row-amount" style="color:var(--red)">${fmt(totalW)}/wk</div>
         <div style="font-size:12px;color:var(--text2);text-align:right">~${fmt(totalW*52/12)}/mo</div>
@@ -1414,7 +1732,8 @@ function renderBills() {
     </div></div>`;
   }
 
-  html += `<div class="section-label">Monthly Bills</div><div class="card-list">`;
+  html += `<div class="section-label">Monthly Bills</div><div class="card-list expense-list">
+    <div class="expense-table-head"><span></span><span>Item</span><span>Schedule</span><span>Amount</span><span></span></div>`;
   for (const b of monthly) {
     if (editingBillId === b.id) {
       html += itemForm('bill', b);
@@ -1435,6 +1754,7 @@ function renderBills() {
         <div class="row-title">${b.name}</div>
         <div class="row-sub" style="color:${personColor}">${personName}${b.note ? ' · <span style="color:var(--text2)">'+b.note+'</span>' : ''}</div>
       </div>
+      <div class="row-schedule">${b.dueDay ? `Day ${b.dueDay}` : 'Various dates'}</div>
       <div class="row-right">
         <div class="row-amount">${fmt(b.amount)}</div>
         <div style="text-align:right">${daysText}</div>
@@ -1442,13 +1762,14 @@ function renderBills() {
       ${editMode ? `<button class="del-btn" onclick="event.stopPropagation();deleteBill(${b.id})">−</button>` : `<span class="chevron">›</span>`}
     </div>`;
   }
-  html += `<div class="list-row" style="background:rgba(0,0,0,0.02)">
+  html += `<div class="list-row total-row" style="background:rgba(0,0,0,0.02)"><div></div>
     <div class="row-main" style="font-weight:600">Monthly Total</div>
     <div class="row-right"><div class="row-amount" style="color:var(--red)">${fmt(totalM)}</div></div>
   </div></div>`;
 
   if (yearly.length) {
-    html += `<div class="section-label">Annual Bills</div><div class="card-list">`;
+    html += `<div class="section-label">Annual Bills</div><div class="card-list expense-list">
+      <div class="expense-table-head"><span></span><span>Item</span><span>Schedule</span><span>Amount</span><span></span></div>`;
     for (const b of yearly) {
       if (editingBillId === b.id) {
         html += itemForm('bill', b);
@@ -1462,6 +1783,7 @@ function renderBills() {
           <div class="row-title">${b.name}</div>
           <div class="row-sub" style="color:#b8860b">${personName} · Annual · ${MONTHS[b.dueMonth-1]} ${b.dueDay || 1}</div>
         </div>
+        <div class="row-schedule">${MONTHS[b.dueMonth-1]} ${b.dueDay || 1}</div>
         <div class="row-right">
           <div class="row-amount">${fmt(b.amount)}</div>
           <div style="text-align:right;font-size:12px;color:${days<=30?'var(--orange)':'var(--text3)'}">in ${days}d</div>
@@ -1469,7 +1791,7 @@ function renderBills() {
         ${editMode ? `<button class="del-btn" onclick="event.stopPropagation();deleteBill(${b.id})">−</button>` : `<span class="chevron">›</span>`}
       </div>`;
     }
-    html += `<div class="list-row" style="background:rgba(0,0,0,0.02)">
+    html += `<div class="list-row total-row" style="background:rgba(0,0,0,0.02)"><div></div>
       <div class="row-main" style="font-weight:600">Annual Total</div>
       <div class="row-right"><div class="row-amount" style="color:var(--red)">${fmt(totalY)}</div>
         <div style="font-size:12px;color:var(--text2);text-align:right">~${fmt(totalY/12)}/mo</div>
@@ -1496,7 +1818,8 @@ function renderSubs() {
 
   let html = '';
   if (weekly.length) {
-    html += `<div class="section-label">Weekly Subscriptions</div><div class="card-list">`;
+    html += `<div class="section-label">Weekly Subscriptions</div><div class="card-list expense-list">
+      <div class="expense-table-head"><span></span><span>Item</span><span>Schedule</span><span>Amount</span><span></span></div>`;
     for (const s of weekly) {
       if (editingSubId === s.id) {
         html += itemForm('sub', s);
@@ -1511,6 +1834,7 @@ function renderSubs() {
           <div class="row-title">${s.name}</div>
           <div class="row-sub" style="color:${personColor}">${personName} · Every ${WEEKDAYS[s.weekday]} · ${fmt(s.amount*52)}/yr</div>
         </div>
+        <div class="row-schedule">Every ${WEEKDAYS[s.weekday]}</div>
         <div class="row-right">
           <div class="row-amount">${fmt(s.amount)}/wk</div>
           <div style="font-size:12px;color:${days <= 1 ? 'var(--orange)' : 'var(--text3)'};text-align:right">${days === 0 ? 'TODAY' : `in ${days}d`}</div>
@@ -1518,7 +1842,7 @@ function renderSubs() {
         ${editMode ? `<button class="del-btn" onclick="event.stopPropagation();deleteSub(${s.id})">−</button>` : `<span class="chevron">›</span>`}
       </div>`;
     }
-    html += `<div class="list-row" style="background:rgba(0,0,0,0.02)">
+    html += `<div class="list-row total-row" style="background:rgba(0,0,0,0.02)"><div></div>
       <div class="row-main" style="font-weight:600">Weekly Total</div>
       <div class="row-right"><div class="row-amount" style="color:var(--red)">${fmt(totalW)}/wk</div>
         <div style="font-size:12px;color:var(--text2);text-align:right">~${fmt(totalW*52/12)}/mo</div>
@@ -1526,7 +1850,8 @@ function renderSubs() {
     </div></div>`;
   }
 
-  html += `<div class="section-label">Monthly Subscriptions</div><div class="card-list">`;
+  html += `<div class="section-label">Monthly Subscriptions</div><div class="card-list expense-list">
+    <div class="expense-table-head"><span></span><span>Item</span><span>Schedule</span><span>Amount</span><span></span></div>`;
   for (const s of monthly) {
     if (editingSubId === s.id) {
       html += itemForm('sub', s);
@@ -1546,6 +1871,7 @@ function renderSubs() {
         <div class="row-title">${s.name}</div>
         <div class="row-sub" style="color:${personColor}">${personName}</div>
       </div>
+      <div class="row-schedule">${s.dueDay ? `Day ${s.dueDay}` : 'Monthly'}</div>
       <div class="row-right">
         <div class="row-amount">${fmt(s.amount)}</div>
         <div style="text-align:right">${daysText}</div>
@@ -1553,13 +1879,14 @@ function renderSubs() {
       ${editMode ? `<button class="del-btn" onclick="event.stopPropagation();deleteSub(${s.id})">−</button>` : `<span class="chevron">›</span>`}
     </div>`;
   }
-  html += `<div class="list-row" style="background:rgba(0,0,0,0.02)">
+  html += `<div class="list-row total-row" style="background:rgba(0,0,0,0.02)"><div></div>
     <div class="row-main" style="font-weight:600">Monthly Total</div>
     <div class="row-right"><div class="row-amount" style="color:var(--red)">${fmt(totalM)}</div></div>
   </div></div>`;
 
   if (yearly.length) {
-    html += `<div class="section-label">Annual Subscriptions</div><div class="card-list">`;
+    html += `<div class="section-label">Annual Subscriptions</div><div class="card-list expense-list">
+      <div class="expense-table-head"><span></span><span>Item</span><span>Schedule</span><span>Amount</span><span></span></div>`;
     for (const s of yearly) {
       if (editingSubId === s.id) {
         html += itemForm('sub', s);
@@ -1573,6 +1900,7 @@ function renderSubs() {
           <div class="row-title">${s.name}</div>
           <div class="row-sub" style="color:#b8860b">${personName} · Annual · ${MONTHS[s.dueMonth-1]} ${s.dueDay || 1}</div>
         </div>
+        <div class="row-schedule">${MONTHS[s.dueMonth-1]} ${s.dueDay || 1}</div>
         <div class="row-right">
           <div class="row-amount">${fmt(s.amount)}</div>
           <div style="font-size:12px;color:${days<=30?'var(--orange)':'var(--text3)'};text-align:right">in ${days}d</div>
@@ -1580,7 +1908,7 @@ function renderSubs() {
         ${editMode ? `<button class="del-btn" onclick="event.stopPropagation();deleteSub(${s.id})">−</button>` : `<span class="chevron">›</span>`}
       </div>`;
     }
-    html += `<div class="list-row" style="background:rgba(0,0,0,0.02)">
+    html += `<div class="list-row total-row" style="background:rgba(0,0,0,0.02)"><div></div>
       <div class="row-main" style="font-weight:600">Annual Total</div>
       <div class="row-right"><div class="row-amount" style="color:var(--red)">${fmt(totalY)}</div>
         <div style="font-size:12px;color:var(--text2);text-align:right">~${fmt(totalY/12)}/mo</div>
@@ -1688,6 +2016,8 @@ function updatePerson(person, key, value) {
 
 function updatePaySchedule(key, value) {
   if (key === 'anchorDate') data.paySchedule.anchorDate = parseLocalDate(value) ? value : '';
+  expandedPayPeriods.clear();
+  payPeriodsInitialized = false;
   save();
   render();
 }
