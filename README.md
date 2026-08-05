@@ -20,6 +20,8 @@ Bills are managed on the Bills tab. Subscriptions are managed on the Subscriptio
 
 At desktop widths the app uses persistent side navigation, denser expense tables, and a right-side expense editor. Smaller screens retain the bottom navigation and stacked lists.
 
+The visual system uses a warm ivory canvas, forest-green navigation and actions, muted coral expense accents, and serif display type for page headings and key totals. Dense tables, controls, and transaction data remain in a compact sans-serif style. Papa and Mama dashboard cards stack on phone-sized screens to keep amounts readable.
+
 ## Data Compatibility
 
 Version 5 adds weekly expenses with a selected weekday. It also stores a shared biweekly pay schedule, separate paycheck amounts, the recurring payday transfer, and a person on every bill or subscription. Weekly and yearly expenses store the actual transaction amount while monthly summaries derive the monthly equivalent.

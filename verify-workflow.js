@@ -147,6 +147,9 @@ async function run() {
   assert(html.includes('data-tab="pay"'), 'Navigation should include the Pay Periods tab.');
   assert(html.includes('renderPayPeriods'), 'Pay Periods should have a dedicated renderer.');
   assert(html.includes('class="sidebar"') && html.includes('class="workspace"'), 'The responsive app shell should include a desktop sidebar and workspace.');
+  assert(html.includes('--bg: #f6f1e7') && html.includes('--sidebar-bg: #173d2d'), 'The light theme should use the warm editorial palette.');
+  assert(html.includes('font-family: var(--display-font)') && html.includes('household-summary'), 'The dashboard should include editorial display type and the emphasized household summary.');
+  assert(html.includes('.summary-row { grid-template-columns: 1fr; }'), 'Phone layouts should stack the two household member cards.');
   assert(html.includes('ledger-table'), 'Expanded desktop ledgers should include a transaction table.');
   assert(html.includes('expense-table-head'), 'Desktop expense lists should include table headers.');
   assert(html.includes('updatePayTransfer'), 'Pay setup should expose the recurring actual transfer.');

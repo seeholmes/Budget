@@ -11,54 +11,93 @@
   <link rel="apple-touch-icon" href="icon-192.png">
   <style>
     :root {
-      --bg: #f5f6f8;
-      --card: #ffffff;
-      --surface2: #eef0f3;
-      --text: #1d2025;
-      --text2: #626873;
-      --text3: #969da8;
-      --sep: #dfe3e8;
-      --blue: #2563eb;
-      --purple: #8b5cf6;
-      --green: #16834b;
-      --red: #d64545;
-      --orange: #c96b12;
-      --yellow: #ffcc00;
-      --tab-bg: #ffffff;
-      --header-bg: #ffffff;
-      --sidebar-bg: #202124;
-      --sidebar-text: #e7e9ec;
-      --sidebar-muted: #9da2aa;
+      --bg: #f6f1e7;
+      --card: #fffdf8;
+      --surface2: #f0eadf;
+      --text: #25362e;
+      --text2: #667169;
+      --text3: #929b94;
+      --sep: #ded7ca;
+      --blue: #246b4d;
+      --purple: #7f617f;
+      --green: #246b4d;
+      --red: #b95f4f;
+      --orange: #b9783f;
+      --yellow: #c69a3a;
+      --coral: #c8705e;
+      --papa-soft: #e6f0e9;
+      --mama-soft: #f0e7f0;
+      --annual-soft: #f4ecd7;
+      --warning-soft: #f7eadf;
+      --tab-bg: #fffdf8;
+      --header-bg: #fffdf8;
+      --sidebar-bg: #173d2d;
+      --sidebar-text: #fff9ee;
+      --sidebar-muted: #b9c9be;
+      --summary-bg: #1f6347;
+      --summary-text: #fff9ee;
+      --display-font: Georgia, 'Times New Roman', serif;
+      --surface-shadow: 0 10px 30px rgba(23,61,45,0.07);
       --safe-bottom: env(safe-area-inset-bottom, 0px);
       --safe-top: env(safe-area-inset-top, 0px);
       color-scheme: light;
     }
     @media (prefers-color-scheme: dark) {
       :root:not([data-theme="light"]) {
-        --bg: #151618;
-        --card: #1f2124;
-        --surface2: #292c30;
-        --text: #f4f5f6;
-        --text2: #a6abb3;
-        --text3: #747b85;
-        --sep: #34383e;
-        --tab-bg: #1f2124;
-        --header-bg: #1f2124;
-        --sidebar-bg: #101113;
+        --bg: #151a17;
+        --card: #202722;
+        --surface2: #29312b;
+        --text: #f5f0e6;
+        --text2: #b4beb6;
+        --text3: #7f8b82;
+        --sep: #39443c;
+        --blue: #65b489;
+        --purple: #b58eb6;
+        --green: #6bc18f;
+        --red: #df8978;
+        --orange: #d7a267;
+        --coral: #df8978;
+        --papa-soft: #263c30;
+        --mama-soft: #392f3b;
+        --annual-soft: #3c3728;
+        --warning-soft: #3d3027;
+        --tab-bg: #202722;
+        --header-bg: #1c231e;
+        --sidebar-bg: #0e251b;
+        --sidebar-text: #fff9ee;
+        --sidebar-muted: #9db0a3;
+        --summary-bg: #173d2d;
+        --summary-text: #fff9ee;
+        --surface-shadow: 0 12px 34px rgba(0,0,0,0.2);
         color-scheme: dark;
       }
     }
     :root[data-theme="dark"] {
-      --bg: #151618;
-      --card: #1f2124;
-      --surface2: #292c30;
-      --text: #f4f5f6;
-      --text2: #a6abb3;
-      --text3: #747b85;
-      --sep: #34383e;
-      --tab-bg: #1f2124;
-      --header-bg: #1f2124;
-      --sidebar-bg: #101113;
+      --bg: #151a17;
+      --card: #202722;
+      --surface2: #29312b;
+      --text: #f5f0e6;
+      --text2: #b4beb6;
+      --text3: #7f8b82;
+      --sep: #39443c;
+      --blue: #65b489;
+      --purple: #b58eb6;
+      --green: #6bc18f;
+      --red: #df8978;
+      --orange: #d7a267;
+      --coral: #df8978;
+      --papa-soft: #263c30;
+      --mama-soft: #392f3b;
+      --annual-soft: #3c3728;
+      --warning-soft: #3d3027;
+      --tab-bg: #202722;
+      --header-bg: #1c231e;
+      --sidebar-bg: #0e251b;
+      --sidebar-text: #fff9ee;
+      --sidebar-muted: #9db0a3;
+      --summary-bg: #173d2d;
+      --summary-text: #fff9ee;
+      --surface-shadow: 0 12px 34px rgba(0,0,0,0.2);
       color-scheme: dark;
     }
     :root[data-theme="light"] { color-scheme: light; }
@@ -93,7 +132,7 @@
       gap: 14px;
     }
     .title-wrap { flex: 1; min-width: 160px; text-align: left; }
-    .header h1 { font-size: 17px; font-weight: 600; }
+    .header h1 { font-family: var(--display-font); font-size: 19px; font-weight: 600; }
     .doc-status {
       color: var(--text2);
       font-size: 11px;
@@ -130,7 +169,7 @@
     .tool-btn.primary {
       border-color: var(--blue);
       background: var(--blue);
-      color: white;
+      color: #fffdf8;
     }
     .theme-btn {
       min-width: 58px;
@@ -172,7 +211,7 @@
       min-height: 40px;
       border-radius: 8px;
     }
-    .tab-btn.active { color: var(--blue); background: var(--card); box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+    .tab-btn.active { color: var(--blue); background: var(--card); box-shadow: 0 1px 3px rgba(23,61,45,0.1); }
     .tab-btn svg { width: 20px; height: 20px; }
     .tab-btn span { font-size: 13px; font-weight: 600; }
     /* SECTION LABEL */
@@ -181,6 +220,20 @@
       text-transform: uppercase;
       padding: 20px 16px 6px;
     }
+    .page-intro { padding: 22px 16px 0; }
+    .page-eyebrow {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+      color: var(--coral);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    .page-eyebrow::before { content: ''; width: 24px; height: 2px; background: var(--coral); }
+    .page-heading { font-family: var(--display-font); font-size: 32px; line-height: 1.05; color: var(--blue); }
+    .page-subtitle { margin-top: 5px; color: var(--text2); font-size: 14px; }
     /* CARD LIST */
     .card-list {
       background: var(--card);
@@ -188,6 +241,7 @@
       border: 1px solid var(--sep);
       margin: 0 16px;
       overflow: hidden;
+      box-shadow: var(--surface-shadow);
     }
     .card-list + .card-list { margin-top: 0; }
     .list-row {
@@ -203,7 +257,7 @@
       flex-shrink: 0; font-size: 17px;
     }
     .row-main { flex: 1; min-width: 0; }
-    .row-title { font-size: 16px; font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .row-title { font-size: 16px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .row-sub { font-size: 13px; color: var(--text2); margin-top: 1px; }
     .row-right { text-align: right; flex-shrink: 0; }
     .row-amount { font-size: 16px; font-weight: 500; }
@@ -211,19 +265,20 @@
       font-size: 11px; font-weight: 600; padding: 2px 7px;
       border-radius: 20px; margin-top: 3px; display: inline-block;
     }
-    .badge-papa { background: rgba(0,122,255,0.12); color: var(--blue); }
-    .badge-mama { background: rgba(175,82,222,0.12); color: var(--purple); }
-    .badge-due { background: rgba(255,59,48,0.12); color: var(--red); }
-    .badge-soon { background: rgba(255,149,0,0.12); color: var(--orange); }
-    .badge-ok { background: rgba(52,199,89,0.12); color: var(--green); }
-    .badge-yearly { background: rgba(255,204,0,0.12); color: #b8860b; }
+    .badge-papa { background: var(--papa-soft); color: var(--blue); }
+    .badge-mama { background: var(--mama-soft); color: var(--purple); }
+    .badge-due { background: var(--warning-soft); color: var(--red); }
+    .badge-soon { background: var(--warning-soft); color: var(--orange); }
+    .badge-ok { background: var(--papa-soft); color: var(--green); }
+    .badge-yearly { background: var(--annual-soft); color: var(--orange); }
     /* SUMMARY CARDS */
     .summary-row {
       display: grid; grid-template-columns: 1fr 1fr;
       gap: 12px; padding: 16px 16px 0;
     }
     .summary-card {
-      background: var(--card); border: 1px solid var(--sep); border-radius: 8px; padding: 14px;
+      background: var(--card); border: 1px solid var(--sep); border-radius: 8px; padding: 16px;
+      box-shadow: var(--surface-shadow);
     }
     .summary-card.papa { border-top: 3px solid var(--blue); }
     .summary-card.mama { border-top: 3px solid var(--purple); }
@@ -240,7 +295,7 @@
       width: 100%;
       border: 1px solid transparent;
       border-radius: 8px;
-      background: var(--bg);
+      background: var(--surface2);
       color: var(--text);
       font: inherit;
       font-size: 16px;
@@ -252,7 +307,7 @@
       width: 96px;
       border: 1px solid var(--sep);
       border-radius: 8px;
-      background: var(--bg);
+      background: var(--surface2);
       color: var(--text);
       font: inherit;
       font-size: 13px;
@@ -264,12 +319,30 @@
     .wide-card {
       background: var(--card); border: 1px solid var(--sep); border-radius: 8px;
       margin: 12px 16px 0; padding: 14px;
+      box-shadow: var(--surface-shadow);
     }
     .wide-card-title { font-size: 13px; font-weight: 600; color: var(--text2); margin-bottom: 10px; text-transform: uppercase; }
     .wc-row { display: flex; justify-content: space-between; align-items: center; font-size: 15px; padding: 5px 0; border-bottom: 0.5px solid var(--sep); }
     .wc-row:last-child { border-bottom: none; }
     .wc-row .label { color: var(--text); }
     .wc-row .val { font-weight: 500; }
+    .household-summary { padding: 0; overflow: hidden; }
+    .household-summary-lead {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 18px 20px;
+      background: var(--summary-bg);
+      color: var(--summary-text);
+    }
+    .household-summary-kicker { font-size: 11px; font-weight: 700; text-transform: uppercase; }
+    .household-summary-caption { margin-top: 4px; font-size: 13px; opacity: 0.78; }
+    .household-net { text-align: right; flex-shrink: 0; }
+    .household-net span { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; opacity: 0.78; }
+    .household-net strong { display: block; margin-top: 2px; font-family: var(--display-font); font-size: 34px; font-weight: 500; line-height: 1; }
+    .household-net strong.negative { color: #f2b3a7; }
+    .household-summary-rows { padding: 10px 16px 12px; }
     /* FILTER ROW */
     .filter-row {
       display: flex; gap: 8px; padding: 12px 16px 0; overflow-x: auto;
@@ -367,8 +440,8 @@
     .notice-card {
       margin: 12px 16px 0;
       padding: 12px 14px;
-      background: rgba(255,149,0,0.1);
-      border: 1px solid rgba(255,149,0,0.35);
+      background: var(--warning-soft);
+      border: 1px solid color-mix(in srgb, var(--orange) 35%, var(--sep));
       border-radius: 8px;
       color: var(--text);
       font-size: 14px;
@@ -380,6 +453,7 @@
       border: 1px solid var(--sep);
       border-radius: 8px;
       overflow: hidden;
+      box-shadow: var(--surface-shadow);
     }
     .period-card.current { box-shadow: inset 0 0 0 1.5px var(--blue); }
     .period-head {
@@ -390,11 +464,11 @@
       padding: 13px 14px;
       border-bottom: 0.5px solid var(--sep);
     }
-    .period-title { font-size: 16px; font-weight: 700; }
+    .period-title { font-family: var(--display-font); font-size: 17px; font-weight: 600; }
     .period-range { color: var(--text2); font-size: 13px; margin-top: 2px; }
     .period-badge {
       color: var(--blue);
-      background: rgba(0,122,255,0.1);
+      background: var(--papa-soft);
       border-radius: 20px;
       padding: 4px 8px;
       font-size: 11px;
@@ -510,18 +584,18 @@
       margin: 20px 16px 8px;
       color: var(--text2);
     }
-    .pay-month-name { font-size: 13px; font-weight: 700; }
+    .pay-month-name { font-family: var(--display-font); font-size: 17px; font-weight: 600; color: var(--text); }
     .pay-month-head.three-paycheck {
       padding: 9px 10px;
       border-left: 3px solid var(--green);
       border-radius: 6px;
-      background: rgba(22,131,75,0.08);
+      background: var(--papa-soft);
       color: var(--text);
     }
     .three-paycheck-badge {
       padding: 3px 7px;
       border-radius: 20px;
-      background: rgba(22,131,75,0.12);
+      background: var(--card);
       color: var(--green);
       font-size: 11px;
       font-weight: 700;
@@ -574,9 +648,9 @@
         height: 30px;
         display: grid;
         place-items: center;
-        border-radius: 7px;
-        background: var(--blue);
-        color: white;
+        border-radius: 50%;
+        background: var(--sidebar-text);
+        color: var(--sidebar-bg);
         font-size: 14px;
       }
       .tab-bar {
@@ -684,6 +758,11 @@
       .tab-btn.active { background: none; box-shadow: none; }
       .tab-btn svg { width: 24px; height: 24px; }
       .tab-btn span { font-size: 10px; font-weight: 500; }
+      .page-intro { padding-top: 18px; }
+      .page-heading { font-size: 29px; }
+      .summary-row { grid-template-columns: 1fr; }
+      .household-summary-lead { align-items: flex-start; padding: 16px; }
+      .household-net strong { font-size: 30px; }
       .pay-setup-grid { grid-template-columns: 1fr 1fr; }
       .pay-setup-grid .pay-date-field { grid-column: 1 / -1; }
       .ledger-grid { grid-template-columns: 1fr; }
@@ -712,7 +791,7 @@
     .sheet-card {
       width: 100%; max-width: 398px;
       background: var(--card);
-      border-radius: 14px;
+      border-radius: 8px;
       overflow: hidden;
       box-shadow: 0 18px 60px rgba(0,0,0,0.24);
     }
@@ -1134,6 +1213,7 @@ window.addEventListener('beforeunload', event => {
 // ─── UTILS ──────────────────────────────────────────────────────────────────
 const fmt = n => '$' + Math.round(Math.abs(n)).toLocaleString('en-US');
 const fmtSigned = n => (n < 0 ? '–' : '') + fmt(n);
+const ownerSoft = person => person === 'papa' ? 'var(--papa-soft)' : person === 'mama' ? 'var(--mama-soft)' : 'var(--warning-soft)';
 
 const CAT_ICONS = {
   housing:'🏠', utilities:'⚡', auto:'🚗', insurance:'🛡️', health:'💪',
@@ -1144,11 +1224,11 @@ const CAT_ICONS = {
 
 
 const CAT_COLORS = {
-  housing:'#007AFF', utilities:'#FF9500', food:'#34C759', auto:'#FF3B30',
-  insurance:'#AF52DE', health:'#00C7BE', tech:'#5856D6', savings:'#FFD60A',
-  debt:'#FF6B6B', home:'#FF9500', misc:'#8E8E93', media:'#FF2D55',
-  photo:'#30B0C7', cloud:'#63C8F7', ai:'#BF5AF2', sports:'#30D158', design:'#FFD60A',
-  education:'#FF6B00'
+  housing:'#246B4D', utilities:'#B9783F', food:'#5E8A68', auto:'#B95F4F',
+  insurance:'#7F617F', health:'#4F8B83', tech:'#586E75', savings:'#C69A3A',
+  debt:'#C8705E', home:'#9A7445', misc:'#7A857D', media:'#A45F73',
+  photo:'#4E8290', cloud:'#6C91A0', ai:'#876A91', sports:'#5D8A65', design:'#B58A45',
+  education:'#A96842'
 };
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const MONTHS_FULL = ['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -1425,9 +1505,10 @@ function renderHome() {
     .filter(b => b.days !== null && b.days <= 60)
     .sort((a, b) => a.days - b.days);
 
-  let html = `<div style="padding:16px 16px 0">
-    <div style="font-size:22px;font-weight:700">${MONTHS_FULL[now.getMonth()]} ${now.getFullYear()}</div>
-    <div style="font-size:14px;color:var(--text2);margin-top:2px">Monthly Budget Overview</div>
+  let html = `<div class="page-intro">
+    <div class="page-eyebrow">Household outlook</div>
+    <div class="page-heading">${MONTHS_FULL[now.getMonth()]} ${now.getFullYear()}</div>
+    <div class="page-subtitle">Monthly budget overview</div>
   </div>`;
 
   // Summary cards
@@ -1466,16 +1547,23 @@ function renderHome() {
   const totalIncome = papaIncome + mamaIncome;
   const totalExp = totalHouseholdMonthly();
   const totalBal = totalIncome - totalExp;
-  html += `<div class="wide-card">
-    <div class="wide-card-title">Household Monthly</div>
-    <div class="wc-row"><span class="label">Combined Income</span><span class="val">${fmt(totalIncome)}</span></div>
-    <div class="wc-row"><span class="label">Total Expenses</span><span class="val" style="color:var(--red)">–${fmt(totalExp)}</span></div>
-    <div class="wc-row"><span class="label">Suggested/month · ${exchange >= 0 ? data.names.papa+' → '+data.names.mama : data.names.mama+' → '+data.names.papa}</span><span class="val" style="color:var(--text2)">${fmt(Math.abs(exchange))}</span></div>
-    <div class="wc-row" style="font-weight:600">
-      <span class="label">Net Balance</span>
-      <span class="val" style="color:${totalBal >= 0 ? 'var(--green)' : 'var(--red)'}">${fmtSigned(totalBal)}</span>
+  html += `<section class="wide-card household-summary">
+    <div class="household-summary-lead">
+      <div>
+        <div class="household-summary-kicker">Household monthly</div>
+        <div class="household-summary-caption">After recurring expenses</div>
+      </div>
+      <div class="household-net">
+        <span>Net balance</span>
+        <strong class="${totalBal < 0 ? 'negative' : ''}">${fmtSigned(totalBal)}</strong>
+      </div>
     </div>
-  </div>`;
+    <div class="household-summary-rows">
+      <div class="wc-row"><span class="label">Combined Income</span><span class="val">${fmt(totalIncome)}</span></div>
+      <div class="wc-row"><span class="label">Total Expenses</span><span class="val" style="color:var(--red)">–${fmt(totalExp)}</span></div>
+      <div class="wc-row"><span class="label">Suggested/month · ${exchange >= 0 ? data.names.papa+' → '+data.names.mama : data.names.mama+' → '+data.names.papa}</span><span class="val" style="color:var(--text2)">${fmt(Math.abs(exchange))}</span></div>
+    </div>
+  </section>`;
 
   const unassignedCount = data.expenses.filter(expense => expense.person === 'unassigned').length;
   if (unassignedCount) {
@@ -1490,7 +1578,7 @@ function renderHome() {
       const owner = b.person === 'unassigned' ? 'Needs assignment' : data.names[b.person];
       const urgency = b.days <= 0 ? 'var(--red)' : b.days <= 3 ? 'var(--orange)' : 'var(--green)';
       html += `<div class="list-row">
-        <div class="row-icon" style="background:rgba(${b.person==='papa'?'0,122,255':'175,82,222'},0.1)">${CAT_ICONS[b.cat]||'📋'}</div>
+        <div class="row-icon" style="background:${ownerSoft(b.person)}">${CAT_ICONS[b.cat]||'📋'}</div>
         <div class="row-main">
           <div class="row-title">${b.name}</div>
           <div class="row-sub" style="color:${color}">${owner} · Due ${dueLabel(b)}</div>
@@ -1504,10 +1592,10 @@ function renderHome() {
     for (const b of upcomingYearly) {
       const owner = b.person === 'unassigned' ? 'Needs assignment' : data.names[b.person];
       html += `<div class="list-row">
-        <div class="row-icon" style="background:rgba(255,204,0,0.15)">${CAT_ICONS[b.cat]||'📋'}</div>
+        <div class="row-icon" style="background:var(--annual-soft)">${CAT_ICONS[b.cat]||'📋'}</div>
         <div class="row-main">
           <div class="row-title">${b.name}</div>
-          <div class="row-sub" style="color:#b8860b">${owner} · Annual · ${MONTHS[b.dueMonth-1]} ${b.dueDay || 1}</div>
+          <div class="row-sub" style="color:var(--orange)">${owner} · Annual · ${MONTHS[b.dueMonth-1]} ${b.dueDay || 1}</div>
         </div>
         <div class="row-right">
           <div class="row-amount">${fmt(b.amount)}</div>
@@ -1631,10 +1719,10 @@ function renderAnnualLookahead() {
     const days = Math.round((date - now) / 86400000);
     const owner = expense.person === 'unassigned' ? 'Needs assignment' : data.names[expense.person];
     html += `<div class="list-row">
-      <div class="row-icon" style="background:rgba(255,204,0,0.15)">${CAT_ICONS[expense.cat] || '📋'}</div>
+      <div class="row-icon" style="background:var(--annual-soft)">${CAT_ICONS[expense.cat] || '📋'}</div>
       <div class="row-main">
         <div class="row-title">${expense.name}</div>
-        <div class="row-sub" style="color:#b8860b">${owner} · ${date.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' })}</div>
+        <div class="row-sub" style="color:var(--orange)">${owner} · ${date.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' })}</div>
       </div>
       <div class="row-right">
         <div class="row-amount">${fmt(expense.amount)}</div>
@@ -1794,7 +1882,7 @@ function renderBills() {
       const personColor = b.person === 'papa' ? 'var(--blue)' : b.person === 'mama' ? 'var(--purple)' : 'var(--orange)';
       const personName = b.person === 'unassigned' ? 'Needs assignment' : data.names[b.person];
       html += `<div class="list-row" style="cursor:pointer" onclick="editingBillId=${b.id};addingBill=false;render()">
-        <div class="row-icon" style="background:rgba(${b.person==='papa'?'0,122,255':'175,82,222'},0.1)">${CAT_ICONS[b.cat]||'📋'}</div>
+        <div class="row-icon" style="background:${ownerSoft(b.person)}">${CAT_ICONS[b.cat]||'📋'}</div>
         <div class="row-main">
           <div class="row-title">${b.name}</div>
           <div class="row-sub" style="color:${personColor}">${personName} · Every ${WEEKDAYS[b.weekday]} · ${fmt(b.amount*52)}/yr</div>
@@ -1807,7 +1895,7 @@ function renderBills() {
         ${editMode ? `<button class="del-btn" onclick="event.stopPropagation();deleteBill(${b.id})">−</button>` : `<span class="chevron">›</span>`}
       </div>`;
     }
-    html += `<div class="list-row total-row" style="background:rgba(0,0,0,0.02)"><div></div>
+    html += `<div class="list-row total-row" style="background:var(--surface2)"><div></div>
       <div class="row-main" style="font-weight:600">Weekly Total</div>
       <div class="row-right"><div class="row-amount" style="color:var(--red)">${fmt(totalW)}/wk</div>
         <div style="font-size:12px;color:var(--text2);text-align:right">~${fmt(totalW*52/12)}/mo</div>
@@ -1832,7 +1920,7 @@ function renderBills() {
         : `<span style="color:var(--text3);font-size:12px">day ${b.dueDay}</span>`)
       : `<span style="color:var(--text3);font-size:12px">various</span>`;
     html += `<div class="list-row" style="cursor:pointer" onclick="editingBillId=${b.id};addingBill=false;render()">
-      <div class="row-icon" style="background:rgba(${b.person==='papa'?'0,122,255':'175,82,222'},0.1)">${CAT_ICONS[b.cat]||'📋'}</div>
+      <div class="row-icon" style="background:${ownerSoft(b.person)}">${CAT_ICONS[b.cat]||'📋'}</div>
       <div class="row-main">
         <div class="row-title">${b.name}</div>
         <div class="row-sub" style="color:${personColor}">${personName}${b.note ? ' · <span style="color:var(--text2)">'+b.note+'</span>' : ''}</div>
@@ -1845,7 +1933,7 @@ function renderBills() {
       ${editMode ? `<button class="del-btn" onclick="event.stopPropagation();deleteBill(${b.id})">−</button>` : `<span class="chevron">›</span>`}
     </div>`;
   }
-  html += `<div class="list-row total-row" style="background:rgba(0,0,0,0.02)"><div></div>
+  html += `<div class="list-row total-row" style="background:var(--surface2)"><div></div>
     <div class="row-main" style="font-weight:600">Monthly Total</div>
     <div class="row-right"><div class="row-amount" style="color:var(--red)">${fmt(totalM)}</div></div>
   </div></div>`;
@@ -1861,10 +1949,10 @@ function renderBills() {
       const days = daysUntil(b.dueDay, b.dueMonth);
       const personName = b.person === 'unassigned' ? 'Needs assignment' : data.names[b.person];
       html += `<div class="list-row" style="cursor:pointer" onclick="editingBillId=${b.id};addingBill=false;render()">
-        <div class="row-icon" style="background:rgba(255,204,0,0.15)">${CAT_ICONS[b.cat]||'📋'}</div>
+        <div class="row-icon" style="background:var(--annual-soft)">${CAT_ICONS[b.cat]||'📋'}</div>
         <div class="row-main">
           <div class="row-title">${b.name}</div>
-          <div class="row-sub" style="color:#b8860b">${personName} · Annual · ${MONTHS[b.dueMonth-1]} ${b.dueDay || 1}</div>
+          <div class="row-sub" style="color:var(--orange)">${personName} · Annual · ${MONTHS[b.dueMonth-1]} ${b.dueDay || 1}</div>
         </div>
         <div class="row-schedule">${MONTHS[b.dueMonth-1]} ${b.dueDay || 1}</div>
         <div class="row-right">
@@ -1874,7 +1962,7 @@ function renderBills() {
         ${editMode ? `<button class="del-btn" onclick="event.stopPropagation();deleteBill(${b.id})">−</button>` : `<span class="chevron">›</span>`}
       </div>`;
     }
-    html += `<div class="list-row total-row" style="background:rgba(0,0,0,0.02)"><div></div>
+    html += `<div class="list-row total-row" style="background:var(--surface2)"><div></div>
       <div class="row-main" style="font-weight:600">Annual Total</div>
       <div class="row-right"><div class="row-amount" style="color:var(--red)">${fmt(totalY)}</div>
         <div style="font-size:12px;color:var(--text2);text-align:right">~${fmt(totalY/12)}/mo</div>
@@ -1912,7 +2000,7 @@ function renderSubs() {
       const personColor = s.person === 'papa' ? 'var(--blue)' : s.person === 'mama' ? 'var(--purple)' : 'var(--orange)';
       const personName = s.person === 'unassigned' ? 'Needs assignment' : data.names[s.person];
       html += `<div class="list-row" style="cursor:pointer" onclick="editingSubId=${s.id};addingSub=false;render()">
-        <div class="row-icon" style="background:rgba(0,122,255,0.1)">${CAT_ICONS[s.cat]||'📱'}</div>
+        <div class="row-icon" style="background:${ownerSoft(s.person)}">${CAT_ICONS[s.cat]||'📱'}</div>
         <div class="row-main">
           <div class="row-title">${s.name}</div>
           <div class="row-sub" style="color:${personColor}">${personName} · Every ${WEEKDAYS[s.weekday]} · ${fmt(s.amount*52)}/yr</div>
@@ -1925,7 +2013,7 @@ function renderSubs() {
         ${editMode ? `<button class="del-btn" onclick="event.stopPropagation();deleteSub(${s.id})">−</button>` : `<span class="chevron">›</span>`}
       </div>`;
     }
-    html += `<div class="list-row total-row" style="background:rgba(0,0,0,0.02)"><div></div>
+    html += `<div class="list-row total-row" style="background:var(--surface2)"><div></div>
       <div class="row-main" style="font-weight:600">Weekly Total</div>
       <div class="row-right"><div class="row-amount" style="color:var(--red)">${fmt(totalW)}/wk</div>
         <div style="font-size:12px;color:var(--text2);text-align:right">~${fmt(totalW*52/12)}/mo</div>
@@ -1949,7 +2037,7 @@ function renderSubs() {
         : `<span style="color:var(--text3);font-size:12px">day ${s.dueDay}</span>`)
       : `<span style="color:var(--text3);font-size:12px">monthly</span>`;
     html += `<div class="list-row" style="cursor:pointer" onclick="editingSubId=${s.id};addingSub=false;render()">
-      <div class="row-icon" style="background:rgba(0,122,255,0.1)">${CAT_ICONS[s.cat]||'📱'}</div>
+      <div class="row-icon" style="background:${ownerSoft(s.person)}">${CAT_ICONS[s.cat]||'📱'}</div>
       <div class="row-main">
         <div class="row-title">${s.name}</div>
         <div class="row-sub" style="color:${personColor}">${personName}</div>
@@ -1962,7 +2050,7 @@ function renderSubs() {
       ${editMode ? `<button class="del-btn" onclick="event.stopPropagation();deleteSub(${s.id})">−</button>` : `<span class="chevron">›</span>`}
     </div>`;
   }
-  html += `<div class="list-row total-row" style="background:rgba(0,0,0,0.02)"><div></div>
+  html += `<div class="list-row total-row" style="background:var(--surface2)"><div></div>
     <div class="row-main" style="font-weight:600">Monthly Total</div>
     <div class="row-right"><div class="row-amount" style="color:var(--red)">${fmt(totalM)}</div></div>
   </div></div>`;
@@ -1978,10 +2066,10 @@ function renderSubs() {
       const days = daysUntil(s.dueDay||1, s.dueMonth);
       const personName = s.person === 'unassigned' ? 'Needs assignment' : data.names[s.person];
       html += `<div class="list-row" style="cursor:pointer" onclick="editingSubId=${s.id};addingSub=false;render()">
-        <div class="row-icon" style="background:rgba(255,204,0,0.15)">${CAT_ICONS[s.cat]||'📱'}</div>
+        <div class="row-icon" style="background:var(--annual-soft)">${CAT_ICONS[s.cat]||'📱'}</div>
         <div class="row-main">
           <div class="row-title">${s.name}</div>
-          <div class="row-sub" style="color:#b8860b">${personName} · Annual · ${MONTHS[s.dueMonth-1]} ${s.dueDay || 1}</div>
+          <div class="row-sub" style="color:var(--orange)">${personName} · Annual · ${MONTHS[s.dueMonth-1]} ${s.dueDay || 1}</div>
         </div>
         <div class="row-schedule">${MONTHS[s.dueMonth-1]} ${s.dueDay || 1}</div>
         <div class="row-right">
@@ -1991,7 +2079,7 @@ function renderSubs() {
         ${editMode ? `<button class="del-btn" onclick="event.stopPropagation();deleteSub(${s.id})">−</button>` : `<span class="chevron">›</span>`}
       </div>`;
     }
-    html += `<div class="list-row total-row" style="background:rgba(0,0,0,0.02)"><div></div>
+    html += `<div class="list-row total-row" style="background:var(--surface2)"><div></div>
       <div class="row-main" style="font-weight:600">Annual Total</div>
       <div class="row-right"><div class="row-amount" style="color:var(--red)">${fmt(totalY)}</div>
         <div style="font-size:12px;color:var(--text2);text-align:right">~${fmt(totalY/12)}/mo</div>
