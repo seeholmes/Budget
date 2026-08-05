@@ -12,6 +12,8 @@ Use the document toolbar in the header for the normal file workflow:
 
 The header shows the current file name and marks it as Unsaved after any budget edit. On smaller screens, the same file actions are available from the File button. The app warns before closing the browser tab with unsaved changes and before New or Open would discard edits.
 
+The installed mobile app uses a network-first app shell so launches pick up the current GitHub Pages release instead of remaining on Safari's cached HTML. The latest successful shell remains available as an offline fallback.
+
 Household names and income are edited directly in the Papa and Mama Dashboard cards. The Pay tab stores a separate known biweekly payday and net paycheck for each person, then derives each average monthly income automatically. A recurring actual transfer amount and direction can be entered for every sender payday. The transfer appears as outgoing for the sender and incoming for the receiver on that actual date, even when their pay periods differ. The Dashboard keeps its calculated monthly transfer as guidance and shows its equivalent every-payday amount using `monthly x 12 / 26`.
 
 The Pay tab has remembered Papa/Mama and 3-month/6-month/1-year selectors, and shows one personal ledger at a time. Pay periods are grouped by payday month, with three-paycheck months highlighted. The current period opens by default, future periods stay collapsed, and periods can be expanded individually. Expanded desktop ledgers use a transaction table with a running balance; mobile keeps the compact stacked transaction view.

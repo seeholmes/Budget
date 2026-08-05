@@ -4,6 +4,7 @@ const vm = require('vm');
 const html = fs.readFileSync('index.html', 'utf8');
 const manifest = JSON.parse(fs.readFileSync('manifest.json', 'utf8'));
 const iconSvg = fs.readFileSync('icon.svg', 'utf8');
+const serviceWorker = fs.readFileSync('sw.js', 'utf8');
 const script = html.match(/<script>([\s\S]*)<\/script>/)[1].replace(/\nrender\(\);\s*$/, '');
 
 function pngDimensions(path) {
@@ -175,6 +176,9 @@ async function run() {
   assert(!html.includes('.period-head-summary { display: none; }'), 'Phone layouts should keep collapsed period summaries visible.');
   assert(html.includes('expense-table-head'), 'Desktop expense lists should include table headers.');
   assert(html.includes('updatePayTransfer'), 'Pay setup should expose the recurring actual transfer.');
+  assert(html.includes("navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' })"), 'The app should register its updater without reusing a stale worker script.');
+  assert(serviceWorker.includes("fetch(request, { cache: 'no-store' })"), 'The app updater should request the current shell before using its offline cache.');
+  assert(serviceWorker.includes("request.mode === 'navigate'"), 'The app updater should retain an offline navigation fallback.');
   assert(html.includes('<option value="weekly"'), 'Expense frequency should include Weekly.');
 
   const legacy = {
