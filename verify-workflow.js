@@ -157,9 +157,10 @@ async function run() {
   assert(!html.includes('saveBudgetAs'), 'Save As handler should not remain as a public workflow.');
   assert(html.includes('person-income-input'), 'Dashboard summary cards should expose household income entry.');
   assert(html.includes('theme-btn'), 'Header should include the light/dark theme toggle.');
-  assert(html.includes('class="brand-logo"') && html.includes('src="icon.svg"'), 'The app shell should use the piggy-bank brand mark.');
+  assert(html.includes('class="brand-logo"') && html.includes('href="#brand-mark"'), 'The app shell should use the inline piggy-bank vector mark.');
   assert(html.includes('href="#icon-home"') && html.includes('href="#icon-save"'), 'Navigation and file actions should use the shared outline icon set.');
   assert(iconSvg.includes('id="gold"') && iconSvg.includes('id="bars"'), 'The vector app mark should contain the gold coin and growth bars.');
+  assert(!iconSvg.includes('<filter') && !iconSvg.includes('filter='), 'The app mark should avoid filters that rasterize softly on mobile Safari.');
   assert(JSON.stringify(manifest).includes('#173d2d') && manifest.name === 'Budget - Family Finances', 'The PWA manifest should match the updated brand.');
   assert(pngDimensions('icon-192.png').width === 192 && pngDimensions('icon-512.png').width === 512, 'PWA icons should be rendered at their declared sizes.');
   assert(html.includes('data-tab="pay"'), 'Navigation should include the Pay Periods tab.');
