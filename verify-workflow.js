@@ -2,7 +2,14 @@ const fs = require('fs');
 const vm = require('vm');
 
 const html = fs.readFileSync('index.html', 'utf8');
+const manifest = JSON.parse(fs.readFileSync('manifest.json', 'utf8'));
+const iconSvg = fs.readFileSync('icon.svg', 'utf8');
 const script = html.match(/<script>([\s\S]*)<\/script>/)[1].replace(/\nrender\(\);\s*$/, '');
+
+function pngDimensions(path) {
+  const buffer = fs.readFileSync(path);
+  return { width: buffer.readUInt32BE(16), height: buffer.readUInt32BE(20) };
+}
 
 function createHarness(options = {}) {
   const storage = new Map(Object.entries(options.storage || {}));
@@ -29,6 +36,12 @@ function createHarness(options = {}) {
       contains(name) {
         return this.values.has(name);
       },
+    },
+    setAttribute(name, value) {
+      this[name] = String(value);
+    },
+    getAttribute(name) {
+      return this[name] == null ? null : this[name];
     },
     appendChild(child) {
       child.parentNode = this;
@@ -144,6 +157,11 @@ async function run() {
   assert(!html.includes('saveBudgetAs'), 'Save As handler should not remain as a public workflow.');
   assert(html.includes('person-income-input'), 'Dashboard summary cards should expose household income entry.');
   assert(html.includes('theme-btn'), 'Header should include the light/dark theme toggle.');
+  assert(html.includes('class="brand-logo"') && html.includes('src="icon.svg"'), 'The app shell should use the piggy-bank brand mark.');
+  assert(html.includes('href="#icon-home"') && html.includes('href="#icon-save"'), 'Navigation and file actions should use the shared outline icon set.');
+  assert(iconSvg.includes('id="gold"') && iconSvg.includes('id="bars"'), 'The vector app mark should contain the gold coin and growth bars.');
+  assert(JSON.stringify(manifest).includes('#173d2d') && manifest.name === 'Budget - Family Finances', 'The PWA manifest should match the updated brand.');
+  assert(pngDimensions('icon-192.png').width === 192 && pngDimensions('icon-512.png').width === 512, 'PWA icons should be rendered at their declared sizes.');
   assert(html.includes('data-tab="pay"'), 'Navigation should include the Pay Periods tab.');
   assert(html.includes('renderPayPeriods'), 'Pay Periods should have a dedicated renderer.');
   assert(html.includes('class="sidebar"') && html.includes('class="workspace"'), 'The responsive app shell should include a desktop sidebar and workspace.');
@@ -291,9 +309,10 @@ async function run() {
   vm.runInContext('render()', shellFlow);
   assert(shellFlow.__harness.elements.get('main').innerHTML.includes('person-income-input'), 'Dashboard should render card-level income inputs.');
   assert(shellFlow.__harness.elements.get('edit-btn').style.display === 'none', 'Home should not show a dead edit/delete control.');
-  assert(shellFlow.__harness.elements.get('theme-btn').textContent === 'Dark', 'Theme toggle should default to offering dark mode.');
+  assert(shellFlow.__harness.elements.get('theme-label').textContent === 'Dark', 'Theme toggle should default to offering dark mode.');
   vm.runInContext('toggleTheme()', shellFlow);
-  assert(shellFlow.__harness.elements.get('theme-btn').textContent === 'Light', 'Theme toggle should switch to offering light mode in dark mode.');
+  assert(shellFlow.__harness.elements.get('theme-label').textContent === 'Light', 'Theme toggle should switch to offering light mode in dark mode.');
+  assert(shellFlow.__harness.elements.get('theme-icon').getAttribute('href') === '#icon-sun', 'Theme toggle should switch to the sun icon in dark mode.');
   assert(shellFlow.__harness.storage.get('budget_theme') === 'dark', 'Theme selection should be saved.');
   vm.runInContext('switchTab("pay")', shellFlow);
   assert(shellFlow.__harness.elements.get('main').innerHTML.includes('Shared Pay Schedule'), 'Pay tab should expose the shared biweekly setup.');

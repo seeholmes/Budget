@@ -6,8 +6,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Budget">
-  <title>Family Budget</title>
+  <title>Budget | Family Finances</title>
   <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="icon-192.png">
   <style>
     :root {
@@ -109,6 +110,7 @@
       min-height: 100dvh;
       overflow-x: hidden;
     }
+    .icon-sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
     #app {
       display: flex;
       flex-direction: column;
@@ -131,7 +133,9 @@
       justify-content: space-between;
       gap: 14px;
     }
-    .title-wrap { flex: 1; min-width: 160px; text-align: left; }
+    .title-wrap { flex: 1; min-width: 160px; display: flex; align-items: center; gap: 9px; text-align: left; }
+    .title-copy { min-width: 0; }
+    .mobile-brand-logo { display: none; width: 34px; height: 34px; border-radius: 8px; flex-shrink: 0; }
     .header h1 { font-family: var(--display-font); font-size: 19px; font-weight: 600; }
     .doc-status {
       color: var(--text2);
@@ -149,7 +153,7 @@
       background: none; border: none; color: var(--blue);
       font-size: 17px; font-family: inherit; cursor: pointer;
       padding: 4px 0; min-width: 54px; min-height: 44px;
-      display: flex; align-items: center; justify-content: center;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
     }
     .hdr-btn:disabled { color: var(--text3); cursor: default; }
     .file-menu-btn { display: none; }
@@ -165,7 +169,12 @@
       font-weight: 600;
       cursor: pointer;
       white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
     }
+    .button-icon { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
     .tool-btn.primary {
       border-color: var(--blue);
       background: var(--blue);
@@ -641,19 +650,12 @@
         gap: 10px;
         padding: 2px 8px 22px;
         color: var(--sidebar-text);
-        font-size: 15px;
-        font-weight: 700;
+        min-height: 58px;
       }
-      .brand-mark {
-        width: 30px;
-        height: 30px;
-        display: grid;
-        place-items: center;
-        border-radius: 50%;
-        background: var(--sidebar-text);
-        color: var(--sidebar-bg);
-        font-size: 14px;
-      }
+      .brand-logo { width: 42px; height: 42px; border-radius: 10px; flex-shrink: 0; box-shadow: 0 6px 18px rgba(0,0,0,0.2); }
+      .brand-copy { display: flex; flex-direction: column; min-width: 0; }
+      .brand-name { color: var(--sidebar-text); font-family: var(--display-font); font-size: 21px; font-weight: 600; line-height: 1; }
+      .brand-tagline { margin-top: 4px; color: var(--sidebar-muted); font-size: 10px; line-height: 1; }
       .tab-bar {
         position: static;
         width: 100%;
@@ -732,7 +734,8 @@
         padding: calc(var(--safe-top) + 12px) 16px 12px;
         gap: 10px;
       }
-      .title-wrap { text-align: center; min-width: 0; }
+      .title-wrap { text-align: left; min-width: 0; }
+      .mobile-brand-logo { display: block; }
       .file-actions { display: none; }
       .file-menu-btn { display: flex; }
       main { padding-bottom: calc(var(--safe-bottom) + 74px); }
@@ -826,24 +829,41 @@
   </style>
 </head>
 <body>
+<svg class="icon-sprite" aria-hidden="true">
+  <symbol id="icon-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></symbol>
+  <symbol id="icon-calendar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4M16 2v4M3 10h18"/><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></symbol>
+  <symbol id="icon-receipt" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l2-2 2 2 2-2 2 2 2-2 2 2 2-2 2 2V2l-2 2-2-2-2 2-2-2-2 2-2-2-2 2z"/><path d="M16 8h-6M16 12h-6M13 16h-3"/></symbol>
+  <symbol id="icon-card" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h2"/></symbol>
+  <symbol id="icon-file-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M12 18v-6M9 15h6"/></symbol>
+  <symbol id="icon-folder-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 14h15l-1.5 6H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h7a2 2 0 0 1 2 2v2"/><path d="m2 18 2-8h18l-2 8"/></symbol>
+  <symbol id="icon-save" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></symbol>
+  <symbol id="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></symbol>
+  <symbol id="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.41M17.66 6.34l1.41-1.41"/></symbol>
+  <symbol id="icon-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 15H6L5 6M10 11v6M14 11v6"/></symbol>
+  <symbol id="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4 4L19 6"/></symbol>
+  <symbol id="icon-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+</svg>
 <div id="app">
   <aside class="sidebar">
-    <div class="sidebar-brand"><span class="brand-mark">B</span><span>Family Budget</span></div>
+    <div class="sidebar-brand">
+      <img class="brand-logo" src="icon.svg" alt="">
+      <span class="brand-copy"><span class="brand-name">Budget</span><span class="brand-tagline">Family finances</span></span>
+    </div>
     <nav class="tab-bar" aria-label="Budget sections">
       <button class="tab-btn active" onclick="switchTab('home')" data-tab="home">
-        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+        <svg aria-hidden="true"><use href="#icon-home"></use></svg>
         <span>Home</span>
       </button>
       <button class="tab-btn" onclick="switchTab('pay')" data-tab="pay">
-        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11zm-7-9h5v5h-5z"/></svg>
+        <svg aria-hidden="true"><use href="#icon-calendar"></use></svg>
         <span>Pay</span>
       </button>
       <button class="tab-btn" onclick="switchTab('bills')" data-tab="bills">
-        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11zM8 15h8v2H8zm0-4h8v2H8zm0-4h5v2H8z"/></svg>
+        <svg aria-hidden="true"><use href="#icon-receipt"></use></svg>
         <span>Bills</span>
       </button>
       <button class="tab-btn" onclick="switchTab('subs')" data-tab="subs">
-        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V8h16v10zM6 10h12v2H6zm0 4h8v2H6z"/></svg>
+        <svg aria-hidden="true"><use href="#icon-card"></use></svg>
         <span>Subs</span>
       </button>
     </nav>
@@ -851,18 +871,21 @@
   <div class="workspace">
     <header class="header">
       <div class="title-wrap">
-        <h1 id="page-title">Dashboard</h1>
-        <div id="doc-status" class="doc-status">Untitled Budget</div>
+        <img class="mobile-brand-logo" src="icon.svg" alt="">
+        <div class="title-copy">
+          <h1 id="page-title">Dashboard</h1>
+          <div id="doc-status" class="doc-status">Untitled Budget</div>
+        </div>
       </div>
       <div class="header-actions file-actions" aria-label="Budget file actions">
-        <button class="tool-btn" onclick="newBudget()">New</button>
-        <button class="tool-btn" onclick="openBudget()">Open</button>
-        <button class="tool-btn primary" onclick="saveBudget()">Save</button>
+        <button class="tool-btn" onclick="newBudget()"><svg class="button-icon" aria-hidden="true"><use href="#icon-file-plus"></use></svg><span>New</span></button>
+        <button class="tool-btn" onclick="openBudget()"><svg class="button-icon" aria-hidden="true"><use href="#icon-folder-open"></use></svg><span>Open</span></button>
+        <button class="tool-btn primary" onclick="saveBudget()"><svg class="button-icon" aria-hidden="true"><use href="#icon-save"></use></svg><span>Save</span></button>
       </div>
       <div class="header-actions">
-        <button class="hdr-btn file-menu-btn" id="file-btn" onclick="openFileMenu()">File</button>
-        <button class="hdr-btn theme-btn" id="theme-btn" onclick="toggleTheme()">Dark</button>
-        <button class="hdr-btn" id="edit-btn" onclick="toggleEdit()">Delete</button>
+        <button class="hdr-btn file-menu-btn" id="file-btn" onclick="openFileMenu()"><svg class="button-icon" aria-hidden="true"><use href="#icon-folder-open"></use></svg><span>File</span></button>
+        <button class="hdr-btn theme-btn" id="theme-btn" onclick="toggleTheme()"><svg class="button-icon" aria-hidden="true"><use id="theme-icon" href="#icon-moon"></use></svg><span id="theme-label">Dark</span></button>
+        <button class="hdr-btn" id="edit-btn" onclick="toggleEdit()"><svg class="button-icon" aria-hidden="true"><use id="edit-icon" href="#icon-trash"></use></svg><span id="edit-label">Delete</span></button>
       </div>
     </header>
     <main id="main"></main>
@@ -875,19 +898,20 @@
       <div class="sheet-sub" id="file-menu-status">Untitled Budget</div>
     </div>
     <button class="file-action" onclick="newBudget()">
-      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 3H6c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10h-7V3zm2 0v5h5l-5-5zM8 12h8v2H8v-2zm0 4h8v2H8v-2z"/></svg>
+      <svg class="button-icon" aria-hidden="true"><use href="#icon-file-plus"></use></svg>
       <span class="label">New</span>
     </button>
     <button class="file-action" onclick="openBudget()">
-      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 4l2 2h8c1.1 0 2 .9 2 2v2H2V6c0-1.1.9-2 2-2h6zm12 8v6c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2v-6h20z"/></svg>
+      <svg class="button-icon" aria-hidden="true"><use href="#icon-folder-open"></use></svg>
       <span class="label">Open</span>
     </button>
     <button class="file-action" id="save-action" onclick="saveBudget()">
-      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zM12 19c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zM6 8V5h9v3H6z"/></svg>
+      <svg class="button-icon" aria-hidden="true"><use href="#icon-save"></use></svg>
       <span class="label">Save</span>
     </button>
     <button class="file-action" onclick="closeFileMenu()">
-      <span class="label" style="color:var(--blue);text-align:center">Close</span>
+      <svg class="button-icon" aria-hidden="true"><use href="#icon-x"></use></svg>
+      <span class="label" style="color:var(--blue)">Close</span>
     </button>
   </div>
 </div>
@@ -1008,7 +1032,12 @@ let themeMode = localStorage.getItem(THEME_KEY) === 'dark' ? 'dark' : 'light';
 function applyTheme() {
   document.documentElement.dataset.theme = themeMode;
   const button = document.getElementById('theme-btn');
-  if (button) button.textContent = themeMode === 'dark' ? 'Light' : 'Dark';
+  const label = document.getElementById('theme-label');
+  const icon = document.getElementById('theme-icon');
+  const nextTheme = themeMode === 'dark' ? 'Light' : 'Dark';
+  if (button) button.title = `Switch to ${nextTheme.toLowerCase()} mode`;
+  if (label) label.textContent = nextTheme;
+  if (icon) icon.setAttribute('href', themeMode === 'dark' ? '#icon-sun' : '#icon-moon');
 }
 
 function toggleTheme() {
@@ -1440,6 +1469,13 @@ let ledgerRangeMonths = [3, 6, 12].includes(+localStorage.getItem(LEDGER_RANGE_K
 let expandedPayPeriods = new Set();
 let payPeriodsInitialized = false;
 
+function updateEditButton() {
+  const label = document.getElementById('edit-label');
+  const icon = document.getElementById('edit-icon');
+  if (label) label.textContent = editMode ? 'Done' : 'Delete';
+  if (icon) icon.setAttribute('href', editMode ? '#icon-check' : '#icon-trash');
+}
+
 function switchTab(tab) {
   currentTab = tab;
   editMode = false;
@@ -1449,13 +1485,13 @@ function switchTab(tab) {
   editingBillId = null;
   editingSubId = null;
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
-  document.getElementById('edit-btn').textContent = 'Delete';
+  updateEditButton();
   render();
 }
 
 function toggleEdit() {
   editMode = !editMode;
-  document.getElementById('edit-btn').textContent = editMode ? 'Done' : 'Delete';
+  updateEditButton();
   render();
 }
 

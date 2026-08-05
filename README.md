@@ -20,7 +20,7 @@ Bills are managed on the Bills tab. Subscriptions are managed on the Subscriptio
 
 At desktop widths the app uses persistent side navigation, denser expense tables, and a right-side expense editor. Smaller screens retain the bottom navigation and stacked lists.
 
-The visual system uses a warm ivory canvas, forest-green navigation and actions, muted coral expense accents, and serif display type for page headings and key totals. Dense tables, controls, and transaction data remain in a compact sans-serif style. Papa and Mama dashboard cards stack on phone-sized screens to keep amounts readable.
+The visual system uses a warm ivory canvas, forest-green navigation and actions, muted coral expense accents, and serif display type for page headings and key totals. A gold-coin piggy bank with growth bars serves as the app, favicon, sidebar, and mobile-header mark, paired with a consistent outline icon set for navigation and commands. Dense tables, controls, and transaction data remain in a compact sans-serif style. Papa and Mama dashboard cards stack on phone-sized screens to keep amounts readable.
 
 ## Data Compatibility
 

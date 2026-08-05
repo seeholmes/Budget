@@ -1,54 +1,41 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" fill="white"/>
+  <defs>
+    <radialGradient id="background" cx="42%" cy="34%" r="82%">
+      <stop offset="0" stop-color="#214f3b"/>
+      <stop offset="1" stop-color="#102a20"/>
+    </radialGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f4d58a"/>
+      <stop offset="0.55" stop-color="#d8a84f"/>
+      <stop offset="1" stop-color="#b9822f"/>
+    </linearGradient>
+    <linearGradient id="bars" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0" stop-color="#2f654b"/>
+      <stop offset="1" stop-color="#76a784"/>
+    </linearGradient>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#07150f" flood-opacity="0.3"/>
+    </filter>
+  </defs>
 
-  <!-- Curly tail (left side, behind body) -->
-  <path d="M 68 295 C 38 268 34 228 58 215 C 82 202 100 222 88 240 C 78 254 62 247 68 234"
-        fill="none" stroke="black" stroke-width="19" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect width="512" height="512" fill="url(#background)"/>
 
-  <!-- Leg fills (behind body so body overlaps tops) -->
-  <rect x="92"  y="418" width="66" height="72" rx="24" fill="#FF79D7"/>
-  <rect x="173" y="426" width="66" height="72" rx="24" fill="#FF79D7"/>
-  <rect x="256" y="426" width="66" height="72" rx="24" fill="#FF79D7"/>
-  <rect x="339" y="418" width="66" height="72" rx="24" fill="#FF79D7"/>
+  <g filter="url(#softShadow)">
+    <circle cx="256" cy="90" r="47" fill="url(#gold)" stroke="#f8e6ba" stroke-width="4"/>
+    <text x="256" y="111" fill="#173d2d" font-family="Arial, Helvetica, sans-serif" font-size="66" font-weight="700" text-anchor="middle">$</text>
 
-  <!-- Body fill — large, plump, slightly wide oval -->
-  <ellipse cx="232" cy="300" rx="175" ry="158" fill="#FF79D7"/>
-  <!-- Body belly highlight -->
-  <ellipse cx="232" cy="320" rx="110" ry="95" fill="#FFB3E8" opacity="0.5"/>
-  <!-- Body outline -->
-  <ellipse cx="232" cy="300" rx="175" ry="158" fill="none" stroke="black" stroke-width="18"/>
+    <g fill="none" stroke="#f8ead1" stroke-width="14" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M165 184l-14-31c-4-10 2-14 12-9l40 21c28-13 59-18 92-15 62 5 111 38 133 83 9 19 13 40 13 62 0 32-12 58-36 77l-6 35c-2 11-8 17-19 17h-29c-10 0-16-6-18-18H226c-2 12-8 18-18 18h-29c-11 0-17-6-19-17l-5-33c-18-11-31-26-40-45H88c-10 0-16-6-16-16v-49c0-10 6-16 16-16h28c9-27 25-48 49-63z"/>
+      <path d="M216 157c27-10 56-11 85-4"/>
+      <path d="M440 254c23-24 48-14 43 8-4 18-25 25-36 9"/>
+    </g>
 
-  <!-- Ear (behind head) -->
-  <circle cx="368" cy="152" r="30" fill="#FF79D7"/>
-  <circle cx="368" cy="157" r="17" fill="#FFB3E8"/>
-  <circle cx="368" cy="152" r="30" fill="none" stroke="black" stroke-width="14"/>
+    <circle cx="137" cy="252" r="9" fill="#f8ead1"/>
 
-  <!-- Head — notably smaller than body -->
-  <circle cx="366" cy="264" r="96" fill="#FF79D7"/>
-  <circle cx="366" cy="264" r="96" fill="none" stroke="black" stroke-width="18"/>
-
-  <!-- Coin slot on pig's back -->
-  <ellipse cx="218" cy="148" rx="54" ry="16" fill="#222"/>
-
-  <!-- Gold coin dropping into slot -->
-  <circle cx="218" cy="83"  r="62" fill="#FFD43B"/>
-  <circle cx="218" cy="83"  r="45" fill="none" stroke="#E8A800" stroke-width="7"/>
-  <circle cx="218" cy="83"  r="62" fill="none" stroke="black" stroke-width="18"/>
-
-  <!-- Snout — cx+rx = 456+38 = 494, safe inside 512 -->
-  <ellipse cx="452" cy="276" rx="38" ry="31" fill="#FFB3E8"/>
-  <ellipse cx="452" cy="276" rx="38" ry="31" fill="none" stroke="black" stroke-width="15"/>
-  <!-- Nostrils -->
-  <circle cx="440" cy="281" r="8" fill="#CC60B0"/>
-  <circle cx="463" cy="281" r="8" fill="#CC60B0"/>
-
-  <!-- Eye -->
-  <circle cx="418" cy="234" r="13" fill="black"/>
-  <circle cx="424" cy="228" r="5"  fill="white"/>
-
-  <!-- Leg outlines -->
-  <rect x="92"  y="418" width="66" height="72" rx="24" fill="none" stroke="black" stroke-width="15"/>
-  <rect x="173" y="426" width="66" height="72" rx="24" fill="none" stroke="black" stroke-width="15"/>
-  <rect x="256" y="426" width="66" height="72" rx="24" fill="none" stroke="black" stroke-width="15"/>
-  <rect x="339" y="418" width="66" height="72" rx="24" fill="none" stroke="black" stroke-width="15"/>
+    <g fill="url(#bars)" stroke="#92b49b" stroke-width="2">
+      <rect x="201" y="304" width="36" height="72" rx="6"/>
+      <rect x="253" y="267" width="36" height="109" rx="6"/>
+      <rect x="305" y="218" width="36" height="158" rx="6"/>
+    </g>
+  </g>
 </svg>
