@@ -223,6 +223,9 @@ async function run() {
   });`, periodFlow);
   assert(Math.abs(vm.runInContext('monthlyIncome("papa")', periodFlow) - (2500 * 26 / 12)) < 0.001, 'Biweekly paycheck should derive monthly average income.');
   assert(vm.runInContext('dateKey(payPeriodStarts(1, new Date(2026, 7, 12))[0])', periodFlow) === '2026-08-07', 'Known payday should anchor the current 14-day period.');
+  assert(vm.runInContext('payPeriodCountForRange(12)', periodFlow) === 26, 'The one-year ledger range should contain 26 pay periods.');
+  assert(vm.runInContext('paydaysInMonth(new Date(2026, 9, 1)).length', periodFlow) === 3, 'October 2026 should be detected as a three-paycheck month.');
+  assert(vm.runInContext('paydaysInMonth(new Date(2026, 7, 1)).length', periodFlow) === 2, 'A normal month should not be marked as a three-paycheck month.');
   assert(vm.runInContext('expenseOccurrences("papa", parseLocalDate("2026-08-07"), parseLocalDate("2026-08-21")).filter(item => item.expense.name === "Loan2").length', periodFlow) === 2, 'A Friday weekly bill should occur twice in a biweekly period.');
   assert(vm.runInContext('ledgerForPeriod("papa", parseLocalDate("2026-08-07")).expenseOutgoing', periodFlow) === 1200, 'Papa ledger should include monthly and both weekly transactions in the period.');
   assert(vm.runInContext('ledgerForPeriod("papa", parseLocalDate("2026-08-07")).outgoing', periodFlow) === 1500, 'Papa outgoing should include expenses and the actual payday transfer.');
@@ -238,6 +241,7 @@ async function run() {
   assert(vm.runInContext('parseLocalDate("2026-02-31")', periodFlow) === null, 'Invalid calendar dates should not become pay schedule anchors.');
   const initialPayHtml = vm.runInContext('renderPayPeriods()', periodFlow);
   assert(initialPayHtml.includes('segment-btn papa active'), 'Pay Periods should default to Papa as the selected ledger.');
+  assert(initialPayHtml.includes('onclick="setLedgerRange(3)"') && initialPayHtml.includes('3 Months'), 'Pay Periods should expose the remembered horizon control.');
   assert(initialPayHtml.includes('<section class="ledger papa">') && !initialPayHtml.includes('<section class="ledger mama">'), 'Pay Periods should render only the selected person ledger.');
   assert((initialPayHtml.match(/aria-expanded="true"/g) || []).length === 1, 'Only the current pay period should be expanded initially.');
   assert(initialPayHtml.includes('Actual amount each payday'), 'Pay setup should label the recurring transfer amount clearly.');
@@ -246,7 +250,7 @@ async function run() {
   const papaPayHtml = vm.runInContext('renderPayPeriods()', periodFlow);
   assert(papaPayHtml.includes('Transfer to Sam') && papaPayHtml.includes('-$300'), 'The sender ledger should show the actual payday transfer as Money Out.');
   assert((papaPayHtml.match(/Loan2/g) || []).length >= 2, 'Expanded Pay Periods should show both Friday Loan2 transactions.');
-  assert((papaPayHtml.match(/aria-expanded="true"/g) || []).length === 6, 'Expand all should open every displayed period.');
+  assert((papaPayHtml.match(/aria-expanded="true"/g) || []).length === 7, 'Expand all should open every displayed three-month period.');
 
   vm.runInContext('setLedgerPerson("mama")', periodFlow);
   const mamaPayHtml = vm.runInContext('renderPayPeriods()', periodFlow);
@@ -254,6 +258,12 @@ async function run() {
   assert(mamaPayHtml.includes('Annual Software') && mamaPayHtml.includes('$600'), 'The selected ledger should surface actual annual charges.');
   assert(mamaPayHtml.includes('Transfer from Alex') && mamaPayHtml.includes('+$300'), 'The receiver ledger should show the actual payday transfer as Money In.');
   assert(periodFlow.__harness.storage.get('budget_ledger_person') === 'mama', 'The selected ledger person should be remembered locally.');
+
+  vm.runInContext('setLedgerRange(12)', periodFlow);
+  const yearPayHtml = vm.runInContext('renderPayPeriods()', periodFlow);
+  assert((yearPayHtml.match(/class="period-card/g) || []).length === 26, 'The one-year view should render 26 collapsed pay periods.');
+  assert(yearPayHtml.includes('three-paycheck') && yearPayHtml.includes('3 paychecks'), 'The one-year view should highlight three-paycheck month headings.');
+  assert(periodFlow.__harness.storage.get('budget_ledger_range') === '12', 'The selected ledger horizon should be remembered locally.');
 
   vm.runInContext('setAllPayPeriods(false)', periodFlow);
   assert(vm.runInContext('expandedPayPeriods.size', periodFlow) === 0, 'Collapse all should close every pay period.');

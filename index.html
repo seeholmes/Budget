@@ -439,15 +439,18 @@
       gap: 12px;
       margin: 0 16px 12px;
     }
-    .person-segment {
+    .pay-ledger-filters { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .person-segment,
+    .range-segment {
       display: inline-grid;
-      grid-template-columns: 1fr 1fr;
       gap: 3px;
       padding: 3px;
       border: 1px solid var(--sep);
       border-radius: 8px;
       background: var(--surface2);
     }
+    .person-segment { grid-template-columns: 1fr 1fr; }
+    .range-segment { grid-template-columns: repeat(3, 1fr); }
     .segment-btn {
       min-width: 108px;
       min-height: 34px;
@@ -464,6 +467,7 @@
     .segment-btn.active { background: var(--card); color: var(--text); box-shadow: 0 1px 2px rgba(0,0,0,0.08); }
     .segment-btn.papa.active { color: var(--blue); }
     .segment-btn.mama.active { color: var(--purple); }
+    .range-segment .segment-btn { min-width: 76px; }
     .period-controls { display: flex; gap: 6px; }
     .compact-btn {
       min-height: 34px;
@@ -498,6 +502,31 @@
     .period-head-end { display: flex; align-items: center; gap: 10px; }
     .period-chevron { color: var(--text2); font-size: 18px; line-height: 1; transform: rotate(0deg); transition: transform 0.15s ease; }
     .period-head[aria-expanded="true"] .period-chevron { transform: rotate(90deg); }
+    .pay-month-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 20px 16px 8px;
+      color: var(--text2);
+    }
+    .pay-month-name { font-size: 13px; font-weight: 700; }
+    .pay-month-head.three-paycheck {
+      padding: 9px 10px;
+      border-left: 3px solid var(--green);
+      border-radius: 6px;
+      background: rgba(22,131,75,0.08);
+      color: var(--text);
+    }
+    .three-paycheck-badge {
+      padding: 3px 7px;
+      border-radius: 20px;
+      background: rgba(22,131,75,0.12);
+      color: var(--green);
+      font-size: 11px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
     .ledger-grid.single { grid-template-columns: 1fr; }
     .ledger-grid.single .ledger { padding: 16px; }
     .ledger-table-wrap { display: none; }
@@ -660,9 +689,11 @@
       .ledger-grid { grid-template-columns: 1fr; }
       .ledger + .ledger { border-left: none; border-top: 0.5px solid var(--sep); }
       .pay-ledger-toolbar { align-items: stretch; flex-direction: column; }
-      .person-segment { width: 100%; }
+      .pay-ledger-filters { align-items: stretch; flex-direction: column; }
+      .person-segment, .range-segment { width: 100%; }
       .segment-btn { min-width: 0; }
       .period-controls { justify-content: flex-end; }
+      .expand-all-btn { display: none; }
       .period-head { align-items: flex-start; }
       .period-head-summary { display: none; }
       .period-head-end { margin-left: auto; }
@@ -1170,6 +1201,28 @@ function payPeriodStarts(count, today = new Date()) {
   return Array.from({ length: count }, (_, index) => addDays(start, index * 14));
 }
 
+function payPeriodCountForRange(months) {
+  return months === 12 ? 26 : months === 6 ? 13 : 7;
+}
+
+function paydaysInMonth(value) {
+  const anchor = parseLocalDate(data.paySchedule && data.paySchedule.anchorDate);
+  if (!anchor) return [];
+  const year = value.getFullYear();
+  const month = value.getMonth();
+  const first = new Date(year, month, 1);
+  const last = new Date(year, month + 1, 0);
+  let payday = startOfDay(anchor);
+  while (payday > first) payday = addDays(payday, -14);
+  while (payday < first) payday = addDays(payday, 14);
+  const dates = [];
+  while (payday <= last) {
+    dates.push(payday);
+    payday = addDays(payday, 14);
+  }
+  return dates;
+}
+
 function expenseOccursOn(expense, date) {
   if (expense.freq === 'weekly') return date.getDay() === expense.weekday;
   const dueDay = Math.max(1, expense.dueDay || 1);
@@ -1294,7 +1347,11 @@ let addingSub = false;
 let editingBillId = null;
 let editingSubId = null;
 const LEDGER_PERSON_KEY = 'budget_ledger_person';
+const LEDGER_RANGE_KEY = 'budget_ledger_range';
 let ledgerPerson = localStorage.getItem(LEDGER_PERSON_KEY) === 'mama' ? 'mama' : 'papa';
+let ledgerRangeMonths = [3, 6, 12].includes(+localStorage.getItem(LEDGER_RANGE_KEY))
+  ? +localStorage.getItem(LEDGER_RANGE_KEY)
+  : 3;
 let expandedPayPeriods = new Set();
 let payPeriodsInitialized = false;
 
@@ -1323,6 +1380,14 @@ function setLedgerPerson(person) {
   render();
 }
 
+function setLedgerRange(months) {
+  ledgerRangeMonths = [3, 6, 12].includes(+months) ? +months : 3;
+  localStorage.setItem(LEDGER_RANGE_KEY, String(ledgerRangeMonths));
+  expandedPayPeriods.clear();
+  payPeriodsInitialized = false;
+  render();
+}
+
 function togglePayPeriod(key) {
   if (expandedPayPeriods.has(key)) expandedPayPeriods.delete(key);
   else expandedPayPeriods.add(key);
@@ -1331,7 +1396,7 @@ function togglePayPeriod(key) {
 
 function setAllPayPeriods(expand) {
   expandedPayPeriods = expand
-    ? new Set(payPeriodStarts(6, startOfDay(new Date())).map(dateKey))
+    ? new Set(payPeriodStarts(payPeriodCountForRange(ledgerRangeMonths), startOfDay(new Date())).map(dateKey))
     : new Set();
   payPeriodsInitialized = true;
   render();
@@ -1630,7 +1695,7 @@ function renderPayPeriods() {
   }
 
   const today = startOfDay(new Date());
-  const starts = payPeriodStarts(6, today);
+  const starts = payPeriodStarts(payPeriodCountForRange(ledgerRangeMonths), today);
   if (!payPeriodsInitialized) {
     const currentStart = starts.find(start => today >= start && today < addDays(start, 14));
     expandedPayPeriods = new Set(currentStart ? [dateKey(currentStart)] : []);
@@ -1638,21 +1703,39 @@ function renderPayPeriods() {
   }
   html += `<div class="section-label">Biweekly Ledgers</div>
     <div class="pay-ledger-toolbar">
-      <div class="person-segment" role="group" aria-label="Ledger person">
-        <button class="segment-btn papa${ledgerPerson === 'papa' ? ' active' : ''}" onclick="setLedgerPerson('papa')">${data.names.papa}</button>
-        <button class="segment-btn mama${ledgerPerson === 'mama' ? ' active' : ''}" onclick="setLedgerPerson('mama')">${data.names.mama}</button>
+      <div class="pay-ledger-filters">
+        <div class="person-segment" role="group" aria-label="Ledger person">
+          <button class="segment-btn papa${ledgerPerson === 'papa' ? ' active' : ''}" onclick="setLedgerPerson('papa')">${data.names.papa}</button>
+          <button class="segment-btn mama${ledgerPerson === 'mama' ? ' active' : ''}" onclick="setLedgerPerson('mama')">${data.names.mama}</button>
+        </div>
+        <div class="range-segment" role="group" aria-label="Ledger range">
+          <button class="segment-btn${ledgerRangeMonths === 3 ? ' active' : ''}" onclick="setLedgerRange(3)">3 Months</button>
+          <button class="segment-btn${ledgerRangeMonths === 6 ? ' active' : ''}" onclick="setLedgerRange(6)">6 Months</button>
+          <button class="segment-btn${ledgerRangeMonths === 12 ? ' active' : ''}" onclick="setLedgerRange(12)">1 Year</button>
+        </div>
       </div>
       <div class="period-controls">
-        <button class="compact-btn" onclick="setAllPayPeriods(true)">Expand all</button>
+        <button class="compact-btn expand-all-btn" onclick="setAllPayPeriods(true)">Expand all</button>
         <button class="compact-btn" onclick="setAllPayPeriods(false)">Collapse all</button>
       </div>
     </div>`;
+  let previousMonth = '';
   for (const start of starts) {
     const end = addDays(start, 14);
     const key = dateKey(start);
     const ledger = ledgerForPeriod(ledgerPerson, start);
     const isCurrent = today >= start && today < end;
     const isExpanded = expandedPayPeriods.has(key);
+    const monthKey = `${start.getFullYear()}-${start.getMonth()}`;
+    if (monthKey !== previousMonth) {
+      const paydayCount = paydaysInMonth(start).length;
+      const isThreePaycheckMonth = paydayCount === 3;
+      html += `<div class="pay-month-head${isThreePaycheckMonth ? ' three-paycheck' : ''}">
+        <span class="pay-month-name">${MONTHS_FULL[start.getMonth()]} ${start.getFullYear()}</span>
+        ${isThreePaycheckMonth ? '<span class="three-paycheck-badge">3 paychecks</span>' : ''}
+      </div>`;
+      previousMonth = monthKey;
+    }
     html += `<article class="period-card${isCurrent ? ' current' : ''}">
       <button class="period-head" type="button" aria-expanded="${isExpanded}" onclick="togglePayPeriod('${key}')">
         <div class="period-head-main">
