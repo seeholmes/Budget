@@ -170,6 +170,7 @@ async function run() {
   assert(html.includes('--bg: #f6f1e7') && html.includes('--sidebar-bg: #173d2d'), 'The light theme should use the warm editorial palette.');
   assert(html.includes('font-family: var(--display-font)') && html.includes('household-summary'), 'The Overview should include editorial display type and the emphasized household summary.');
   assert(html.includes('<span class="brand-name">Oink</span>') && !html.includes('Family finances'), 'The app shell should show Oink without a tagline.');
+  assert(html.includes('<span class="mobile-brand-name">Oink</span>') && html.includes('.title-heading h1 {'), 'The mobile header should prioritize the Oink wordmark while retaining an accessible section heading.');
   assert(html.includes('<span>Overview</span>') && html.includes('<span>Cash Flow</span>') && html.includes('<span>Spending</span>') && html.includes('<span>Subscriptions</span>'), 'Navigation should use the new section names.');
   assert(html.includes('.summary-row { grid-template-columns: 1fr; }'), 'Phone layouts should stack the two household member cards.');
   assert(html.includes('min-width: 0; max-width: 100%;'), 'Form controls should stay inside narrow mobile grid columns.');

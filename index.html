@@ -135,9 +135,11 @@
     }
     .title-wrap { flex: 1; min-width: 160px; display: flex; align-items: center; gap: 9px; text-align: left; }
     .title-copy { min-width: 0; }
+    .title-heading { display: flex; align-items: baseline; gap: 6px; min-width: 0; }
+    .mobile-brand-name { display: none; }
     .brand-logo, .mobile-brand-logo { shape-rendering: geometricPrecision; overflow: hidden; }
     .mobile-brand-logo { display: none; width: 34px; height: 34px; border-radius: 8px; flex-shrink: 0; }
-    .header h1 { font-family: var(--display-font); font-size: 19px; font-weight: 600; }
+    .header h1 { font-family: var(--display-font); font-size: 19px; font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .doc-status {
       color: var(--text2);
       font-size: 11px;
@@ -784,6 +786,15 @@
       }
       .title-wrap { text-align: left; min-width: 0; }
       .mobile-brand-logo { display: block; }
+      .mobile-brand-name {
+        display: inline; flex: 0 0 auto;
+        color: var(--blue); font-family: var(--display-font);
+        font-size: 19px; font-weight: 600;
+      }
+      .title-heading h1 {
+        position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+        overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+      }
       .file-actions { display: none; }
       .file-menu-btn { display: flex; }
       main { padding-bottom: calc(var(--safe-bottom) + 74px); }
@@ -973,7 +984,10 @@
       <div class="title-wrap">
         <svg class="mobile-brand-logo" viewBox="0 0 512 512" aria-hidden="true"><use href="#brand-mark"></use></svg>
         <div class="title-copy">
-          <h1 id="page-title">Overview</h1>
+          <div class="title-heading">
+            <span class="mobile-brand-name">Oink</span>
+            <h1 id="page-title">Overview</h1>
+          </div>
           <div id="doc-status" class="doc-status">Untitled Oink</div>
         </div>
       </div>
