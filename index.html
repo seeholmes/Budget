@@ -598,14 +598,24 @@
     .period-chevron { color: var(--text2); font-size: 18px; line-height: 1; transform: rotate(0deg); transition: transform 0.15s ease; }
     .period-head[aria-expanded="true"] .period-chevron { transform: rotate(90deg); }
     .pay-month-head {
-      display: flex;
+      display: grid;
+      grid-template-columns: minmax(150px, 1fr) auto;
       align-items: center;
-      justify-content: space-between;
       gap: 12px;
       margin: 20px 16px 8px;
       color: var(--text2);
     }
+    .pay-month-title { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
     .pay-month-name { font-family: var(--display-font); font-size: 17px; font-weight: 600; color: var(--text); }
+    .pay-month-summary {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(76px, 1fr));
+      gap: 14px;
+      font-variant-numeric: tabular-nums;
+    }
+    .pay-month-stat { min-width: 0; text-align: right; }
+    .pay-month-stat-label { display: block; font-size: 9px; text-transform: uppercase; }
+    .pay-month-stat-value { display: block; margin-top: 2px; color: var(--text); font-size: 13px; font-weight: 700; white-space: nowrap; }
     .pay-month-head.three-paycheck {
       padding: 9px 10px;
       border-left: 3px solid var(--green);
@@ -807,6 +817,17 @@
       .period-head-summary > div:nth-child(2) { text-align: center; }
       .period-head-summary > div:last-child { text-align: right; }
       .period-head-end { grid-column: 2; grid-row: 1; }
+      .pay-month-head { grid-template-columns: 1fr; align-items: stretch; gap: 8px; }
+      .pay-month-title { justify-content: space-between; }
+      .pay-month-summary {
+        width: 100%;
+        gap: 8px;
+        padding-top: 8px;
+        border-top: 0.5px solid var(--sep);
+      }
+      .pay-month-stat:first-child { text-align: left; }
+      .pay-month-stat:nth-child(2) { text-align: center; }
+      .pay-month-stat:last-child { text-align: right; }
     }
     @media (max-width: 380px) {
       .transfer-setup { grid-template-columns: 1fr; }
@@ -1447,6 +1468,27 @@ function ledgerForPeriod(person, start) {
   };
 }
 
+function monthlyReconciliation(person, value) {
+  const start = new Date(value.getFullYear(), value.getMonth(), 1);
+  const end = new Date(value.getFullYear(), value.getMonth() + 1, 1);
+  const items = expenseOccurrences(person, start, end);
+  const paycheckDates = paydaysInMonth(person, start);
+  const paycheckIncome = (data.paySchedule.paychecks[person] || 0) * paycheckDates.length;
+  const expenseOutgoing = items.reduce((sum, item) => sum + item.expense.amount, 0);
+  const transfer = data.paySchedule.transfer || DEFAULTS.paySchedule.transfer;
+  const transferTo = transfer.from === 'papa' ? 'mama' : 'papa';
+  const transferDates = paydaysBetween(transfer.from, start, end);
+  const transferTotal = transfer.amount * transferDates.length;
+  const transferOut = person === transfer.from ? transferTotal : 0;
+  const transferIn = person === transferTo ? transferTotal : 0;
+  const income = paycheckIncome + transferIn;
+  const outgoing = expenseOutgoing + transferOut;
+  return {
+    person, start, end, paycheckDates, paycheckIncome, expenseOutgoing,
+    transferIn, transferOut, transferDates, income, outgoing, net: income - outgoing, items
+  };
+}
+
 function nextAnnualOccurrence(expense, today = new Date()) {
   const currentDay = startOfDay(today);
   const month = Math.max(1, Math.min(12, expense.dueMonth || 1));
@@ -1960,9 +2002,17 @@ function renderPayPeriods() {
     if (monthKey !== previousMonth) {
       const paydayCount = paydaysInMonth(ledgerPerson, start).length;
       const isThreePaycheckMonth = paydayCount === 3;
+      const month = monthlyReconciliation(ledgerPerson, start);
       html += `<div class="pay-month-head${isThreePaycheckMonth ? ' three-paycheck' : ''}">
-        <span class="pay-month-name">${MONTHS_FULL[start.getMonth()]} ${start.getFullYear()}</span>
-        ${isThreePaycheckMonth ? '<span class="three-paycheck-badge">3 paychecks</span>' : ''}
+        <div class="pay-month-title">
+          <span class="pay-month-name">${MONTHS_FULL[start.getMonth()]} ${start.getFullYear()}</span>
+          ${isThreePaycheckMonth ? '<span class="three-paycheck-badge">3 paychecks</span>' : ''}
+        </div>
+        <div class="pay-month-summary" aria-label="Monthly reconciliation">
+          <div class="pay-month-stat"><span class="pay-month-stat-label">Incoming</span><span class="pay-month-stat-value" style="color:var(--green)">${fmt(month.income)}</span></div>
+          <div class="pay-month-stat"><span class="pay-month-stat-label">Outgoing</span><span class="pay-month-stat-value" style="color:var(--red)">${fmt(month.outgoing)}</span></div>
+          <div class="pay-month-stat"><span class="pay-month-stat-label">Net</span><span class="pay-month-stat-value" style="color:${month.net >= 0 ? 'var(--green)' : 'var(--red)'}">${fmtSigned(month.net)}</span></div>
+        </div>
       </div>`;
       previousMonth = monthKey;
     }

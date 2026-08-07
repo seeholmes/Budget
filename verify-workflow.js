@@ -176,6 +176,7 @@ async function run() {
   assert(html.includes('ledger-table'), 'Expanded desktop ledgers should include a transaction table.');
   assert(html.includes('grid-template-columns: minmax(180px, 1fr) 330px 18px;'), 'Desktop period headers should reserve stable columns for summary totals.');
   assert(!html.includes('.period-head-summary { display: none; }'), 'Phone layouts should keep collapsed period summaries visible.');
+  assert(html.includes('.pay-month-head { grid-template-columns: 1fr; align-items: stretch; gap: 8px; }'), 'Phone layouts should stack monthly reconciliation beneath the month label.');
   assert(html.includes('expense-table-head'), 'Desktop expense lists should include table headers.');
   assert(html.includes('updatePayTransfer'), 'Pay setup should expose the recurring actual transfer.');
   assert(html.includes("navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' })"), 'The app should register its updater without reusing a stale worker script.');
@@ -282,6 +283,12 @@ async function run() {
   assert(vm.runInContext('ledgerForPeriod("mama", parseLocalDate("2026-08-14")).transferIn', periodFlow) === 300, 'The receiver should record the transfer as Money In.');
   assert(vm.runInContext('dateKey(ledgerForPeriod("mama", parseLocalDate("2026-08-14")).transferDates[0])', periodFlow) === '2026-08-21', 'The receiver should record the transfer on the sender\'s payday.');
   assert(vm.runInContext('ledgerForPeriod("mama", parseLocalDate("2026-08-14")).items.length', periodFlow) === 1, 'Undated monthly expenses should not be placed on an invented date.');
+  assert(vm.runInContext('monthlyReconciliation("papa", parseLocalDate("2026-08-07")).income', periodFlow) === 5000, 'Papa monthly reconciliation should include both August paychecks.');
+  assert(vm.runInContext('monthlyReconciliation("papa", parseLocalDate("2026-08-07")).outgoing', periodFlow) === 2000, 'Papa monthly reconciliation should include calendar-month expenses and both payday transfers.');
+  assert(vm.runInContext('monthlyReconciliation("papa", parseLocalDate("2026-08-07")).net', periodFlow) === 3000, 'Papa monthly reconciliation should net the complete calendar month.');
+  assert(vm.runInContext('monthlyReconciliation("mama", parseLocalDate("2026-08-07")).income', periodFlow) === 4200, 'Mama monthly reconciliation should include her paychecks and transfers on Papa\'s separate payday schedule.');
+  assert(vm.runInContext('monthlyReconciliation("mama", parseLocalDate("2026-08-07")).outgoing', periodFlow) === 600, 'Mama monthly reconciliation should include annual expenses due during the month.');
+  assert(vm.runInContext('monthlyReconciliation("mama", parseLocalDate("2026-10-01")).income', periodFlow) === 4500, 'A receiver with two paychecks should still reconcile all three transfers from a sender\'s three-paycheck month.');
   assert(vm.runInContext(`expenseOccursOn({ freq: 'monthly', dueDay: 31 }, new Date(2027, 1, 28))`, periodFlow), 'End-of-month expenses should clamp to the last calendar day.');
   assert(vm.runInContext(`expenseOccursOn({ freq: 'weekly', weekday: 5 }, new Date(2026, 7, 7))`, periodFlow), 'Weekly expenses should occur on the selected weekday.');
   assert(!vm.runInContext(`expenseOccursOn({ freq: 'weekly', weekday: 5 }, new Date(2026, 7, 8))`, periodFlow), 'Weekly expenses should not occur on other weekdays.');
@@ -295,6 +302,7 @@ async function run() {
   assert((initialPayHtml.match(/aria-expanded="true"/g) || []).length === 1, 'Only the current pay period should be expanded initially.');
   assert(initialPayHtml.includes('period-title-row') && initialPayHtml.includes('<span class="period-badge">Current</span>'), 'The current marker should sit with the payday title.');
   assert(initialPayHtml.includes('period-head-summary') && initialPayHtml.includes('Incoming') && initialPayHtml.includes('Remaining'), 'Collapsed periods should include their three summary totals.');
+  assert(initialPayHtml.includes('pay-month-summary') && initialPayHtml.includes('Monthly reconciliation') && initialPayHtml.includes('$3,000'), 'Month headings should show calendar-month incoming, outgoing, and net reconciliation.');
   assert((initialPayHtml.match(/Known payday/g) || []).length === 2, 'Pay setup should show a known payday for each person.');
   assert(initialPayHtml.includes('value="2026-08-07"') && initialPayHtml.includes('value="2026-08-14"'), 'Pay setup should show each person\'s own payday.');
   assert(initialPayHtml.includes('Actual amount each sender payday'), 'Pay setup should label the recurring transfer amount clearly.');
