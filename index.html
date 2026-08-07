@@ -599,12 +599,23 @@
     .period-head[aria-expanded="true"] .period-chevron { transform: rotate(90deg); }
     .pay-month-head {
       display: grid;
-      grid-template-columns: minmax(150px, 1fr) auto;
+      grid-template-columns: minmax(150px, 1fr) auto 18px;
       align-items: center;
       gap: 12px;
+      width: calc(100% - 32px);
       margin: 20px 16px 8px;
+      padding: 9px 10px;
+      border: 0;
+      border-left: 3px solid transparent;
+      border-radius: 6px;
+      background: transparent;
       color: var(--text2);
+      font: inherit;
+      text-align: left;
+      cursor: pointer;
     }
+    .pay-month-head:hover { background: var(--surface2); }
+    .pay-month-head:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
     .pay-month-title { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
     .pay-month-name { font-family: var(--display-font); font-size: 17px; font-weight: 600; color: var(--text); }
     .pay-month-summary {
@@ -617,9 +628,7 @@
     .pay-month-stat-label { display: block; font-size: 9px; text-transform: uppercase; }
     .pay-month-stat-value { display: block; margin-top: 2px; color: var(--text); font-size: 13px; font-weight: 700; white-space: nowrap; }
     .pay-month-head.three-paycheck {
-      padding: 9px 10px;
       border-left: 3px solid var(--green);
-      border-radius: 6px;
       background: var(--papa-soft);
       color: var(--text);
     }
@@ -632,6 +641,9 @@
       font-weight: 700;
       white-space: nowrap;
     }
+    .pay-month-end { display: flex; width: 18px; align-items: center; justify-content: flex-end; }
+    .pay-month-chevron { color: var(--text2); font-size: 18px; line-height: 1; transform: rotate(0deg); transition: transform 0.15s ease; }
+    .pay-month-head[aria-expanded="true"] .pay-month-chevron { transform: rotate(90deg); }
     .ledger-grid.single { grid-template-columns: 1fr; }
     .ledger-grid.single .ledger { padding: 16px; }
     .ledger-table-wrap { display: none; }
@@ -817,9 +829,11 @@
       .period-head-summary > div:nth-child(2) { text-align: center; }
       .period-head-summary > div:last-child { text-align: right; }
       .period-head-end { grid-column: 2; grid-row: 1; }
-      .pay-month-head { grid-template-columns: 1fr; align-items: stretch; gap: 8px; }
-      .pay-month-title { justify-content: space-between; }
+      .pay-month-head { grid-template-columns: minmax(0, 1fr) 18px; align-items: center; gap: 8px; }
+      .pay-month-title { grid-column: 1; grid-row: 1; justify-content: space-between; }
       .pay-month-summary {
+        grid-column: 1 / -1;
+        grid-row: 2;
         width: 100%;
         gap: 8px;
         padding-top: 8px;
@@ -828,6 +842,7 @@
       .pay-month-stat:first-child { text-align: left; }
       .pay-month-stat:nth-child(2) { text-align: center; }
       .pay-month-stat:last-child { text-align: right; }
+      .pay-month-end { grid-column: 2; grid-row: 1; }
     }
     @media (max-width: 380px) {
       .transfer-setup { grid-template-columns: 1fr; }
@@ -1180,6 +1195,7 @@ function resetTransientState() {
   editingBillId = null;
   editingSubId = null;
   expandedPayPeriods.clear();
+  collapsedPayMonths.clear();
   payPeriodsInitialized = false;
 }
 
@@ -1586,6 +1602,7 @@ let ledgerRangeMonths = [3, 6, 12].includes(+localStorage.getItem(LEDGER_RANGE_K
   ? +localStorage.getItem(LEDGER_RANGE_KEY)
   : 3;
 let expandedPayPeriods = new Set();
+let collapsedPayMonths = new Set();
 let payPeriodsInitialized = false;
 
 function updateEditButton() {
@@ -1633,6 +1650,16 @@ function setLedgerRange(months) {
 function togglePayPeriod(key) {
   if (expandedPayPeriods.has(key)) expandedPayPeriods.delete(key);
   else expandedPayPeriods.add(key);
+  render();
+}
+
+function payMonthStateKey(person, value) {
+  return `${person}-${value.getFullYear()}-${value.getMonth()}`;
+}
+
+function togglePayMonth(key) {
+  if (collapsedPayMonths.has(key)) collapsedPayMonths.delete(key);
+  else collapsedPayMonths.add(key);
   render();
 }
 
@@ -1992,18 +2019,18 @@ function renderPayPeriods() {
     payPeriodsInitialized = true;
   }
   let previousMonth = '';
+  let isMonthExpanded = true;
   for (const start of starts) {
-    const end = addDays(start, 14);
-    const key = dateKey(start);
-    const ledger = ledgerForPeriod(ledgerPerson, start);
-    const isCurrent = today >= start && today < end;
-    const isExpanded = expandedPayPeriods.has(key);
     const monthKey = `${start.getFullYear()}-${start.getMonth()}`;
     if (monthKey !== previousMonth) {
+      if (previousMonth) html += `</div></section>`;
       const paydayCount = paydaysInMonth(ledgerPerson, start).length;
       const isThreePaycheckMonth = paydayCount === 3;
       const month = monthlyReconciliation(ledgerPerson, start);
-      html += `<div class="pay-month-head${isThreePaycheckMonth ? ' three-paycheck' : ''}">
+      const stateKey = payMonthStateKey(ledgerPerson, start);
+      isMonthExpanded = !collapsedPayMonths.has(stateKey);
+      html += `<section class="pay-month-group">
+      <button class="pay-month-head${isThreePaycheckMonth ? ' three-paycheck' : ''}" type="button" aria-expanded="${isMonthExpanded}" onclick="togglePayMonth('${stateKey}')">
         <div class="pay-month-title">
           <span class="pay-month-name">${MONTHS_FULL[start.getMonth()]} ${start.getFullYear()}</span>
           ${isThreePaycheckMonth ? '<span class="three-paycheck-badge">3 paychecks</span>' : ''}
@@ -2013,9 +2040,17 @@ function renderPayPeriods() {
           <div class="pay-month-stat"><span class="pay-month-stat-label">Outgoing</span><span class="pay-month-stat-value" style="color:var(--red)">${fmt(month.outgoing)}</span></div>
           <div class="pay-month-stat"><span class="pay-month-stat-label">Net</span><span class="pay-month-stat-value" style="color:${month.net >= 0 ? 'var(--green)' : 'var(--red)'}">${fmtSigned(month.net)}</span></div>
         </div>
-      </div>`;
+        <span class="pay-month-end"><span class="pay-month-chevron" aria-hidden="true">&rsaquo;</span></span>
+      </button>
+      <div class="pay-month-periods">`;
       previousMonth = monthKey;
     }
+    if (!isMonthExpanded) continue;
+    const end = addDays(start, 14);
+    const key = dateKey(start);
+    const ledger = ledgerForPeriod(ledgerPerson, start);
+    const isCurrent = today >= start && today < end;
+    const isExpanded = expandedPayPeriods.has(key);
     html += `<article class="period-card${isCurrent ? ' current' : ''}">
       <button class="period-head" type="button" aria-expanded="${isExpanded}" onclick="togglePayPeriod('${key}')">
         <div class="period-head-main">
@@ -2037,6 +2072,7 @@ function renderPayPeriods() {
       ${isExpanded ? `<div class="ledger-grid single">${renderPersonLedger(ledger)}</div>` : ''}
     </article>`;
   }
+  if (previousMonth) html += `</div></section>`;
   return html;
 }
 
