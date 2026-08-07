@@ -337,6 +337,14 @@ async function run() {
 
   vm.runInContext('setAllPayPeriods(false)', periodFlow);
   assert(vm.runInContext('expandedPayPeriods.size', periodFlow) === 0, 'Collapse all should close every pay period.');
+  const collapsedAllPayHtml = vm.runInContext('renderPayPeriods()', periodFlow);
+  assert(!collapsedAllPayHtml.includes('class="period-card'), 'Collapse all should also hide every month\'s pay-period cards.');
+  assert((collapsedAllPayHtml.match(/class="pay-month-head[^>]*aria-expanded="false"/g) || []).length >= 12, 'Collapse all should close every displayed month while retaining its heading.');
+  assert(collapsedAllPayHtml.includes('Monthly reconciliation'), 'Collapse all should keep monthly reconciliation summaries visible.');
+  vm.runInContext('setAllPayPeriods(true)', periodFlow);
+  const expandedAllPayHtml = vm.runInContext('renderPayPeriods()', periodFlow);
+  assert((expandedAllPayHtml.match(/class="period-card/g) || []).length === 26, 'Expand all should restore every month and pay period in the one-year view.');
+  assert((expandedAllPayHtml.match(/class="pay-month-head[^>]*aria-expanded="false"/g) || []).length === 0, 'Expand all should reopen every displayed month.');
   const homeGuidanceHtml = vm.runInContext('renderHome()', periodFlow);
   assert(homeGuidanceHtml.includes('Suggested/mo') && homeGuidanceHtml.includes('Suggested/payday'), 'Dashboard should show monthly and biweekly calculated transfer guidance.');
   const periodSaved = JSON.parse(vm.runInContext('serializeBudget()', periodFlow));

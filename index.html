@@ -1664,9 +1664,13 @@ function togglePayMonth(key) {
 }
 
 function setAllPayPeriods(expand) {
-  expandedPayPeriods = expand
-    ? new Set(payPeriodStarts(ledgerPerson, payPeriodCountForRange(ledgerRangeMonths), startOfDay(new Date())).map(dateKey))
-    : new Set();
+  const starts = payPeriodStarts(ledgerPerson, payPeriodCountForRange(ledgerRangeMonths), startOfDay(new Date()));
+  expandedPayPeriods = expand ? new Set(starts.map(dateKey)) : new Set();
+  const monthKeys = new Set(starts.map(start => payMonthStateKey(ledgerPerson, start)));
+  for (const key of monthKeys) {
+    if (expand) collapsedPayMonths.delete(key);
+    else collapsedPayMonths.add(key);
+  }
   payPeriodsInitialized = true;
   render();
 }
