@@ -1,7 +1,7 @@
 {
-  "name": "Budget - Family Finances",
-  "short_name": "Budget",
-  "description": "Holmes family monthly budget tracker",
+  "name": "Oink",
+  "short_name": "Oink",
+  "description": "Household budget and cash-flow tracker",
   "start_url": "/Budget/",
   "display": "standalone",
   "background_color": "#f6f1e7",

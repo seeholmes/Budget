@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Budget">
-  <title>Budget | Family Finances</title>
+  <meta name="apple-mobile-web-app-title" content="Oink">
+  <title>Oink</title>
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="icon-192.png">
@@ -686,9 +686,7 @@
         min-height: 58px;
       }
       .brand-logo { width: 42px; height: 42px; border-radius: 10px; flex-shrink: 0; box-shadow: 0 6px 18px rgba(0,0,0,0.2); }
-      .brand-copy { display: flex; flex-direction: column; min-width: 0; }
       .brand-name { color: var(--sidebar-text); font-family: var(--display-font); font-size: 21px; font-weight: 600; line-height: 1; }
-      .brand-tagline { margin-top: 4px; color: var(--sidebar-muted); font-size: 10px; line-height: 1; }
       .tab-bar {
         position: static;
         width: 100%;
@@ -932,16 +930,16 @@
   <aside class="sidebar">
     <div class="sidebar-brand">
       <svg class="brand-logo" viewBox="0 0 512 512" aria-hidden="true"><use href="#brand-mark"></use></svg>
-      <span class="brand-copy"><span class="brand-name">Budget</span><span class="brand-tagline">Family finances</span></span>
+      <span class="brand-name">Oink</span>
     </div>
-    <nav class="tab-bar" aria-label="Budget sections">
+    <nav class="tab-bar" aria-label="Oink sections">
       <button class="tab-btn active" onclick="switchTab('home')" data-tab="home">
         <svg aria-hidden="true"><use href="#icon-home"></use></svg>
-        <span>Home</span>
+        <span>Overview</span>
       </button>
       <button class="tab-btn" onclick="switchTab('pay')" data-tab="pay">
         <svg aria-hidden="true"><use href="#icon-calendar"></use></svg>
-        <span>Pay</span>
+        <span>Cash Flow</span>
       </button>
       <button class="tab-btn" onclick="switchTab('bills')" data-tab="bills">
         <svg aria-hidden="true"><use href="#icon-receipt"></use></svg>
@@ -949,7 +947,7 @@
       </button>
       <button class="tab-btn" onclick="switchTab('subs')" data-tab="subs">
         <svg aria-hidden="true"><use href="#icon-card"></use></svg>
-        <span>Subs</span>
+        <span>Subscriptions</span>
       </button>
     </nav>
   </aside>
@@ -958,8 +956,8 @@
       <div class="title-wrap">
         <svg class="mobile-brand-logo" viewBox="0 0 512 512" aria-hidden="true"><use href="#brand-mark"></use></svg>
         <div class="title-copy">
-          <h1 id="page-title">Dashboard</h1>
-          <div id="doc-status" class="doc-status">Untitled Budget</div>
+          <h1 id="page-title">Overview</h1>
+          <div id="doc-status" class="doc-status">Untitled Oink</div>
         </div>
       </div>
       <div class="header-actions file-actions" aria-label="Budget file actions">
@@ -980,7 +978,7 @@
   <div class="sheet-card" onclick="event.stopPropagation()">
     <div class="sheet-head">
       <div class="sheet-title">Budget File</div>
-      <div class="sheet-sub" id="file-menu-status">Untitled Budget</div>
+      <div class="sheet-sub" id="file-menu-status">Untitled Oink</div>
     </div>
     <button class="file-action" onclick="newBudget()">
       <svg class="button-icon" aria-hidden="true"><use href="#icon-file-plus"></use></svg>
@@ -1018,7 +1016,7 @@ const DEFAULTS = {
 const RECOVERY_KEY = 'budget_recovery_v2';
 const LEGACY_KEY = 'budget_v1';
 const THEME_KEY = 'budget_theme';
-const DEFAULT_FILE_NAME = 'Untitled Budget.budget.json';
+const DEFAULT_FILE_NAME = 'Untitled Oink.budget.json';
 
 const clone = value => JSON.parse(JSON.stringify(value));
 
@@ -1105,7 +1103,7 @@ function loadInitialBudget() {
     if (legacy) {
       return {
         data: normalizeBudget(legacy),
-        name: 'Migrated Budget.budget.json',
+        name: 'Migrated Oink.budget.json',
         dirty: true
       };
     }
@@ -2640,7 +2638,7 @@ function renderChartSection() {
 }
 // ─── RENDER DISPATCH ──────────────────────────────────────────────────────────
 function render() {
-  const titles = { home:'Dashboard', pay:'Pay Periods', bills:'Bills', subs:'Subscriptions' };
+  const titles = { home:'Overview', pay:'Cash Flow', bills:'Bills', subs:'Subscriptions' };
   document.getElementById('page-title').textContent = titles[currentTab];
   applyTheme();
   updateDocumentChrome();

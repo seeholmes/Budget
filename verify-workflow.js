@@ -153,22 +153,24 @@ function assert(condition, message) {
 
 async function run() {
   assert(!html.includes('data-tab="settings"'), 'Settings tab should not be present in the main navigation.');
-  assert(!html.includes('renderSettings'), 'Settings renderer should be removed after moving income to Dashboard.');
+  assert(!html.includes('renderSettings'), 'Settings renderer should be removed after moving income to Overview.');
   assert(!html.includes('>Save As<'), 'Save As should not be exposed as a separate command.');
   assert(!html.includes('saveBudgetAs'), 'Save As handler should not remain as a public workflow.');
-  assert(html.includes('person-income-input'), 'Dashboard summary cards should expose household income entry.');
+  assert(html.includes('person-income-input'), 'Overview summary cards should expose household income entry.');
   assert(html.includes('theme-btn'), 'Header should include the light/dark theme toggle.');
   assert(html.includes('class="brand-logo"') && html.includes('href="#brand-mark"'), 'The app shell should use the inline piggy-bank vector mark.');
   assert(html.includes('href="#icon-home"') && html.includes('href="#icon-save"'), 'Navigation and file actions should use the shared outline icon set.');
   assert(iconSvg.includes('id="gold"') && iconSvg.includes('id="bars"'), 'The vector app mark should contain the gold coin and growth bars.');
   assert(!iconSvg.includes('<filter') && !iconSvg.includes('filter='), 'The app mark should avoid filters that rasterize softly on mobile Safari.');
-  assert(JSON.stringify(manifest).includes('#173d2d') && manifest.name === 'Budget - Family Finances', 'The PWA manifest should match the updated brand.');
+  assert(JSON.stringify(manifest).includes('#173d2d') && manifest.name === 'Oink' && manifest.short_name === 'Oink', 'The PWA manifest should use the Oink brand.');
   assert(pngDimensions('icon-192.png').width === 192 && pngDimensions('icon-512.png').width === 512, 'PWA icons should be rendered at their declared sizes.');
-  assert(html.includes('data-tab="pay"'), 'Navigation should include the Pay Periods tab.');
+  assert(html.includes('data-tab="pay"'), 'Navigation should include the Cash Flow tab.');
   assert(html.includes('renderPayPeriods'), 'Pay Periods should have a dedicated renderer.');
   assert(html.includes('class="sidebar"') && html.includes('class="workspace"'), 'The responsive app shell should include a desktop sidebar and workspace.');
   assert(html.includes('--bg: #f6f1e7') && html.includes('--sidebar-bg: #173d2d'), 'The light theme should use the warm editorial palette.');
-  assert(html.includes('font-family: var(--display-font)') && html.includes('household-summary'), 'The dashboard should include editorial display type and the emphasized household summary.');
+  assert(html.includes('font-family: var(--display-font)') && html.includes('household-summary'), 'The Overview should include editorial display type and the emphasized household summary.');
+  assert(html.includes('<span class="brand-name">Oink</span>') && !html.includes('Family finances'), 'The app shell should show Oink without a tagline.');
+  assert(html.includes('<span>Overview</span>') && html.includes('<span>Cash Flow</span>') && html.includes('<span>Subscriptions</span>'), 'Navigation should use the new section names.');
   assert(html.includes('.summary-row { grid-template-columns: 1fr; }'), 'Phone layouts should stack the two household member cards.');
   assert(html.includes('min-width: 0; max-width: 100%;'), 'Form controls should stay inside narrow mobile grid columns.');
   assert(html.includes('.form-input[type="date"] { padding-left: 0; padding-right: 0; }'), 'Date controls should avoid the iOS width-plus-padding overflow bug.');
@@ -365,7 +367,8 @@ async function run() {
 
   const shellFlow = createHarness();
   vm.runInContext('render()', shellFlow);
-  assert(shellFlow.__harness.elements.get('main').innerHTML.includes('person-income-input'), 'Dashboard should render card-level income inputs.');
+  assert(shellFlow.__harness.elements.get('main').innerHTML.includes('person-income-input'), 'Overview should render card-level income inputs.');
+  assert(shellFlow.__harness.elements.get('page-title').textContent === 'Overview', 'The initial page title should use the Overview name.');
   assert(shellFlow.__harness.elements.get('edit-btn').style.display === 'none', 'Home should not show a dead edit/delete control.');
   assert(shellFlow.__harness.elements.get('theme-label').textContent === 'Dark', 'Theme toggle should default to offering dark mode.');
   vm.runInContext('toggleTheme()', shellFlow);
@@ -373,6 +376,7 @@ async function run() {
   assert(shellFlow.__harness.elements.get('theme-icon').getAttribute('href') === '#icon-sun', 'Theme toggle should switch to the sun icon in dark mode.');
   assert(shellFlow.__harness.storage.get('budget_theme') === 'dark', 'Theme selection should be saved.');
   vm.runInContext('switchTab("pay")', shellFlow);
+  assert(shellFlow.__harness.elements.get('page-title').textContent === 'Cash Flow', 'The pay ledger page title should use the Cash Flow name.');
   assert(shellFlow.__harness.elements.get('main').innerHTML.includes('Pay Schedules'), 'Pay tab should expose separate biweekly schedules.');
   assert((shellFlow.__harness.elements.get('main').innerHTML.match(/Known payday/g) || []).length === 2, 'Pay tab should expose a known payday for each person.');
   assert(shellFlow.__harness.elements.get('main').innerHTML.includes('Actual amount each sender payday'), 'Pay tab should expose the recurring transfer amount.');
@@ -390,7 +394,7 @@ async function run() {
   vm.runInContext(`data.expenses.push({ id: 1, type: 'bill', name: 'Rent', amount: 1200, dueDay: 1, dueMonth: 1, person: 'papa', freq: 'monthly', cat: 'housing' }); isDirty = true;`, newFlow);
   await vm.runInContext('newBudget()', newFlow);
   assert(vm.runInContext('data.expenses.length', newFlow) === 0, 'Accepting New should create a blank budget.');
-  assert(vm.runInContext('documentName', newFlow) === 'Untitled Budget.budget.json', 'New should reset the document name.');
+  assert(vm.runInContext('documentName', newFlow) === 'Untitled Oink.budget.json', 'New should reset the document name with the Oink brand.');
   assert(vm.runInContext('isDirty', newFlow) === false, 'New should start as a clean blank budget.');
 
   const openFlow = createHarness();
