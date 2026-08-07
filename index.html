@@ -281,6 +281,12 @@
     .badge-soon { background: var(--warning-soft); color: var(--orange); }
     .badge-ok { background: var(--papa-soft); color: var(--green); }
     .badge-yearly { background: var(--annual-soft); color: var(--orange); }
+    .personal-tag {
+      display: inline-block; margin-left: 5px; padding: 1px 6px;
+      border-radius: 10px; background: var(--surface2); color: var(--text2);
+      border: 1px solid var(--sep); font-size: 10px; font-weight: 700;
+      line-height: 1.35; vertical-align: 1px; text-transform: uppercase;
+    }
     /* SUMMARY CARDS */
     .summary-row {
       display: grid; grid-template-columns: 1fr 1fr;
@@ -427,6 +433,17 @@
     .form-input[type="date"] { padding-left: 0; padding-right: 0; }
     .form-select { -webkit-appearance: none; appearance: none; }
     .form-actions { display: flex; gap: 8px; margin-top: 10px; }
+    .transfer-check {
+      display: flex; align-items: center; gap: 10px;
+      margin-top: 12px; padding: 11px 12px;
+      border: 1px solid var(--sep); border-radius: 8px;
+      background: var(--surface2); color: var(--text);
+      font-size: 13px; font-weight: 600; cursor: pointer;
+    }
+    .transfer-check input {
+      width: 18px; height: 18px; margin: 0; flex: 0 0 auto;
+      accent-color: var(--green);
+    }
     .btn-save { flex:1; background: var(--blue); color: white; border: none; border-radius: 8px; padding: 12px; font-size: 15px; font-family: inherit; font-weight: 600; cursor: pointer; }
     .btn-cancel { background: var(--sep); color: var(--text); border: none; border-radius: 8px; padding: 12px 18px; font-size: 15px; font-family: inherit; font-weight: 500; cursor: pointer; }
     .btn-add-row { width: 100%; background: none; border: none; color: var(--blue); font-size: 16px; font-family: inherit; padding: 13px 16px; text-align: left; cursor: pointer; display: flex; align-items: center; gap: 6px; }
@@ -1001,7 +1018,7 @@
 <script>
 // ─── DATA ───────────────────────────────────────────────────────────────────
 const DEFAULTS = {
-  schemaVersion: 6,
+  schemaVersion: 7,
   names: { papa: 'Papa', mama: 'Mama' },
   income: { papa: 0, mama: 0 },
   paySchedule: {
@@ -1033,6 +1050,7 @@ function normalizeExpense(item, fallbackId, type, sourceSchemaVersion) {
   normalized.weekday = Number.isFinite(+normalized.weekday) ? Math.max(0, Math.min(6, Math.trunc(+normalized.weekday))) : 5;
   if (normalized.freq !== 'weekly') delete normalized.weekday;
   normalized.cat = normalized.cat || 'misc';
+  normalized.includeInTransfer = normalized.includeInTransfer !== false;
   normalized.person = normalized.person === 'mama'
     ? 'mama'
     : normalized.person === 'papa'
@@ -1144,7 +1162,7 @@ function ensureBudgetFileName(name) {
 function serializeBudget() {
   return JSON.stringify({
     ...normalizeBudget(data),
-    schemaVersion: 6,
+    schemaVersion: 7,
     savedAt: new Date().toISOString()
   }, null, 2);
 }
@@ -1566,15 +1584,25 @@ function totalMonthly(person) {
   return expensesFor(person).reduce((sum, expense) => sum + monthlyEquiv(expense), 0);
 }
 
+function transferMonthly(person) {
+  return expensesFor(person)
+    .filter(expense => expense.includeInTransfer !== false)
+    .reduce((sum, expense) => sum + monthlyEquiv(expense), 0);
+}
+
 function totalHouseholdMonthly() {
   return data.expenses.reduce((sum, expense) => sum + monthlyEquiv(expense), 0);
 }
 
 // Returns positive if papa sends to mama, negative if mama sends to papa
 function calcExchange() {
-  const papaNet = monthlyIncome('papa') - totalMonthly('papa');
-  const mamaNet = monthlyIncome('mama') - totalMonthly('mama');
+  const papaNet = monthlyIncome('papa') - transferMonthly('papa');
+  const mamaNet = monthlyIncome('mama') - transferMonthly('mama');
   return (papaNet - mamaNet) / 2;
+}
+
+function personalTag(expense) {
+  return expense.includeInTransfer === false ? '<span class="personal-tag">Personal</span>' : '';
 }
 
 function monthlyToBiweekly(amount) {
@@ -1676,9 +1704,8 @@ function renderHome() {
   const mamaIncome = monthlyIncome('mama');
   const exchange = calcExchange(); // positive = papa→mama, negative = mama→papa
   const exchangePayday = monthlyToBiweekly(exchange);
-  const equalBal = (papaIncome + mamaIncome - totalMonthly('papa') - totalMonthly('mama')) / 2;
-  const papaBal = equalBal;
-  const mamaBal = equalBal;
+  const papaBal = papaIncome - totalMonthly('papa') - exchange;
+  const mamaBal = mamaIncome - totalMonthly('mama') + exchange;
 
   // Upcoming recurring expenses this week (next 7 days)
   const upcoming = data.expenses
@@ -1774,7 +1801,7 @@ function renderHome() {
         <div class="row-icon" style="background:${ownerSoft(b.person)}">${CAT_ICONS[b.cat]||'📋'}</div>
         <div class="row-main">
           <div class="row-title">${b.name}</div>
-          <div class="row-sub" style="color:${color}">${owner} · Due ${dueLabel(b)}</div>
+          <div class="row-sub" style="color:${color}">${owner} · Due ${dueLabel(b)}${personalTag(b)}</div>
         </div>
         <div class="row-right">
           <div class="row-amount">${fmt(b.amount)}</div>
@@ -1788,7 +1815,7 @@ function renderHome() {
         <div class="row-icon" style="background:var(--annual-soft)">${CAT_ICONS[b.cat]||'📋'}</div>
         <div class="row-main">
           <div class="row-title">${b.name}</div>
-          <div class="row-sub" style="color:var(--orange)">${owner} · Annual · ${MONTHS[b.dueMonth-1]} ${b.dueDay || 1}</div>
+          <div class="row-sub" style="color:var(--orange)">${owner} · Annual · ${MONTHS[b.dueMonth-1]} ${b.dueDay || 1}${personalTag(b)}</div>
         </div>
         <div class="row-right">
           <div class="row-amount">${fmt(b.amount)}</div>
@@ -1836,7 +1863,7 @@ function renderPersonLedger(ledger) {
   ledger.items.forEach(({ expense, date }) => transactions.push({
     date,
     name: expense.name,
-    type: expense.type === 'subscription' ? 'Subscription' : 'Payment',
+    type: `${expense.type === 'subscription' ? 'Subscription' : 'Payment'}${expense.includeInTransfer === false ? ' · Personal' : ''}`,
     incoming: 0,
     outgoing: expense.amount,
     order: 2
@@ -1874,7 +1901,7 @@ function renderPersonLedger(ledger) {
   const expenseItems = ledger.items.map(({ expense, date }) => `<div class="ledger-item">
         <div>
           <div class="ledger-item-name">${expense.name}</div>
-          <div class="ledger-item-date">${formatPeriodDate(date)} · ${expense.type === 'subscription' ? 'Subscription' : 'Payment'}${expense.freq === 'yearly' ? ' · Annual' : expense.freq === 'weekly' ? ' · Weekly' : ''}</div>
+          <div class="ledger-item-date">${formatPeriodDate(date)} · ${expense.type === 'subscription' ? 'Subscription' : 'Payment'}${expense.freq === 'yearly' ? ' · Annual' : expense.freq === 'weekly' ? ' · Weekly' : ''}${expense.includeInTransfer === false ? ' · Personal' : ''}</div>
         </div>
         <div class="ledger-item-amount">–${fmt(expense.amount)}</div>
       </div>`).join('');
@@ -1916,7 +1943,7 @@ function renderAnnualLookahead() {
       <div class="row-icon" style="background:var(--annual-soft)">${CAT_ICONS[expense.cat] || '📋'}</div>
       <div class="row-main">
         <div class="row-title">${expense.name}</div>
-        <div class="row-sub" style="color:var(--orange)">${owner} · ${date.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' })}</div>
+        <div class="row-sub" style="color:var(--orange)">${owner} · ${date.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' })}${personalTag(expense)}</div>
       </div>
       <div class="row-right">
         <div class="row-amount">${fmt(expense.amount)}</div>
@@ -2113,7 +2140,7 @@ function renderBills() {
         <div class="row-icon" style="background:${ownerSoft(b.person)}">${CAT_ICONS[b.cat]||'📋'}</div>
         <div class="row-main">
           <div class="row-title">${b.name}</div>
-          <div class="row-sub" style="color:${personColor}">${personName} · Every ${WEEKDAYS[b.weekday]} · ${fmt(b.amount*52)}/yr</div>
+          <div class="row-sub" style="color:${personColor}">${personName} · Every ${WEEKDAYS[b.weekday]} · ${fmt(b.amount*52)}/yr${personalTag(b)}</div>
         </div>
         <div class="row-schedule">Every ${WEEKDAYS[b.weekday]}</div>
         <div class="row-right">
@@ -2151,7 +2178,7 @@ function renderBills() {
       <div class="row-icon" style="background:${ownerSoft(b.person)}">${CAT_ICONS[b.cat]||'📋'}</div>
       <div class="row-main">
         <div class="row-title">${b.name}</div>
-        <div class="row-sub" style="color:${personColor}">${personName}${b.note ? ' · <span style="color:var(--text2)">'+b.note+'</span>' : ''}</div>
+        <div class="row-sub" style="color:${personColor}">${personName}${b.note ? ' · <span style="color:var(--text2)">'+b.note+'</span>' : ''}${personalTag(b)}</div>
       </div>
       <div class="row-schedule">${b.dueDay ? `Day ${b.dueDay}` : 'Various dates'}</div>
       <div class="row-right">
@@ -2180,7 +2207,7 @@ function renderBills() {
         <div class="row-icon" style="background:var(--annual-soft)">${CAT_ICONS[b.cat]||'📋'}</div>
         <div class="row-main">
           <div class="row-title">${b.name}</div>
-          <div class="row-sub" style="color:var(--orange)">${personName} · Annual · ${MONTHS[b.dueMonth-1]} ${b.dueDay || 1}</div>
+          <div class="row-sub" style="color:var(--orange)">${personName} · Annual · ${MONTHS[b.dueMonth-1]} ${b.dueDay || 1}${personalTag(b)}</div>
         </div>
         <div class="row-schedule">${MONTHS[b.dueMonth-1]} ${b.dueDay || 1}</div>
         <div class="row-right">
@@ -2231,7 +2258,7 @@ function renderSubs() {
         <div class="row-icon" style="background:${ownerSoft(s.person)}">${CAT_ICONS[s.cat]||'📱'}</div>
         <div class="row-main">
           <div class="row-title">${s.name}</div>
-          <div class="row-sub" style="color:${personColor}">${personName} · Every ${WEEKDAYS[s.weekday]} · ${fmt(s.amount*52)}/yr</div>
+          <div class="row-sub" style="color:${personColor}">${personName} · Every ${WEEKDAYS[s.weekday]} · ${fmt(s.amount*52)}/yr${personalTag(s)}</div>
         </div>
         <div class="row-schedule">Every ${WEEKDAYS[s.weekday]}</div>
         <div class="row-right">
@@ -2268,7 +2295,7 @@ function renderSubs() {
       <div class="row-icon" style="background:${ownerSoft(s.person)}">${CAT_ICONS[s.cat]||'📱'}</div>
       <div class="row-main">
         <div class="row-title">${s.name}</div>
-        <div class="row-sub" style="color:${personColor}">${personName}</div>
+        <div class="row-sub" style="color:${personColor}">${personName}${personalTag(s)}</div>
       </div>
       <div class="row-schedule">${s.dueDay ? `Day ${s.dueDay}` : 'Monthly'}</div>
       <div class="row-right">
@@ -2297,7 +2324,7 @@ function renderSubs() {
         <div class="row-icon" style="background:var(--annual-soft)">${CAT_ICONS[s.cat]||'📱'}</div>
         <div class="row-main">
           <div class="row-title">${s.name}</div>
-          <div class="row-sub" style="color:var(--orange)">${personName} · Annual · ${MONTHS[s.dueMonth-1]} ${s.dueDay || 1}</div>
+          <div class="row-sub" style="color:var(--orange)">${personName} · Annual · ${MONTHS[s.dueMonth-1]} ${s.dueDay || 1}${personalTag(s)}</div>
         </div>
         <div class="row-schedule">${MONTHS[s.dueMonth-1]} ${s.dueDay || 1}</div>
         <div class="row-right">
@@ -2344,6 +2371,7 @@ function itemForm(type, item) {
   const cancelAction = isEdit ? (isBill ? 'editingBillId=null' : 'editingSubId=null') : (isBill ? 'addingBill=false' : 'addingSub=false');
   const saveAction = isEdit ? `saveEdit('${type}',${item.id})` : `submitNew('${type}')`;
   const personValue = isEdit ? item.person : 'papa';
+  const includeInTransfer = !isEdit || item.includeInTransfer !== false;
   return `<div class="add-form">
     <div style="font-weight:600;font-size:15px;margin-bottom:10px">${isEdit ? 'Edit' : 'New'} ${isBill ? 'Payment' : 'Subscription'}</div>
     <div class="form-grid full"><div class="form-field">
@@ -2398,6 +2426,10 @@ function itemForm(type, item) {
         </select>
       </div>
     </div>
+    <label class="transfer-check">
+      <input id="${prefix}-include-transfer" type="checkbox" ${includeInTransfer ? 'checked' : ''}>
+      <span>Include in household transfer guidance</span>
+    </label>
     <div class="form-actions">
       <button class="btn-save" onclick="${saveAction}">${isEdit ? 'Save' : 'Add'}</button>
       <button class="btn-cancel" onclick="${cancelAction};render()">Cancel</button>
@@ -2472,16 +2504,17 @@ function submitNew(type) {
   const weekday = parseInt(document.getElementById(`${p}-weekday`).value);
   const cat = document.getElementById(`${p}-cat`).value;
   const person = document.getElementById(`${p}-person`).value;
+  const includeInTransfer = document.getElementById(`${p}-include-transfer`).checked;
   if (!name || isNaN(amount) || amount <= 0) { alert('Please enter a name and amount.'); return; }
   const newId = nextExpenseId();
   if (isBill) {
-    const bill = { id:newId, type:'bill', name, amount, dueDay, person, freq, cat, note:'' };
+    const bill = { id:newId, type:'bill', name, amount, dueDay, person, freq, cat, note:'', includeInTransfer };
     if (freq === 'yearly') bill.dueMonth = dueMonth;
     if (freq === 'weekly') bill.weekday = Number.isFinite(weekday) ? weekday : 5;
     data.expenses.push(bill);
     addingBill = false;
   } else {
-    const sub = { id:newId, type:'subscription', name, amount, dueDay, person, freq, cat };
+    const sub = { id:newId, type:'subscription', name, amount, dueDay, person, freq, cat, includeInTransfer };
     if (freq === 'yearly') sub.dueMonth = dueMonth;
     if (freq === 'weekly') sub.weekday = Number.isFinite(weekday) ? weekday : 5;
     data.expenses.push(sub);
@@ -2502,11 +2535,12 @@ function saveEdit(type, id) {
   const weekday = parseInt(document.getElementById(p+'-weekday').value);
   const cat = document.getElementById(p+'-cat').value;
   const person = document.getElementById(p+'-person').value;
+  const includeInTransfer = document.getElementById(p+'-include-transfer').checked;
   if (!name || isNaN(amount) || amount <= 0) { alert('Please enter a name and amount.'); return; }
   if (isBill) {
     const b = data.expenses.find(x => x.type === 'bill' && x.id === id);
     if (b) {
-      b.name=name; b.amount=amount; b.freq=freq; b.dueDay=dueDay; b.cat=cat; b.person=person;
+      b.name=name; b.amount=amount; b.freq=freq; b.dueDay=dueDay; b.cat=cat; b.person=person; b.includeInTransfer=includeInTransfer;
       if (freq==='yearly') b.dueMonth=dueMonth; else delete b.dueMonth;
       if (freq==='weekly') b.weekday=Number.isFinite(weekday) ? weekday : 5; else delete b.weekday;
     }
@@ -2514,7 +2548,7 @@ function saveEdit(type, id) {
   } else {
     const s = data.expenses.find(x => x.type === 'subscription' && x.id === id);
     if (s) {
-      s.name=name; s.amount=amount; s.freq=freq; s.dueDay=dueDay; s.cat=cat; s.person=person;
+      s.name=name; s.amount=amount; s.freq=freq; s.dueDay=dueDay; s.cat=cat; s.person=person; s.includeInTransfer=includeInTransfer;
       if (freq==='yearly') s.dueMonth=dueMonth; else delete s.dueMonth;
       if (freq==='weekly') s.weekday=Number.isFinite(weekday) ? weekday : 5; else delete s.weekday;
     }

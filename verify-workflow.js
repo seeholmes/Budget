@@ -201,9 +201,10 @@ async function run() {
   assert(!Object.hasOwn(saved, 'bills'), 'Serialized v2 budget should not contain bills.');
   assert(!Object.hasOwn(saved, 'subscriptions'), 'Serialized v2 budget should not contain subscriptions.');
   assert(saved.expenses.map(item => item.type).join(',') === 'bill,subscription', 'Migrated expenses should keep item types.');
-  assert(saved.schemaVersion === 6, 'Serialized budgets should use schema version 6.');
+  assert(saved.schemaVersion === 7, 'Serialized budgets should use schema version 7.');
   assert(saved.paySchedule.transfer.amount === 0, 'Older budgets should default to no recorded payday transfer.');
   assert(saved.expenses[1].person === 'unassigned', 'Legacy subscriptions should be preserved for explicit person assignment.');
+  assert(saved.expenses.every(item => item.includeInTransfer === true), 'Existing expenses should remain included in transfer guidance by default.');
 
   const annualMigration = createHarness();
   vm.runInContext(`data = normalizeBudget({
@@ -238,7 +239,7 @@ async function run() {
   assert(vm.runInContext('data.paySchedule.anchorDates.papa', sharedPaydayMigration) === '2026-08-07', 'The shared payday should migrate to Papa.');
   assert(vm.runInContext('data.paySchedule.anchorDates.mama', sharedPaydayMigration) === '2026-08-07', 'The shared payday should migrate to Mama.');
   const migratedPaydaySave = JSON.parse(vm.runInContext('serializeBudget()', sharedPaydayMigration));
-  assert(!Object.hasOwn(migratedPaydaySave.paySchedule, 'anchorDate'), 'Saved version 6 budgets should omit the legacy shared payday.');
+  assert(!Object.hasOwn(migratedPaydaySave.paySchedule, 'anchorDate'), 'Saved version 7 budgets should omit the legacy shared payday.');
 
   const formFlow = createHarness();
   const newBillForm = vm.runInContext('itemForm("bill", null)', formFlow);
@@ -251,6 +252,30 @@ async function run() {
   assert(weeklyBillForm.includes('id="eb-dueday-field" hidden'), 'Weekly forms should hide the monthly due-day field.');
   assert(weeklyBillForm.includes('id="eb-weekday-field" >'), 'Weekly forms should show the weekday selector.');
   assert(weeklyBillForm.includes('<option value="5" selected>Friday</option>'), 'Weekly forms should preserve Friday as the payment day.');
+  assert(newBillForm.includes('id="nb-include-transfer" type="checkbox" checked'), 'New payments should be included in transfer guidance by default.');
+  const personalSubForm = vm.runInContext('itemForm("sub", { id: 3, type: "subscription", name: "Games", amount: 15, dueDay: 2, person: "mama", freq: "monthly", cat: "media", includeInTransfer: false })', formFlow);
+  assert(personalSubForm.includes('id="es-include-transfer" type="checkbox" >'), 'Personal subscriptions should keep transfer guidance unchecked when edited.');
+
+  const personalFlow = createHarness();
+  vm.runInContext(`data = normalizeBudget({
+    schemaVersion: 7,
+    names: { papa: 'Alex', mama: 'Sam' },
+    income: { papa: 5000, mama: 5000 },
+    expenses: [
+      { id: 1, type: 'bill', name: 'Personal Gym', amount: 100, dueDay: 10, person: 'papa', freq: 'monthly', cat: 'health', includeInTransfer: false }
+    ]
+  });`, personalFlow);
+  assert(vm.runInContext('totalMonthly("papa")', personalFlow) === 100, 'Personal spending should remain in the owner\'s outgoing monthly total.');
+  assert(vm.runInContext('transferMonthly("papa")', personalFlow) === 0, 'Personal spending should be excluded from transfer guidance.');
+  assert(vm.runInContext('calcExchange()', personalFlow) === 0, 'Equal incomes should not produce reimbursement for one person\'s personal spending.');
+  assert(vm.runInContext('ledgerForPeriod("papa", parseLocalDate("2026-08-07")).expenseOutgoing', personalFlow) === 100, 'Personal spending should remain in the pay-period ledger.');
+  assert(vm.runInContext('renderPersonLedger(ledgerForPeriod("papa", parseLocalDate("2026-08-07")))', personalFlow).includes('Payment · Personal'), 'Cash Flow should identify personal payments without hiding them.');
+  assert(vm.runInContext('renderBills()', personalFlow).includes('Personal'), 'Spending should mark items excluded from transfer guidance.');
+  const personalHome = vm.runInContext('renderHome()', personalFlow);
+  assert(/<span>Balance<\/span>\s*<span[^>]*>\$4,900<\/span>/.test(personalHome), 'The personal spending owner should retain the lower projected balance.');
+  assert(/<span>Balance<\/span>\s*<span[^>]*>\$5,000<\/span>/.test(personalHome), 'The other person should not share the personal payment.');
+  const personalSave = JSON.parse(vm.runInContext('serializeBudget()', personalFlow));
+  assert(personalSave.expenses[0].includeInTransfer === false, 'Personal transfer treatment should persist in saved budgets.');
 
   const periodFlow = createHarness();
   vm.runInContext(`data = normalizeBudget({
@@ -364,8 +389,8 @@ async function run() {
   assert(billsHtml.includes('$100/wk'), 'Spending should include the actual weekly payment.');
   assert(billsHtml.includes('$5,200/yr') && billsHtml.includes('~$433/mo'), 'Weekly payments should show annual and monthly equivalents.');
   assert(vm.runInContext('renderPayPeriods()', periodFlow).includes('1 needs a due day'), 'Weekly items should not trigger the missing monthly due-day warning.');
-  assert(!vm.runInContext('renderBills()', periodFlow).includes('undefined'), 'Bills should render the version 6 data model cleanly.');
-  assert(!vm.runInContext('renderSubs()', periodFlow).includes('undefined'), 'Subscriptions should render the version 6 data model cleanly.');
+  assert(!vm.runInContext('renderBills()', periodFlow).includes('undefined'), 'Spending should render the current data model cleanly.');
+  assert(!vm.runInContext('renderSubs()', periodFlow).includes('undefined'), 'Subscriptions should render the current data model cleanly.');
 
   const shellFlow = createHarness();
   vm.runInContext('render()', shellFlow);
