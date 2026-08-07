@@ -1482,25 +1482,21 @@ function ledgerForPeriod(person, start) {
   };
 }
 
-function monthlyReconciliation(person, value) {
-  const start = new Date(value.getFullYear(), value.getMonth(), 1);
-  const end = new Date(value.getFullYear(), value.getMonth() + 1, 1);
-  const items = expenseOccurrences(person, start, end);
-  const paycheckDates = paydaysInMonth(person, start);
-  const paycheckIncome = (data.paySchedule.paychecks[person] || 0) * paycheckDates.length;
-  const expenseOutgoing = items.reduce((sum, item) => sum + item.expense.amount, 0);
-  const transfer = data.paySchedule.transfer || DEFAULTS.paySchedule.transfer;
-  const transferTo = transfer.from === 'papa' ? 'mama' : 'papa';
-  const transferDates = paydaysBetween(transfer.from, start, end);
-  const transferTotal = transfer.amount * transferDates.length;
-  const transferOut = person === transfer.from ? transferTotal : 0;
-  const transferIn = person === transferTo ? transferTotal : 0;
-  const income = paycheckIncome + transferIn;
-  const outgoing = expenseOutgoing + transferOut;
-  return {
-    person, start, end, paycheckDates, paycheckIncome, expenseOutgoing,
-    transferIn, transferOut, transferDates, income, outgoing, net: income - outgoing, items
-  };
+function payPeriodMonthReconciliations(person, starts) {
+  const months = new Map();
+  for (const start of starts) {
+    const monthKey = `${start.getFullYear()}-${start.getMonth()}`;
+    if (!months.has(monthKey)) {
+      months.set(monthKey, { income: 0, outgoing: 0, net: 0, periods: new Map() });
+    }
+    const ledger = ledgerForPeriod(person, start);
+    const month = months.get(monthKey);
+    month.income += ledger.income;
+    month.outgoing += ledger.outgoing;
+    month.net += ledger.net;
+    month.periods.set(dateKey(start), ledger);
+  }
+  return months;
 }
 
 function nextAnnualOccurrence(expense, today = new Date()) {
@@ -2020,15 +2016,15 @@ function renderPayPeriods() {
     expandedPayPeriods = new Set(currentStart ? [dateKey(currentStart)] : []);
     payPeriodsInitialized = true;
   }
+  const monthReconciliations = payPeriodMonthReconciliations(ledgerPerson, starts);
   let previousMonth = '';
   let isMonthExpanded = true;
   for (const start of starts) {
     const monthKey = `${start.getFullYear()}-${start.getMonth()}`;
+    const month = monthReconciliations.get(monthKey);
     if (monthKey !== previousMonth) {
       if (previousMonth) html += `</div></section>`;
-      const paydayCount = paydaysInMonth(ledgerPerson, start).length;
-      const isThreePaycheckMonth = paydayCount === 3;
-      const month = monthlyReconciliation(ledgerPerson, start);
+      const isThreePaycheckMonth = month.periods.size === 3;
       const stateKey = payMonthStateKey(ledgerPerson, start);
       isMonthExpanded = !collapsedPayMonths.has(stateKey);
       html += `<section class="pay-month-group">
@@ -2050,7 +2046,7 @@ function renderPayPeriods() {
     if (!isMonthExpanded) continue;
     const end = addDays(start, 14);
     const key = dateKey(start);
-    const ledger = ledgerForPeriod(ledgerPerson, start);
+    const ledger = month.periods.get(key);
     const isCurrent = today >= start && today < end;
     const isExpanded = expandedPayPeriods.has(key);
     html += `<article class="period-card${isCurrent ? ' current' : ''}">

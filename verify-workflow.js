@@ -285,12 +285,13 @@ async function run() {
   assert(vm.runInContext('ledgerForPeriod("mama", parseLocalDate("2026-08-14")).transferIn', periodFlow) === 300, 'The receiver should record the transfer as Money In.');
   assert(vm.runInContext('dateKey(ledgerForPeriod("mama", parseLocalDate("2026-08-14")).transferDates[0])', periodFlow) === '2026-08-21', 'The receiver should record the transfer on the sender\'s payday.');
   assert(vm.runInContext('ledgerForPeriod("mama", parseLocalDate("2026-08-14")).items.length', periodFlow) === 1, 'Undated monthly expenses should not be placed on an invented date.');
-  assert(vm.runInContext('monthlyReconciliation("papa", parseLocalDate("2026-08-07")).income', periodFlow) === 5000, 'Papa monthly reconciliation should include both August paychecks.');
-  assert(vm.runInContext('monthlyReconciliation("papa", parseLocalDate("2026-08-07")).outgoing', periodFlow) === 2000, 'Papa monthly reconciliation should include calendar-month expenses and both payday transfers.');
-  assert(vm.runInContext('monthlyReconciliation("papa", parseLocalDate("2026-08-07")).net', periodFlow) === 3000, 'Papa monthly reconciliation should net the complete calendar month.');
-  assert(vm.runInContext('monthlyReconciliation("mama", parseLocalDate("2026-08-07")).income', periodFlow) === 4200, 'Mama monthly reconciliation should include her paychecks and transfers on Papa\'s separate payday schedule.');
-  assert(vm.runInContext('monthlyReconciliation("mama", parseLocalDate("2026-08-07")).outgoing', periodFlow) === 600, 'Mama monthly reconciliation should include annual expenses due during the month.');
-  assert(vm.runInContext('monthlyReconciliation("mama", parseLocalDate("2026-10-01")).income', periodFlow) === 4500, 'A receiver with two paychecks should still reconcile all three transfers from a sender\'s three-paycheck month.');
+  assert(vm.runInContext('payPeriodMonthReconciliations("papa", paydaysInMonth("papa", parseLocalDate("2026-08-07"))).get("2026-7").income', periodFlow) === 5000, 'Papa month reconciliation should include both grouped August paychecks.');
+  assert(vm.runInContext('payPeriodMonthReconciliations("papa", paydaysInMonth("papa", parseLocalDate("2026-08-07"))).get("2026-7").outgoing', periodFlow) === 2000, 'Papa month reconciliation should sum the outgoing amounts in both grouped pay periods.');
+  assert(vm.runInContext('payPeriodMonthReconciliations("papa", paydaysInMonth("papa", parseLocalDate("2026-08-07"))).get("2026-7").net', periodFlow) === 3000, 'Papa month reconciliation should equal the sum of its pay-period net amounts.');
+  assert(vm.runInContext('payPeriodMonthReconciliations("mama", paydaysInMonth("mama", parseLocalDate("2026-08-07"))).get("2026-7").income', periodFlow) === 4200, 'Mama month reconciliation should include transfers captured by her grouped pay periods.');
+  assert(vm.runInContext('payPeriodMonthReconciliations("mama", paydaysInMonth("mama", parseLocalDate("2026-08-07"))).get("2026-7").outgoing', periodFlow) === 600, 'Mama month reconciliation should include annual expenses captured by her grouped pay periods.');
+  assert(vm.runInContext('payPeriodMonthReconciliations("mama", paydaysInMonth("mama", parseLocalDate("2026-10-01"))).get("2026-9").income', periodFlow) === 4200, 'A receiver\'s month should sum the transfers inside its two displayed pay-period ledgers rather than unrelated calendar dates.');
+  assert(vm.runInContext('payPeriodMonthReconciliations("papa", [parseLocalDate("2026-08-21")]).get("2026-7").net', periodFlow) === vm.runInContext('ledgerForPeriod("papa", parseLocalDate("2026-08-21")).net', periodFlow), 'A partial displayed month should reconcile only the pay-period cards actually shown.');
   assert(vm.runInContext(`expenseOccursOn({ freq: 'monthly', dueDay: 31 }, new Date(2027, 1, 28))`, periodFlow), 'End-of-month expenses should clamp to the last calendar day.');
   assert(vm.runInContext(`expenseOccursOn({ freq: 'weekly', weekday: 5 }, new Date(2026, 7, 7))`, periodFlow), 'Weekly expenses should occur on the selected weekday.');
   assert(!vm.runInContext(`expenseOccursOn({ freq: 'weekly', weekday: 5 }, new Date(2026, 7, 8))`, periodFlow), 'Weekly expenses should not occur on other weekdays.');
@@ -304,7 +305,7 @@ async function run() {
   assert((initialPayHtml.match(/class="period-head"[^>]*aria-expanded="true"/g) || []).length === 1, 'Only the current pay period should be expanded initially.');
   assert(initialPayHtml.includes('period-title-row') && initialPayHtml.includes('<span class="period-badge">Current</span>'), 'The current marker should sit with the payday title.');
   assert(initialPayHtml.includes('period-head-summary') && initialPayHtml.includes('Incoming') && initialPayHtml.includes('Remaining'), 'Collapsed periods should include their three summary totals.');
-  assert(initialPayHtml.includes('pay-month-summary') && initialPayHtml.includes('Monthly reconciliation') && initialPayHtml.includes('$3,000'), 'Month headings should show calendar-month incoming, outgoing, and net reconciliation.');
+  assert(initialPayHtml.includes('pay-month-summary') && initialPayHtml.includes('Monthly reconciliation') && initialPayHtml.includes('$3,000'), 'Month headings should reconcile incoming, outgoing, and net across their displayed pay periods.');
   assert(initialPayHtml.includes('class="pay-month-head') && initialPayHtml.includes('onclick="togglePayMonth('), 'Each month heading should control a second collapse level.');
   assert((initialPayHtml.match(/Known payday/g) || []).length === 2, 'Pay setup should show a known payday for each person.');
   assert(initialPayHtml.includes('value="2026-08-07"') && initialPayHtml.includes('value="2026-08-14"'), 'Pay setup should show each person\'s own payday.');
