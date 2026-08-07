@@ -170,7 +170,7 @@ async function run() {
   assert(html.includes('--bg: #f6f1e7') && html.includes('--sidebar-bg: #173d2d'), 'The light theme should use the warm editorial palette.');
   assert(html.includes('font-family: var(--display-font)') && html.includes('household-summary'), 'The Overview should include editorial display type and the emphasized household summary.');
   assert(html.includes('<span class="brand-name">Oink</span>') && !html.includes('Family finances'), 'The app shell should show Oink without a tagline.');
-  assert(html.includes('<span>Overview</span>') && html.includes('<span>Cash Flow</span>') && html.includes('<span>Subscriptions</span>'), 'Navigation should use the new section names.');
+  assert(html.includes('<span>Overview</span>') && html.includes('<span>Cash Flow</span>') && html.includes('<span>Spending</span>') && html.includes('<span>Subscriptions</span>'), 'Navigation should use the new section names.');
   assert(html.includes('.summary-row { grid-template-columns: 1fr; }'), 'Phone layouts should stack the two household member cards.');
   assert(html.includes('min-width: 0; max-width: 100%;'), 'Form controls should stay inside narrow mobile grid columns.');
   assert(html.includes('.form-input[type="date"] { padding-left: 0; padding-right: 0; }'), 'Date controls should avoid the iOS width-plus-padding overflow bug.');
@@ -360,8 +360,9 @@ async function run() {
   assert(vm.runInContext('ledgerForPeriod("mama", parseLocalDate("2026-08-14")).transferOut', periodFlow) === 125, 'Reversing direction should make Mama the transfer sender.');
   assert(!vm.runInContext('renderHome()', periodFlow).includes('undefined'), 'Dashboard should render assigned and annual expenses cleanly.');
   const billsHtml = vm.runInContext('renderBills()', periodFlow);
-  assert(billsHtml.includes('Weekly Bills') && billsHtml.includes('$100/wk'), 'Bills should include the actual weekly payment.');
-  assert(billsHtml.includes('$5,200/yr') && billsHtml.includes('~$433/mo'), 'Weekly bills should show annual and monthly equivalents.');
+  assert(billsHtml.includes('Weekly Payments') && billsHtml.includes('Monthly Payments') && html.includes('Annual Payments'), 'Spending should group scheduled items by payment cadence.');
+  assert(billsHtml.includes('$100/wk'), 'Spending should include the actual weekly payment.');
+  assert(billsHtml.includes('$5,200/yr') && billsHtml.includes('~$433/mo'), 'Weekly payments should show annual and monthly equivalents.');
   assert(vm.runInContext('renderPayPeriods()', periodFlow).includes('1 needs a due day'), 'Weekly items should not trigger the missing monthly due-day warning.');
   assert(!vm.runInContext('renderBills()', periodFlow).includes('undefined'), 'Bills should render the version 6 data model cleanly.');
   assert(!vm.runInContext('renderSubs()', periodFlow).includes('undefined'), 'Subscriptions should render the version 6 data model cleanly.');
@@ -383,7 +384,8 @@ async function run() {
   assert(shellFlow.__harness.elements.get('main').innerHTML.includes('Actual amount each sender payday'), 'Pay tab should expose the recurring transfer amount.');
   assert(shellFlow.__harness.elements.get('edit-btn').style.display === 'none', 'Pay tab should not show the bill delete control.');
   vm.runInContext('switchTab("bills")', shellFlow);
-  assert(shellFlow.__harness.elements.get('edit-btn').style.display === 'flex', 'Bills should show the contextual delete control.');
+  assert(shellFlow.__harness.elements.get('page-title').textContent === 'Spending', 'The scheduled payment page title should use the Spending name.');
+  assert(shellFlow.__harness.elements.get('edit-btn').style.display === 'flex', 'Spending should show the contextual delete control.');
 
   const dirtyGuard = createHarness({ confirms: [false] });
   vm.runInContext(`data.expenses.push({ id: 1, type: 'bill', name: 'Rent', amount: 1200, dueDay: 1, dueMonth: 1, person: 'papa', freq: 'monthly', cat: 'housing' }); isDirty = true;`, dirtyGuard);

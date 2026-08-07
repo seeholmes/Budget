@@ -943,7 +943,7 @@
       </button>
       <button class="tab-btn" onclick="switchTab('bills')" data-tab="bills">
         <svg aria-hidden="true"><use href="#icon-receipt"></use></svg>
-        <span>Bills</span>
+        <span>Spending</span>
       </button>
       <button class="tab-btn" onclick="switchTab('subs')" data-tab="subs">
         <svg aria-hidden="true"><use href="#icon-card"></use></svg>
@@ -1024,7 +1024,7 @@ function normalizeExpense(item, fallbackId, type, sourceSchemaVersion) {
   const normalized = { ...item };
   normalized.id = Number.isFinite(+normalized.id) ? +normalized.id : fallbackId;
   normalized.type = type === 'subscription' ? 'subscription' : 'bill';
-  normalized.name = String(normalized.name || '').trim() || (type === 'bill' ? 'New Bill' : 'New Subscription');
+  normalized.name = String(normalized.name || '').trim() || (type === 'bill' ? 'New Payment' : 'New Subscription');
   normalized.amount = Number.isFinite(+normalized.amount) ? +normalized.amount : 0;
   normalized.dueDay = Number.isFinite(+normalized.dueDay) ? Math.max(0, Math.min(31, +normalized.dueDay)) : 0;
   normalized.dueMonth = Number.isFinite(+normalized.dueMonth) ? Math.max(1, Math.min(12, +normalized.dueMonth)) : 1;
@@ -1836,7 +1836,7 @@ function renderPersonLedger(ledger) {
   ledger.items.forEach(({ expense, date }) => transactions.push({
     date,
     name: expense.name,
-    type: expense.type === 'subscription' ? 'Subscription' : 'Bill',
+    type: expense.type === 'subscription' ? 'Subscription' : 'Payment',
     incoming: 0,
     outgoing: expense.amount,
     order: 2
@@ -1874,7 +1874,7 @@ function renderPersonLedger(ledger) {
   const expenseItems = ledger.items.map(({ expense, date }) => `<div class="ledger-item">
         <div>
           <div class="ledger-item-name">${expense.name}</div>
-          <div class="ledger-item-date">${formatPeriodDate(date)} · ${expense.type === 'subscription' ? 'Subscription' : 'Bill'}${expense.freq === 'yearly' ? ' · Annual' : expense.freq === 'weekly' ? ' · Weekly' : ''}</div>
+          <div class="ledger-item-date">${formatPeriodDate(date)} · ${expense.type === 'subscription' ? 'Subscription' : 'Payment'}${expense.freq === 'yearly' ? ' · Annual' : expense.freq === 'weekly' ? ' · Weekly' : ''}</div>
         </div>
         <div class="ledger-item-amount">–${fmt(expense.amount)}</div>
       </div>`).join('');
@@ -2095,11 +2095,11 @@ function renderBills() {
   const totalY = bills.filter(b=>b.freq==='yearly').reduce((s,b)=>s+b.amount,0);
 
   let html = `<div class="filter-row">
-    ${billFilters.map(f=>`<button class="filter-chip${billFilter===f?' active':''}" onclick="setBillFilter('${f}')">${f==='all' ? 'All Bills' : f === 'unassigned' ? 'Needs assignment' : data.names[f]}</button>`).join('')}
+    ${billFilters.map(f=>`<button class="filter-chip${billFilter===f?' active':''}" onclick="setBillFilter('${f}')">${f==='all' ? 'All Spending' : f === 'unassigned' ? 'Needs assignment' : data.names[f]}</button>`).join('')}
   </div>`;
 
   if (weekly.length) {
-    html += `<div class="section-label">Weekly Bills</div><div class="card-list expense-list">
+    html += `<div class="section-label">Weekly Payments</div><div class="card-list expense-list">
       <div class="expense-table-head"><span></span><span>Item</span><span>Schedule</span><span>Amount</span><span></span></div>`;
     for (const b of weekly) {
       if (editingBillId === b.id) {
@@ -2131,7 +2131,7 @@ function renderBills() {
     </div></div>`;
   }
 
-  html += `<div class="section-label">Monthly Bills</div><div class="card-list expense-list">
+  html += `<div class="section-label">Monthly Payments</div><div class="card-list expense-list">
     <div class="expense-table-head"><span></span><span>Item</span><span>Schedule</span><span>Amount</span><span></span></div>`;
   for (const b of monthly) {
     if (editingBillId === b.id) {
@@ -2167,7 +2167,7 @@ function renderBills() {
   </div></div>`;
 
   if (yearly.length) {
-    html += `<div class="section-label">Annual Bills</div><div class="card-list expense-list">
+    html += `<div class="section-label">Annual Payments</div><div class="card-list expense-list">
       <div class="expense-table-head"><span></span><span>Item</span><span>Schedule</span><span>Amount</span><span></span></div>`;
     for (const b of yearly) {
       if (editingBillId === b.id) {
@@ -2198,8 +2198,8 @@ function renderBills() {
     </div></div>`;
   }
 
-  html += `<div class="section-label">Manage Bills</div><div class="settings-group">
-    ${addingBill ? itemForm('bill', null) : `<button class="btn-add-row" onclick="addingBill=true;editingBillId=null;render()">＋ Add Bill</button>`}
+  html += `<div class="section-label">Manage Spending</div><div class="settings-group">
+    ${addingBill ? itemForm('bill', null) : `<button class="btn-add-row" onclick="addingBill=true;editingBillId=null;render()">＋ Add Payment</button>`}
   </div>`;
 
   return html;
@@ -2345,7 +2345,7 @@ function itemForm(type, item) {
   const saveAction = isEdit ? `saveEdit('${type}',${item.id})` : `submitNew('${type}')`;
   const personValue = isEdit ? item.person : 'papa';
   return `<div class="add-form">
-    <div style="font-weight:600;font-size:15px;margin-bottom:10px">${isEdit ? 'Edit' : 'New'} ${isBill ? 'Bill' : 'Subscription'}</div>
+    <div style="font-weight:600;font-size:15px;margin-bottom:10px">${isEdit ? 'Edit' : 'New'} ${isBill ? 'Payment' : 'Subscription'}</div>
     <div class="form-grid full"><div class="form-field">
       <span class="form-label">Name</span>
       <input id="${prefix}-name" class="form-input" type="text" value="${v('name')}" placeholder="e.g. Netflix" autocomplete="off">
@@ -2451,7 +2451,7 @@ function updateDueMonthVisibility(prefix) {
 
 function setBillFilter(f) { billFilter = f; render(); }
 function deleteBill(id) {
-  if (!confirm('Delete this bill?')) return;
+  if (!confirm('Delete this payment?')) return;
   data.expenses = data.expenses.filter(item => !(item.type === 'bill' && item.id === id));
   save(); render();
 }
@@ -2634,7 +2634,7 @@ function renderChartSection() {
 }
 // ─── RENDER DISPATCH ──────────────────────────────────────────────────────────
 function render() {
-  const titles = { home:'Overview', pay:'Cash Flow', bills:'Bills', subs:'Subscriptions' };
+  const titles = { home:'Overview', pay:'Cash Flow', bills:'Spending', subs:'Subscriptions' };
   document.getElementById('page-title').textContent = titles[currentTab];
   applyTheme();
   updateDocumentChrome();
