@@ -177,6 +177,7 @@ async function run() {
   assert(html.includes('.form-input[type="date"] { padding-left: 0; padding-right: 0; }'), 'Date controls should avoid the iOS width-plus-padding overflow bug.');
   assert(html.includes('.pay-person-fields { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(120px, 1fr); gap: 10px; }'), 'Payday and transfer fields should use matching mobile column geometry.');
   assert(html.includes('ledger-table'), 'Expanded desktop ledgers should include a transaction table.');
+  assert(html.includes('.ledger-item.past-expense') && html.includes('.ledger-table tr.past-expense'), 'Past current-period expenses should have matching mobile and desktop treatments.');
   assert(html.includes('grid-template-columns: minmax(180px, 1fr) 330px 18px;'), 'Desktop period headers should reserve stable columns for summary totals.');
   assert(!html.includes('.period-head-summary { display: none; }'), 'Phone layouts should keep collapsed period summaries visible.');
   assert(html.includes('.pay-month-head { grid-template-columns: minmax(0, 1fr) 18px; align-items: center; gap: 8px; }'), 'Phone layouts should stack monthly reconciliation beneath the month label while reserving the month chevron.');
@@ -324,6 +325,10 @@ async function run() {
   assert(Math.abs(vm.runInContext(`monthlyEquiv({ freq: 'weekly', amount: 100 })`, periodFlow) - (100 * 52 / 12)) < 0.001, 'Weekly payments should derive their monthly equivalent from 52 occurrences.');
   assert(Math.abs(vm.runInContext('monthlyToBiweekly(1300)', periodFlow) - 600) < 0.001, 'Monthly transfer guidance should convert to 26 equal biweekly payments.');
   assert(vm.runInContext('parseLocalDate("2026-02-31")', periodFlow) === null, 'Invalid calendar dates should not become pay schedule anchors.');
+  const datedLedgerHtml = vm.runInContext('renderPersonLedger(ledgerForPeriod("papa", parseLocalDate("2026-08-07")), parseLocalDate("2026-08-14"))', periodFlow);
+  assert((datedLedgerHtml.match(/class="past-expense"/g) || []).length === 2, 'Desktop should mute the two expenses dated before today in the current period.');
+  assert((datedLedgerHtml.match(/class="ledger-item past-expense"/g) || []).length === 2, 'Mobile should mute the two expenses dated before today in the current period.');
+  assert(!vm.runInContext('renderPersonLedger(ledgerForPeriod("papa", parseLocalDate("2026-08-07")))', periodFlow).includes('past-expense'), 'Historical and future ledgers should not inherit current-period past styling.');
   const initialPayHtml = vm.runInContext('renderPayPeriods()', periodFlow);
   assert(initialPayHtml.includes('segment-btn papa active'), 'Pay Periods should default to Papa as the selected ledger.');
   assert(initialPayHtml.includes('onclick="setLedgerRange(3)"') && initialPayHtml.includes('3 Months'), 'Pay Periods should expose the remembered horizon control.');

@@ -544,6 +544,13 @@
     .ledger-item-date { color: var(--text2); font-size: 11px; margin-top: 2px; }
     .ledger-item-amount { font-size: 13px; font-weight: 600; white-space: nowrap; }
     .ledger-item-amount.incoming { color: var(--green); }
+    .ledger-item.past-expense,
+    .ledger-item.past-expense .ledger-item-date,
+    .ledger-item.past-expense .ledger-item-amount { color: var(--text3); }
+    .ledger-item.past-expense .ledger-item-name {
+      text-decoration: line-through;
+      text-decoration-thickness: 1px;
+    }
     .ledger-empty { color: var(--text2); font-size: 13px; padding-top: 10px; }
     .pay-ledger-toolbar {
       display: flex;
@@ -682,6 +689,12 @@
     .ledger-table .money.incoming { color: var(--green); }
     .ledger-table .running { font-weight: 700; }
     .transaction-type { color: var(--text2); font-size: 12px; }
+    .ledger-table tr.past-expense td,
+    .ledger-table tr.past-expense .transaction-type { color: var(--text3) !important; }
+    .ledger-table tr.past-expense td:nth-child(2) {
+      text-decoration: line-through;
+      text-decoration-thickness: 1px;
+    }
     .expense-table-head { display: none; }
     .row-schedule { display: none; color: var(--text2); font-size: 13px; }
 
@@ -1845,10 +1858,11 @@ function renderHome() {
 }
 
 // ─── RENDER PAY PERIODS ──────────────────────────────────────────────────────
-function renderPersonLedger(ledger) {
+function renderPersonLedger(ledger, currentDay = null) {
   const person = ledger.person;
   const netColor = ledger.net >= 0 ? 'var(--green)' : 'var(--red)';
   const otherPerson = person === 'papa' ? 'mama' : 'papa';
+  const pastCutoff = currentDay ? startOfDay(currentDay) : null;
   const transactions = [{
     date: ledger.start,
     name: `${data.names[person]} paycheck`,
@@ -1880,13 +1894,14 @@ function renderPersonLedger(ledger) {
     type: `${expense.type === 'subscription' ? 'Subscription' : 'Payment'}${expense.includeInTransfer === false ? ' · Personal' : ''}`,
     incoming: 0,
     outgoing: expense.amount,
-    order: 2
+    order: 2,
+    isPast: !!pastCutoff && date < pastCutoff
   }));
   transactions.sort((a, b) => a.date - b.date || a.order - b.order || a.name.localeCompare(b.name));
   let running = 0;
   const tableRows = transactions.map(transaction => {
     running += transaction.incoming - transaction.outgoing;
-    return `<tr>
+    return `<tr${transaction.isPast ? ' class="past-expense"' : ''}>
       <td>${formatPeriodDate(transaction.date)}</td>
       <td>${transaction.name}</td>
       <td><span class="transaction-type">${transaction.type}</span></td>
@@ -1912,7 +1927,7 @@ function renderPersonLedger(ledger) {
           <div class="ledger-item-amount">–${fmt(transferAmount)}</div>
         </div>`).join('')
       : '';
-  const expenseItems = ledger.items.map(({ expense, date }) => `<div class="ledger-item">
+  const expenseItems = ledger.items.map(({ expense, date }) => `<div class="ledger-item${pastCutoff && date < pastCutoff ? ' past-expense' : ''}">
         <div>
           <div class="ledger-item-name">${expense.name}</div>
           <div class="ledger-item-date">${formatPeriodDate(date)} · ${expense.type === 'subscription' ? 'Subscription' : 'Payment'}${expense.freq === 'yearly' ? ' · Annual' : expense.freq === 'weekly' ? ' · Weekly' : ''}${expense.includeInTransfer === false ? ' · Personal' : ''}</div>
@@ -2108,7 +2123,7 @@ function renderPayPeriods() {
           <span class="period-chevron" aria-hidden="true">&rsaquo;</span>
         </div>
       </button>
-      ${isExpanded ? `<div class="ledger-grid single">${renderPersonLedger(ledger)}</div>` : ''}
+      ${isExpanded ? `<div class="ledger-grid single">${renderPersonLedger(ledger, isCurrent ? today : null)}</div>` : ''}
     </article>`;
   }
   if (previousMonth) html += `</div></section>`;
