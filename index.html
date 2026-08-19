@@ -1385,16 +1385,18 @@ const CAT_ICONS = {
   housing:'🏠', utilities:'⚡', auto:'🚗', insurance:'🛡️', health:'💪',
   food:'🛒', tech:'💻', debt:'💳', savings:'🏦', home:'🔧',
   misc:'📦', media:'📺', photo:'📷', cloud:'☁️', ai:'🤖',
-  sports:'⚽', design:'🎨', education:'🎓'
+  sports:'⚽', design:'🎨', education:'🎓', personalCare:'🧴', leisure:'🎟️'
 };
 
+const CAT_LABELS = { personalCare: 'Personal Care', leisure: 'Leisure' };
+const categoryLabel = category => CAT_LABELS[category] || category[0].toUpperCase() + category.slice(1);
 
 const CAT_COLORS = {
   housing:'#246B4D', utilities:'#B9783F', food:'#5E8A68', auto:'#B95F4F',
   insurance:'#7F617F', health:'#4F8B83', tech:'#586E75', savings:'#C69A3A',
   debt:'#C8705E', home:'#9A7445', misc:'#7A857D', media:'#A45F73',
   photo:'#4E8290', cloud:'#6C91A0', ai:'#876A91', sports:'#5D8A65', design:'#B58A45',
-  education:'#A96842'
+  education:'#A96842', personalCare:'#B06D78', leisure:'#6F7FA6'
 };
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const MONTHS_FULL = ['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -2415,7 +2417,7 @@ function itemForm(type, item) {
       <div class="form-field">
         <span class="form-label">Category</span>
         <select id="${prefix}-cat" class="form-select">
-          ${cats.map(c=>`<option value="${c}" ${sel('cat',c)}>${CAT_ICONS[c]} ${c}</option>`).join('')}
+          ${cats.map(c=>`<option value="${c}" ${sel('cat',c)}>${CAT_ICONS[c]} ${categoryLabel(c)}</option>`).join('')}
         </select>
       </div>
     </div>
@@ -2617,7 +2619,7 @@ function renderChartSection() {
     totals[b.cat] = (totals[b.cat] || 0) + monthlyEquiv(b);
   }
   const entries = Object.entries(totals)
-    .map(([cat, val]) => ({ cat, val, color: CAT_COLORS[cat] || '#8E8E93', label: cat[0].toUpperCase()+cat.slice(1), icon: CAT_ICONS[cat] || '📋' }))
+    .map(([cat, val]) => ({ cat, val, color: CAT_COLORS[cat] || '#8E8E93', label: categoryLabel(cat), icon: CAT_ICONS[cat] || '📋' }))
     .filter(e => e.val > 0)
     .sort((a, b) => b.val - a.val);
 
@@ -2641,7 +2643,7 @@ function renderChartSection() {
     if (s.amount > 0) subTotals[s.cat] = (subTotals[s.cat] || 0) + monthlyEquiv(s);
   }
   const subEntries = Object.entries(subTotals)
-    .map(([cat, val]) => ({ val, color: CAT_COLORS[cat] || '#8E8E93', label: cat[0].toUpperCase()+cat.slice(1), icon: CAT_ICONS[cat] || '📱' }))
+    .map(([cat, val]) => ({ val, color: CAT_COLORS[cat] || '#8E8E93', label: categoryLabel(cat), icon: CAT_ICONS[cat] || '📱' }))
     .sort((a, b) => b.val - a.val);
   const subTotal = subEntries.reduce((s, e) => s + e.val, 0);
 

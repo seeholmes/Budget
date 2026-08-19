@@ -254,6 +254,9 @@ async function run() {
   assert(weeklyBillForm.includes('id="eb-dueday-field" hidden'), 'Weekly forms should hide the monthly due-day field.');
   assert(weeklyBillForm.includes('id="eb-weekday-field" >'), 'Weekly forms should show the weekday selector.');
   assert(weeklyBillForm.includes('<option value="5" selected>Friday</option>'), 'Weekly forms should preserve Friday as the payment day.');
+  assert(newBillForm.includes('value="personalCare"') && newBillForm.includes('🧴 Personal Care'), 'Payment forms should offer Personal Care with a readable label.');
+  assert(newBillForm.includes('value="leisure"') && newBillForm.includes('🎟️ Leisure'), 'Payment forms should offer Leisure with its category icon.');
+  assert(vm.runInContext('categoryLabel("housing")', formFlow) === 'Housing', 'Existing category labels should remain title-cased in forms and charts.');
   assert(newBillForm.includes('id="nb-include-transfer" type="checkbox" checked'), 'New payments should be included in transfer guidance by default.');
   const personalSubForm = vm.runInContext('itemForm("sub", { id: 3, type: "subscription", name: "Games", amount: 15, dueDay: 2, person: "mama", freq: "monthly", cat: "media", includeInTransfer: false })', formFlow);
   assert(personalSubForm.includes('id="es-include-transfer" type="checkbox" >'), 'Personal subscriptions should keep transfer guidance unchecked when edited.');
